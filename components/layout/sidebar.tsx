@@ -10,18 +10,7 @@ type NavItem = { href: string; label: string; icon: string; badge?: number };
 type NavSection = { title: string; items: NavItem[] };
 
 function buildNavSections(canAccessControlTotal: boolean): NavSection[] {
-  const systemItems: NavItem[] = [
-    { href: "/planos", label: "Planos", icon: "⭐" },
-    { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
-    { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
-    { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
-  ];
-
-  if (canAccessControlTotal) {
-    systemItems.splice(1, 0, { href: "/contas", label: "Controle total", icon: "🧾" });
-  }
-
-  return [
+  const sections: NavSection[] = [
     {
       title: "Principal",
       items: [
@@ -40,11 +29,28 @@ function buildNavSections(canAccessControlTotal: boolean): NavSection[] {
         { href: "/relatórios", label: "Relatórios", icon: "📋" },
       ],
     },
-    {
-      title: "Sistema",
-      items: systemItems,
-    },
   ];
+
+  if (canAccessControlTotal) {
+    sections.push({
+      title: "Gestão de Contas",
+      items: [
+        { href: "/contas", label: "Todas as Contas", icon: "🏢" },
+      ],
+    });
+  }
+
+  sections.push({
+    title: "Sistema",
+    items: [
+      { href: "/planos", label: "Planos", icon: "⭐" },
+      { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
+      { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
+      { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
+    ],
+  });
+
+  return sections;
 }
 
 function isActive(pathname: string, href: string) {
