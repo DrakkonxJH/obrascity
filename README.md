@@ -107,15 +107,14 @@ components/         # Componentes
 types/             # TypeScript types
 ```
 
-## 🌐 Deploy em Netlify
+## 🌐 Deploy em Vercel
 
 1. Push para repositório Git
-2. Conectar em [netlify.com](https://netlify.com)
+2. Conectar em [vercel.com](https://vercel.com)
 3. Build: `npm run build`
-4. Output: `.next`
-5. O projeto já inclui `netlify.toml` com o plugin oficial do Next
-6. Adicionar variáveis de ambiente no painel do Netlify
-7. Deploy automático em cada push
+4. Framework preset: **Next.js** (detectado automaticamente)
+5. Adicionar variáveis de ambiente no painel da Vercel
+6. Deploy automático em cada push
 
 ### Variáveis obrigatórias antes de publicar
 
@@ -124,7 +123,7 @@ types/             # TypeScript types
 - `SUPABASE_SERVICE_KEY`
 - `REDIS_URL`
 - `DATA_ENCRYPTION_KEY`
-- `NEXT_PUBLIC_APP_URL` (use a URL pública do Netlify)
+- `NEXT_PUBLIC_APP_URL` (use a URL pública da Vercel)
 
 ### Variáveis opcionais que liberam recursos depois
 
