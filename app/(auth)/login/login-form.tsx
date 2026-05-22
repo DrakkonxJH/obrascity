@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { TurnstileField } from "@/components/security/turnstile-field";
 import { signInAction, type LoginActionState } from "./actions";
 
@@ -23,14 +22,6 @@ export function LoginForm({ nextPath = "/dashboard", turnstileSiteKey, captchaRe
 
   return (
     <>
-      {captchaEnabled ? (
-        <Script
-          id="cf-turnstile-api"
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="afterInteractive"
-        />
-      ) : null}
-
       <form action={formAction} autoComplete="off" className="of-login-v2-form">
         <input type="hidden" name="next" value={nextPath} />
         <div className="of-login-v2-field">

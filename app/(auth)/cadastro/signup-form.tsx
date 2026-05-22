@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Script from "next/script";
 import { TurnstileField } from "@/components/security/turnstile-field";
 import { signUpAction, type SignupActionState } from "./actions";
 
@@ -31,14 +30,6 @@ export function SignupForm({ turnstileSiteKey, captchaRequired }: SignupFormProp
 
   return (
     <>
-      {captchaEnabled ? (
-        <Script
-          id="cf-turnstile-api"
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="afterInteractive"
-        />
-      ) : null}
-
       <form action={formAction} autoComplete="off" className="of-login-v2-form">
         <div className="of-login-v2-field">
           <label className="of-login-v2-label" htmlFor="nome">
