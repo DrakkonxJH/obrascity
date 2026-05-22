@@ -55,3 +55,4 @@ next-env.d.ts
 /temp
 /artifacts
 /reports
+.netlify
