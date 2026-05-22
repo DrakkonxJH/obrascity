@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { listGuias } from "./data";
 
+export const dynamic = "force-dynamic";
+
 export default function GuiaPage() {
   const guias = listGuias();
 

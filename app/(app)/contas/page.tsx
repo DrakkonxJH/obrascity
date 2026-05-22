@@ -10,6 +10,8 @@ import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { getProfileLimitByPlan } from "@/lib/billing/plans";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
 
+export const dynamic = "force-dynamic";
+
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
 
 function toPercent(value: number, total: number) {

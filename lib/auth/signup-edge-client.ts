@@ -24,6 +24,11 @@ export type SignupEdgeResult = {
 
 export async function invokeSignupEdgeFunction(payload: SignupEdgePayload): Promise<SignupEdgeResult> {
   const env = getEnv();
+  
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    throw new Error("Supabase environment variables not configured");
+  }
+
   const url = `${env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/signup-orchestrator`;
 
   const response = await fetch(url, {
