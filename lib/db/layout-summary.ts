@@ -66,7 +66,7 @@ export async function getLayoutSummary(): Promise<LayoutSummary> {
     (profile?.role as string | null) ??
     "Administrador";
 
-  const materiaisCriticos = (materiaisResult.success ? materiaisResult.data : []).filter((item: any) => {
+  const materiaisCriticos = (materiaisResult.data ?? []).filter((item: Record<string, unknown>) => {
     const quantidade = Number(item.quantidade ?? 0);
     const minimo = Number(item.minimo ?? 0);
     return quantidade <= minimo;

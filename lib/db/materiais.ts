@@ -55,15 +55,16 @@ export type PurchaseOrderInput = {
 export async function listMateriais(): Promise<MaterialItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
-  const { data, error } = (await supabase
+  const { data, error } = await supabase
     .from("materiais")
     .select("id, nome, unidade, quantidade, minimo")
     .eq("empresa_id", empresaId)
-    .order("nome", { ascending: true })) as any;
+    .order("nome", { ascending: true });
   if (error) {
     throw new Error(`Erro ao listar materiais: ${error.message}`);
   }
-  return (data ?? []).map((item: any) => ({
+  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  return rows.map((item) => ({
     id: item.id as string,
     nome: item.nome as string,
     unidade: item.unidade as string,

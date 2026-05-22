@@ -1,50 +1,31 @@
 # Setup de Deployment no Vercel
 
-## Configuração de Secrets no GitHub
+## Fluxos possíveis (importante)
 
-Para que o workflow de deployment automático funcione, você precisa adicionar alguns secrets no repositório GitHub.
+Existem dois fluxos diferentes e independentes:
 
-### Passo 1: Acessar Secrets do Repositório
+1. **Vercel Git Integration (Preview/Production automático no painel da Vercel)**
+2. **GitHub Actions com Vercel CLI** (`.github/workflows/deploy-vercel.yml`)
 
-1. Acesse o repositório: https://github.com/DrakkonxJH/obrasflow
-2. Clique na aba **Settings** (engrenagem no topo)
-3. No menu esquerdo, procure por **Secrets and variables**
-4. Clique em **Actions**
+Se o erro aparece em **Deployments > Environment: Preview** no painel da Vercel, o build está vindo do fluxo **Vercel Git Integration**.
+Nesse caso, **GitHub Secrets não bastam**: as variáveis precisam existir no **Projeto da Vercel**.
 
-**Link direto:** https://github.com/DrakkonxJH/obrasflow/settings/secrets/actions
+## Configuração obrigatória para Vercel Git Integration
 
-### Passo 2: Adicionar os Secrets do Vercel
+No projeto da Vercel:
+1. Acesse **Settings > Environment Variables**
+2. Cadastre as variáveis abaixo em **Preview** e **Production** (e Development se quiser)
+3. Salve e faça um novo deploy
 
-Clique em **New repository secret** e adicione estes 3 secrets:
-
-#### 1. VERCEL_TOKEN
-- **Como obter:** 
-  - Acesse https://vercel.com/account/tokens
-  - Clique em "Create Token"
-  - Copie o token gerado
-- **Colar em:** Name: `VERCEL_TOKEN`, Secret: `cole-o-token-aqui`
-
-#### 2. VERCEL_ORG_ID
-- **Como obter:**
-  - Acesse https://vercel.com/account/settings
-  - Procure por "Team ID" ou "Org ID"
-  - Copie o valor
-- **Colar em:** Name: `VERCEL_ORG_ID`, Secret: `cole-o-id-aqui`
-
-#### 3. VERCEL_PROJECT_ID
-- **Como obter:**
-  - Acesse seu projeto no Vercel
-  - Vá em Settings → General
-  - Procure por "Project ID"
-  - Copie o valor
-- **Colar em:** Name: `VERCEL_PROJECT_ID`, Secret: `cole-o-id-aqui`
-
-### Passo 3: Adicionar Secrets do Ambiente
-
-Adicione também todos os secrets do seu `.env`:
+### Variáveis obrigatórias
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `DATA_ENCRYPTION_KEY`
+
+### Variáveis opcionais (dependem dos módulos habilitados)
+
 - `SUPABASE_SERVICE_KEY`
 - `REDIS_URL`
 - `STRIPE_SECRET_KEY`
@@ -54,24 +35,25 @@ Adicione também todos os secrets do seu `.env`:
 - `TURNSTILE_ALLOWED_HOSTNAMES`
 - `SIGNUP_EDGE_SHARED_SECRET`
 - `RESEND_API_KEY`
-- `NEXT_PUBLIC_APP_URL`
-- `DATA_ENCRYPTION_KEY`
 - `CONTROLE_TOTAL_OWNER_EMAIL`
 - `CONTROLE_TOTAL_OWNER_PROFILE_ID`
 
-### Passo 4: Pronto!
+## Configuração de GitHub Actions (opcional)
 
-Assim que todos os secrets forem adicionados, o workflow automático estará ativo.
+Se quiser usar também o workflow do GitHub Actions:
+1. Acesse https://github.com/DrakkonxJH/obrasflow/settings/secrets/actions
+2. Cadastre `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+3. Cadastre as variáveis de ambiente necessárias para o workflow
 
-**Próximos pushes no `main` vão disparar deploy automático para Vercel automaticamente.**
+> Esse fluxo é separado do Git Integration da Vercel.
 
-## Verificar Deploy
+## Verificação correta de causa
 
-Para verificar se o deploy foi acionado:
-1. Acesse https://github.com/DrakkonxJH/obrasflow/actions
-2. Procure pelo workflow "Deploy to Vercel"
-3. Clique para ver os logs em tempo real
+No painel da Vercel, em cada deployment, confira:
+- **Source (commit SHA)**: confirma qual commit está sendo deployado
+- **Environment**: Preview ou Production
+- Se estiver redeployando um commit antigo, o erro antigo se repete mesmo com correções novas no `main`
 
 ---
 
-**Workflow:** `.github/workflows/deploy-vercel.yml`
+**Workflow opcional:** `.github/workflows/deploy-vercel.yml`

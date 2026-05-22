@@ -1,4 +1,5 @@
 // API REST Completa e Webhooks
+import { createHmac } from "node:crypto";
 
 export type MetodoHTTP = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 export type EventoWebhook = "obra.criada" | "obra.atualizada" | "tarefa.criada" | "tarefa.completa" | "material.adicionado" | "relatório.gerado" | "usuário.adicionado";
@@ -9,7 +10,7 @@ export interface EndpointAPI {
   metodo: MetodoHTTP;
   descricao: string;
   parametros: ParametroAPI[];
-  resposta_exemplo: Record<string, any>;
+  resposta_exemplo: Record<string, unknown>;
   requer_autenticacao: boolean;
   escopos_acesso: string[];
 }
@@ -19,7 +20,7 @@ export interface ParametroAPI {
   tipo: "string" | "number" | "boolean" | "array" | "object";
   obrigatorio: boolean;
   descricao: string;
-  valores_padrao?: any;
+  valores_padrao?: unknown;
 }
 
 export interface ChaveAPI {
@@ -53,7 +54,7 @@ export interface EntregaWebhook {
   id: string;
   webhook_id: string;
   evento: EventoWebhook;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   status: "pendente" | "entregue" | "falha";
   tentativa: number;
   tempo_resposta_ms?: number;
@@ -92,6 +93,5 @@ export function validarChaveAPI(chave: string): boolean {
 }
 
 export function calcularHashWebhook(payload: string, chaveSecreta: string): string {
-  const crypto = require("crypto");
-  return crypto.createHmac("sha256", chaveSecreta).update(payload).digest("hex");
+  return createHmac("sha256", chaveSecreta).update(payload).digest("hex");
 }

@@ -29,8 +29,8 @@ export interface LogAuditoria {
   acao: string;
   tipo_recurso: string; // "obra", "financeiro", "equipe", etc
   recurso_id: string;
-  dados_anteriores?: Record<string, any>;
-  dados_novos?: Record<string, any>;
+  dados_anteriores?: Record<string, unknown>;
+  dados_novos?: Record<string, unknown>;
   timestamp: Date;
   ip?: string;
   user_agent?: string;
@@ -83,8 +83,8 @@ export function registrarAuditoria(
   acao: string,
   tipoRecurso: string,
   recursoId: string,
-  dadosAnteriores?: Record<string, any>,
-  dadosNovos?: Record<string, any>
+  dadosAnteriores?: Record<string, unknown>,
+  dadosNovos?: Record<string, unknown>
 ): LogAuditoria {
   return {
     id: `audit_${Date.now()}`,

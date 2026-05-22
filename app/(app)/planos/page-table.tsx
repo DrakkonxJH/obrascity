@@ -4,8 +4,8 @@ import Link from "next/link";
 import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
-import { openBillingPortalAction, startCheckoutAction } from "./actions";
-import { featuresAgrupadas, type CategoriaFeature } from "@/lib/billing/features-agrupadas";
+import { startCheckoutAction } from "./actions";
+import { featuresAgrupadas, type CategoriaFeature, type TierPlano } from "@/lib/billing/features-agrupadas";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 
@@ -333,7 +333,7 @@ export default async function PlanosPage({
                             backgroundColor: plano.destaque ? "rgba(255, 107, 26, 0.05)" : "transparent",
                           }}
                         >
-                          {feature.tiers.includes(plano.id as any) ? (
+                          {feature.tiers.includes(plano.id as TierPlano) ? (
                             <div
                               style={{
                                 display: "inline-flex",

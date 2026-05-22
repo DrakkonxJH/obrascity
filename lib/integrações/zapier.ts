@@ -20,7 +20,7 @@ export interface ZapierHook {
   trigger: TipoTriggerZapier;
   acoes: TipoAccaoZapier[];
   url_webhook: string;
-  filtros?: Record<string, any>;
+  filtros?: Record<string, unknown>;
   mapeamento_campos?: Record<string, string>;
   ativa: boolean;
   criada_em: Date;
@@ -31,7 +31,7 @@ export interface EventoZapier {
   id: string;
   hook_id: string;
   tipo_trigger: TipoTriggerZapier;
-  dados_evento: Record<string, any>;
+  dados_evento: Record<string, unknown>;
   status_processamento: "pendente" | "enviado" | "erro";
   tentativas: number;
   proxima_tentativa?: Date;

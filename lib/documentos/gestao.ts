@@ -14,7 +14,7 @@ export interface Documento {
   tamanho_bytes: number;
   mime_type: string;
   status_ocr: StatusOCR;
-  dados_extraidos?: Record<string, any>;
+  dados_extraidos?: Record<string, unknown>;
   tags: string[];
   criado_em: Date;
   atualizado_em: Date;

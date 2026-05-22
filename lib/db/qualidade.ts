@@ -192,8 +192,9 @@ export async function listNaoConformidades(filters: QualidadeFiltro = {}): Promi
   if (from) query = query.gte("created_at", `${from}T00:00:00`);
   if (to) query = query.lte("created_at", `${to}T23:59:59`);
 
-  let { data, error } = await query;
-  let rows: Array<Record<string, unknown>> = (data ?? []) as Array<Record<string, unknown>>;
+  const { data: initialData, error: initialError } = await query;
+  let error = initialError;
+  let rows: Array<Record<string, unknown>> = (initialData ?? []) as Array<Record<string, unknown>>;
   if (error && isMissingSchemaResource(error.message, ["resolvido_em", "fechado_em", "reaberturas"])) {
     let legacyQuery = supabase
       .from("nao_conformidades")
@@ -210,7 +211,7 @@ export async function listNaoConformidades(filters: QualidadeFiltro = {}): Promi
     rows = (legacy.data ?? []) as Array<Record<string, unknown>>;
     error = legacy.error;
   } else {
-    rows = (data ?? []) as Array<Record<string, unknown>>;
+    rows = (initialData ?? []) as Array<Record<string, unknown>>;
   }
   if (error) {
     throw new Error(`Erro ao listar não conformidades: ${error.message}`);
@@ -611,8 +612,9 @@ export async function listChecklistItems(filters: QualidadeFiltro = {}): Promise
   if (from) query = query.gte("created_at", `${from}T00:00:00`);
   if (to) query = query.lte("created_at", `${to}T23:59:59`);
 
-  let { data, error } = await query;
-  let rows: Array<Record<string, unknown>> = (data ?? []) as Array<Record<string, unknown>>;
+  const { data: initialData, error: initialError } = await query;
+  let error = initialError;
+  let rows: Array<Record<string, unknown>> = (initialData ?? []) as Array<Record<string, unknown>>;
   let legacyMode = false;
   if (error && isMissingSchemaResource(error.message, ["qualidade_checklists.status", "responsavel_id", "inspecionado_em"])) {
     legacyMode = true;
@@ -628,7 +630,7 @@ export async function listChecklistItems(filters: QualidadeFiltro = {}): Promise
     rows = (legacy.data ?? []) as Array<Record<string, unknown>>;
     error = legacy.error;
   } else {
-    rows = (data ?? []) as Array<Record<string, unknown>>;
+    rows = (initialData ?? []) as Array<Record<string, unknown>>;
   }
   if (error) {
     throw new Error(`Erro ao listar checklist: ${error.message}`);

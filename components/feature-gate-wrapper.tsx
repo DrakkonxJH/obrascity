@@ -18,10 +18,11 @@ export async function FeatureGateWrapper({
 
   return (
     <FeatureGate
-      children={children}
       feature={feature}
       subscription={subscription}
       fallbackUI={fallbackUI}
-    />
+    >
+      {children}
+    </FeatureGate>
   );
 }

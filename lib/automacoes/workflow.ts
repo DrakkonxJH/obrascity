@@ -7,14 +7,14 @@ export interface Condicao {
   id: string;
   campo: string;
   operador: TipoCondicao;
-  valor: any;
+  valor: unknown;
   conectador?: "E" | "OU";
 }
 
 export interface AcaoWorkflow {
   id: string;
   tipo: TipoAcaoAutomacao;
-  parametros: Record<string, any>;
+  parametros: Record<string, unknown>;
   atraso_segundos?: number;
 }
 
@@ -68,7 +68,7 @@ export function validarCondicao(condicao: Condicao): boolean {
   return condicao.campo.length > 0 && condicao.valor !== undefined;
 }
 
-export function avaliarCondicoes(condicoes: Condicao[], dados: Record<string, any>): boolean {
+export function avaliarCondicoes(condicoes: Condicao[], dados: Record<string, unknown>): boolean {
   return condicoes.every((cond) => {
     const valor = dados[cond.campo];
     switch (cond.operador) {
@@ -77,15 +77,15 @@ export function avaliarCondicoes(condicoes: Condicao[], dados: Record<string, an
       case "diferente":
         return valor !== cond.valor;
       case "maior":
-        return valor > cond.valor;
+        return Number(valor) > Number(cond.valor);
       case "menor":
-        return valor < cond.valor;
+        return Number(valor) < Number(cond.valor);
       case "contem":
-        return String(valor).includes(cond.valor);
+        return String(valor ?? "").includes(String(cond.valor ?? ""));
       case "nao_contem":
-        return !String(valor).includes(cond.valor);
+        return !String(valor ?? "").includes(String(cond.valor ?? ""));
       case "data_passou":
-        return new Date(valor) < new Date();
+        return new Date(String(valor)).getTime() < Date.now();
       default:
         return false;
     }

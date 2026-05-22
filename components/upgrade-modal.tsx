@@ -115,7 +115,7 @@ export function UpgradeModal({ isOpen, onClose, featureStatus, featureName }: Up
               border: "none",
               cursor: "pointer",
             }}
-            onClick={(e) => {
+            onClick={() => {
               onClose();
             }}
           >

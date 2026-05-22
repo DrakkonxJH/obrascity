@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = [
@@ -48,21 +49,15 @@ export async function updateSession(request: NextRequest) {
 
   let user = null;
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const {
-      data: { user: authUser },
-    } = await Promise.race([
+    const authResponse = await Promise.race([
       supabase.auth.getUser(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Auth timeout")), 5000)
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Auth timeout")), 5000),
       ),
-    ]) as { data: { user: any } };
-    
-    clearTimeout(timeoutId);
-    user = authUser;
-  } catch (error) {
+    ]);
+
+    user = (authResponse as { data: { user: User | null } }).data.user;
+  } catch {
     user = null;
   }
 
