@@ -14,7 +14,6 @@ export const signupSchema = z
       .regex(/[0-9]/, "Senha deve conter numeros")
       .regex(/[^A-Za-z0-9]/, "Senha deve conter simbolo"),
     confirmPassword: z.string(),
-    captchaToken: z.string().optional(),
     acceptTerms: z.literal("on", {
       error: "Aceite os termos para continuar",
     }),

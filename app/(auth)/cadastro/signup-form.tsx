@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { TurnstileField } from "@/components/security/turnstile-field";
 import { signUpAction, type SignupActionState } from "./actions";
 
 const initialState: SignupActionState = {
@@ -11,15 +10,9 @@ const initialState: SignupActionState = {
   message: "",
 };
 
-type SignupFormProps = {
-  turnstileSiteKey: string | null;
-  captchaRequired: boolean;
-};
-
-export function SignupForm({ turnstileSiteKey, captchaRequired }: SignupFormProps) {
+export function SignupForm() {
   const [state, formAction, pending] = useActionState(signUpAction, initialState);
   const router = useRouter();
-  const captchaEnabled = Boolean(turnstileSiteKey);
 
   useEffect(() => {
     if (state.ok && !state.needsEmailConfirmation) {
@@ -109,18 +102,6 @@ export function SignupForm({ turnstileSiteKey, captchaRequired }: SignupFormProp
           />
         </div>
 
-        {captchaEnabled ? (
-          <div className="of-login-v2-field">
-            <TurnstileField siteKey={turnstileSiteKey!} />
-          </div>
-        ) : (
-          <p className="of-login-v2-help">
-            {captchaRequired
-              ? "Captcha obrigatorio: configure NEXT_PUBLIC_TURNSTILE_SITE_KEY."
-              : "Captcha desativado em desenvolvimento. Configure TURNSTILE para producao."}
-          </p>
-        )}
-
         <label className="of-login-v2-check of-login-v2-check-start">
           <input type="checkbox" name="acceptTerms" value="on" required />
           <span>
@@ -155,7 +136,7 @@ export function SignupForm({ turnstileSiteKey, captchaRequired }: SignupFormProp
         ) : (
           <button
             type="submit"
-            disabled={pending || (captchaRequired && !captchaEnabled)}
+            disabled={pending}
             className="of-login-v2-submit"
           >
             {pending ? "Criando conta..." : "Começar trial gratuito"}

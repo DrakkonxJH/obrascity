@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { TurnstileField } from "@/components/security/turnstile-field";
 import { signInAction, type LoginActionState } from "./actions";
 
 const initialState: LoginActionState = {
@@ -12,13 +11,10 @@ const initialState: LoginActionState = {
 
 type LoginFormProps = {
   nextPath?: string;
-  turnstileSiteKey: string | null;
-  captchaRequired: boolean;
 };
 
-export function LoginForm({ nextPath = "/dashboard", turnstileSiteKey, captchaRequired }: LoginFormProps) {
+export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(signInAction, initialState);
-  const captchaEnabled = Boolean(turnstileSiteKey);
 
   return (
     <>
@@ -65,25 +61,13 @@ export function LoginForm({ nextPath = "/dashboard", turnstileSiteKey, captchaRe
           </Link>
         </div>
 
-        {captchaEnabled ? (
-          <div className="of-login-v2-field">
-            <TurnstileField siteKey={turnstileSiteKey!} />
-          </div>
-        ) : (
-          <p className="of-login-v2-help">
-            {captchaRequired
-              ? "Captcha obrigatorio: configure NEXT_PUBLIC_TURNSTILE_SITE_KEY."
-              : "Captcha desativado em desenvolvimento. Configure TURNSTILE para producao."}
-          </p>
-        )}
-
         {state.message ? (
           <p className="of-login-v2-error">
             {state.message}
           </p>
         ) : null}
 
-        <button type="submit" disabled={pending || (captchaRequired && !captchaEnabled)} className="of-login-v2-submit">
+        <button type="submit" disabled={pending} className="of-login-v2-submit">
           {pending ? "Entrando..." : "Entrar no sistema"}
         </button>
 

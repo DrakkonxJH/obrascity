@@ -6,8 +6,6 @@ export type SignupEdgePayload = {
   email: string;
   password: string;
   confirmPassword: string;
-  captchaToken?: string;
-  captchaEnabled?: boolean;
   acceptTerms: "on";
   ip: string | null;
   userAgent: string | null;

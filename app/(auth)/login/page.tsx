@@ -1,5 +1,4 @@
 import { LoginForm } from "./login-form";
-import { getTurnstileSecretKey, getTurnstileSiteKey } from "@/lib/security/turnstile-config";
 
 type LoginPageProps = {
   searchParams: Promise<{ next?: string }>;
@@ -8,9 +7,6 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const nextPath = params.next ?? "/dashboard";
-  const turnstileSiteKey = getTurnstileSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-  const turnstileSecret = getTurnstileSecretKey(process.env.TURNSTILE_SECRET_KEY);
-  const captchaRequired = Boolean(turnstileSiteKey && turnstileSecret);
 
   return (
     <section className="of-login-v2-layout">
@@ -39,7 +35,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
           <h2 className="of-login-v2-card-title">Acesso ao Sistema</h2>
           <p className="of-login-v2-card-subtitle">Credenciais corporativas requeridas</p>
-          <LoginForm nextPath={nextPath} turnstileSiteKey={turnstileSiteKey} captchaRequired={captchaRequired} />
+          <LoginForm nextPath={nextPath} />
         </aside>
       </section>
   );

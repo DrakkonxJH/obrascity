@@ -3,9 +3,8 @@
 import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
-import { getAppOrigin, getEnv } from "@/lib/validations/env";
+import { getAppOrigin } from "@/lib/validations/env";
 import { invokeSignupEdgeFunction } from "@/lib/auth/signup-edge-client";
-import { getTurnstileSecretKey, getTurnstileSiteKey } from "@/lib/security/turnstile-config";
 
 export type SignupActionState = {
   ok: boolean;
@@ -39,8 +38,6 @@ export async function signUpAction(
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    captchaToken:
-      formData.get("captchaToken") ?? formData.get("cf-turnstile-response"),
     acceptTerms: formData.get("acceptTerms"),
   });
 
@@ -55,15 +52,8 @@ export async function signUpAction(
     email,
     password,
     confirmPassword,
-    captchaToken,
     acceptTerms,
   } = parsed.data;
-  const env = getEnv();
-  const turnstileSiteKey = getTurnstileSiteKey(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-  const turnstileSecret = getTurnstileSecretKey(env.TURNSTILE_SECRET_KEY);
-  const captchaEnabled = Boolean(
-    turnstileSecret && turnstileSiteKey,
-  );
 
   try {
     const edgeResult = await invokeSignupEdgeFunction({
@@ -72,8 +62,6 @@ export async function signUpAction(
       email,
       password,
       confirmPassword,
-      captchaToken,
-      captchaEnabled,
       acceptTerms,
       ip,
       userAgent,

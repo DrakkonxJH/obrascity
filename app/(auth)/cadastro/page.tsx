@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { SignupForm } from "./signup-form";
-import { getTurnstileSecretKey, getTurnstileSiteKey } from "@/lib/security/turnstile-config";
 
 export default function CadastroPage() {
-  const turnstileSiteKey = getTurnstileSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-  const turnstileSecret = getTurnstileSecretKey(process.env.TURNSTILE_SECRET_KEY);
-  const captchaRequired = Boolean(turnstileSiteKey && turnstileSecret);
-
   return (
     <section className="of-login-v2-layout">
         <div className="of-login-v2-left">
@@ -35,10 +30,7 @@ export default function CadastroPage() {
           </div>
           <h2 className="of-login-v2-card-title">Criar Conta</h2>
           <p className="of-login-v2-card-subtitle">Ativação de trial gratuita por 14 dias</p>
-          <SignupForm
-            turnstileSiteKey={turnstileSiteKey}
-            captchaRequired={captchaRequired}
-          />
+          <SignupForm />
           <p className="mt-5 text-center text-sm text-[#8896b3]">
             Já tem conta?{" "}
             <Link href="/login" className="text-[#ff9445] hover:underline">

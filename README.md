@@ -23,7 +23,6 @@ ObrasFlow é um software SaaS (Software as a Service) desenvolvido em Next.js 16
 - **Cache/Queue:** Redis
 - **Autenticação:** Supabase Auth
 - **Pagamentos:** Stripe
-- **Segurança:** Cloudflare Turnstile (CAPTCHA)
 - **Email:** Resend
 - **TypeScript:** Modo strict
 
@@ -66,7 +65,6 @@ Preencha as variáveis obrigatórias no `.env.local`:
 
 Variáveis opcionais (para depois):
 - `STRIPE_*` (pagamentos)
-- `TURNSTILE_*` (CAPTCHA)
 - `RESEND_API_KEY` (email)
 
 ### 4. Rodar em desenvolvimento
@@ -128,7 +126,6 @@ types/             # TypeScript types
 ### Variáveis opcionais que liberam recursos depois
 
 - `STRIPE_*` para billing
-- `TURNSTILE_*` para captcha
 - `RESEND_API_KEY` para e-mails
 - `SIGNUP_EDGE_SHARED_SECRET` para o fluxo de cadastro
 

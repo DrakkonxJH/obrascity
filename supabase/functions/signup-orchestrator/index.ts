@@ -6,8 +6,6 @@ type SignupPayload = {
   email?: unknown;
   password?: unknown;
   confirmPassword?: unknown;
-  captchaToken?: unknown;
-  captchaEnabled?: unknown;
   acceptTerms?: unknown;
   ip?: unknown;
   userAgent?: unknown;
@@ -22,13 +20,6 @@ type SignupResponse = {
   refreshToken?: string;
   userId?: string;
   empresaId?: string;
-};
-
-type TurnstileResponse = {
-  success?: boolean;
-  hostname?: string;
-  action?: string;
-  "error-codes"?: string[];
 };
 
 const DISPOSABLE_DOMAINS = new Set([
@@ -92,8 +83,6 @@ function parsePayload(value: unknown): { ok: true; data: Required<SignupPayload>
   const email = String(payload.email ?? "").trim();
   const password = String(payload.password ?? "");
   const confirmPassword = String(payload.confirmPassword ?? "");
-  const captchaToken = String(payload.captchaToken ?? "").trim();
-  const captchaEnabled = payload.captchaEnabled === true || payload.captchaEnabled === "true";
   const acceptTerms = String(payload.acceptTerms ?? "");
   const ip = String(payload.ip ?? "").trim();
   const userAgent = String(payload.userAgent ?? "").trim();
@@ -140,8 +129,6 @@ function parsePayload(value: unknown): { ok: true; data: Required<SignupPayload>
       email,
       password,
       confirmPassword,
-      captchaToken,
-      captchaEnabled,
       acceptTerms,
       ip,
       userAgent,
@@ -158,87 +145,6 @@ async function sha256Hex(input: string) {
     .join("");
 }
 
-function normalizeHost(value: string | null | undefined) {
-  if (!value) return null;
-  return value.trim().toLowerCase();
-}
-
-function getAllowedHostnames(rawAllowed: string | undefined, appOrigin: string) {
-  const hostnames = new Set<string>();
-  const fromEnv = rawAllowed
-    ?.split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-
-  for (const hostname of fromEnv ?? []) {
-    hostnames.add(hostname);
-  }
-
-  hostnames.add(new URL(appOrigin).hostname.toLowerCase());
-  return hostnames;
-}
-
-async function verifyTurnstileToken(
-  token: string,
-  secret: string | undefined,
-  captchaEnabled: boolean,
-  remoteIp: string,
-  appOrigin: string,
-  rawAllowedHostnames: string | undefined,
-) {
-  if (!captchaEnabled || !secret) {
-    return { ok: true as const };
-  }
-
-  if (!token) {
-    return { ok: false as const, reason: "Captcha obrigatório." };
-  }
-
-  const body = new URLSearchParams({
-    secret,
-    response: token,
-    idempotency_key: crypto.randomUUID(),
-  });
-  if (remoteIp && remoteIp !== "unknown") {
-    body.set("remoteip", remoteIp);
-  }
-
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-
-  if (!response.ok) {
-    return { ok: false as const, reason: "Falha ao validar captcha." };
-  }
-
-  const data = (await response.json()) as TurnstileResponse;
-  if (!data.success) {
-    const codes = data["error-codes"]?.filter(Boolean) ?? [];
-    const codeLabel = codes.length > 0 ? ` (${codes.join(", ")})` : "";
-    return { ok: false as const, reason: `Captcha inválido.${codeLabel}` };
-  }
-
-  const expectedHostname = normalizeHost(new URL(appOrigin).hostname);
-  const hostname = normalizeHost(data.hostname);
-  const allowedHostnames = getAllowedHostnames(rawAllowedHostnames, appOrigin);
-
-  if (!hostname) {
-    return { ok: false as const, reason: "Captcha inválido (hostname ausente)." };
-  }
-
-  if (hostname !== expectedHostname) {
-    return { ok: false as const, reason: `Captcha inválido (hostname inesperado: ${hostname}).` };
-  }
-
-  if (!allowedHostnames.has(hostname)) {
-    return { ok: false as const, reason: `Captcha inválido (hostname não permitido: ${hostname}).` };
-  }
-
-  return { ok: true as const };
-}
-
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -251,8 +157,6 @@ Deno.serve(async (request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY");
-  const turnstileAllowedHostnames = Deno.env.get("TURNSTILE_ALLOWED_HOSTNAMES");
   const edgeSecret = Deno.env.get("SIGNUP_EDGE_SHARED_SECRET");
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
@@ -298,20 +202,6 @@ Deno.serve(async (request) => {
       metadata,
     });
   };
-
-  const captchaEnabled = payload.captchaEnabled === true || payload.captchaEnabled === "true";
-  const captcha = await verifyTurnstileToken(
-    payload.captchaToken,
-    turnstileSecret,
-    captchaEnabled,
-    payload.ip,
-    payload.appOrigin,
-    turnstileAllowedHostnames,
-  );
-  if (!captcha.ok) {
-    await logAttempt(false, captcha.reason);
-    return json(400, { ok: false, message: captcha.reason });
-  }
 
   const now = Date.now();
   const oneHourAgo = new Date(now - 60 * 60 * 1000).toISOString();
