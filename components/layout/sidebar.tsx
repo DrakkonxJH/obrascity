@@ -7,18 +7,31 @@ import { signOut } from "@/lib/auth/actions";
 import { useAppUi } from "@/components/shell/app-ui-provider";
 
 type NavItem = { href: string; label: string; icon: string; badge?: number };
+type NavSection = { title: string; items: NavItem[] };
 
-const navSections: Array<{ title: string; items: NavItem[] }> = [
-  {
-    title: "Principal",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: "📊" },
-      { href: "/obras", label: "Obras", icon: "🏗️" },
-      { href: "/cronograma", label: "Cronograma", icon: "📅" },
-    ],
-  },
-  {
-    title: "Gestão",
+function buildNavSections(canAccessControlTotal: boolean): NavSection[] {
+  const systemItems: NavItem[] = [
+    { href: "/planos", label: "Planos", icon: "⭐" },
+    { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
+    { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
+    { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
+  ];
+
+  if (canAccessControlTotal) {
+    systemItems.splice(1, 0, { href: "/contas", label: "Controle total", icon: "🧾" });
+  }
+
+  return [
+    {
+      title: "Principal",
+      items: [
+        { href: "/dashboard", label: "Dashboard", icon: "📊" },
+        { href: "/obras", label: "Obras", icon: "🏗️" },
+        { href: "/cronograma", label: "Cronograma", icon: "📅" },
+      ],
+    },
+    {
+      title: "Gestão",
       items: [
         { href: "/financeiro", label: "Financeiro", icon: "💰" },
         { href: "/equipes", label: "Equipes", icon: "👥" },
@@ -26,18 +39,13 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
         { href: "/qualidade", label: "Qualidade", icon: "🛡️" },
         { href: "/relatórios", label: "Relatórios", icon: "📋" },
       ],
-  },
-  {
-    title: "Sistema",
-    items: [
-      { href: "/planos", label: "Planos", icon: "⭐" },
-      { href: "/contas", label: "Contas", icon: "🧾" },
-      { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
-      { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
-      { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
-    ],
-  },
-];
+    },
+    {
+      title: "Sistema",
+      items: systemItems,
+    },
+  ];
+}
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -45,11 +53,13 @@ function isActive(pathname: string, href: string) {
 
 type SidebarProps = {
   summary: LayoutSummary;
+  canAccessControlTotal: boolean;
 };
 
-export function Sidebar({ summary }: SidebarProps) {
+export function Sidebar({ summary, canAccessControlTotal }: SidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, mobileSidebarOpen, toggleSidebar, closeMobileSidebar } = useAppUi();
+  const navSections = buildNavSections(canAccessControlTotal);
 
   const materiaisBadge = summary.materiaisCriticos > 0 ? summary.materiaisCriticos : undefined;
 

@@ -7,6 +7,7 @@ import { listNotificacoes } from "@/lib/db/notificacoes";
 import { listEquipes } from "@/lib/db/equipes";
 import { supportsObraTrash } from "@/lib/db/obras";
 import { mapDbNotifications } from "@/lib/demo/notifications-fallback";
+import { isControlTotalOwner } from "@/lib/auth/control-total";
 
 export default async function AppLayout({
   children,
@@ -21,6 +22,7 @@ export default async function AppLayout({
   if (!profile?.empresa_id) {
     redirect("/conta-pendente");
   }
+  const canAccessControlTotal = isControlTotalOwner(profile);
 
   const [summary, notificacoes, equipes, trashEnabled] = await Promise.all([
     getLayoutSummary(),
@@ -32,7 +34,13 @@ export default async function AppLayout({
   const notifications = mapDbNotifications(notificacoes);
 
   return (
-    <AppShell summary={summary} notifications={notifications} equipes={equipes} trashEnabled={trashEnabled}>
+    <AppShell
+      summary={summary}
+      notifications={notifications}
+      equipes={equipes}
+      trashEnabled={trashEnabled}
+      canAccessControlTotal={canAccessControlTotal}
+    >
       {children}
     </AppShell>
   );

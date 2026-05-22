@@ -16,14 +16,22 @@ type AppShellProps = {
   notifications: NotifDisplay[];
   equipes: EquipeItem[];
   trashEnabled: boolean;
+  canAccessControlTotal: boolean;
   children: ReactNode;
 };
 
-export function AppShell({ summary, notifications, equipes, trashEnabled, children }: AppShellProps) {
+export function AppShell({
+  summary,
+  notifications,
+  equipes,
+  trashEnabled,
+  canAccessControlTotal,
+  children,
+}: AppShellProps) {
   return (
     <AppUiProvider trashEnabled={trashEnabled}>
       <div className="of-app-shell">
-        <Sidebar summary={summary} />
+        <Sidebar summary={summary} canAccessControlTotal={canAccessControlTotal} />
         <div className="of-main-shell">
           <Topbar summary={summary} />
           <main className="of-main-content of-page-enter">{children}</main>
