@@ -21,6 +21,16 @@ export async function signUpAction(
     headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     headerStore.get("x-real-ip");
   const userAgent = headerStore.get("user-agent");
+  const forwardedProto = headerStore.get("x-forwarded-proto");
+  const hostHeader = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const normalizedHost = hostHeader?.split(",")[0]?.trim();
+  const normalizedProto = forwardedProto?.split(",")[0]?.trim();
+  const requestOrigin =
+    normalizedHost && normalizedProto && /^https?$/.test(normalizedProto)
+      ? `${normalizedProto}://${normalizedHost}`
+      : normalizedHost
+        ? `https://${normalizedHost}`
+        : null;
 
   const parsed = signupSchema.safeParse({
     nome: formData.get("nome"),
@@ -64,7 +74,7 @@ export async function signUpAction(
       acceptTerms,
       ip,
       userAgent,
-      appOrigin: getAppOrigin(),
+      appOrigin: requestOrigin ?? getAppOrigin(),
     });
 
     if (!edgeResult.ok) {

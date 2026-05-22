@@ -9,10 +9,13 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional().or(z.literal("")),
+  TURNSTILE_ALLOWED_HOSTNAMES: z.string().optional(),
   SIGNUP_EDGE_SHARED_SECRET: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   DATA_ENCRYPTION_KEY: z.string().min(1).optional(),
+  CONTROLE_TOTAL_OWNER_EMAIL: z.string().email().optional(),
+  CONTROLE_TOTAL_OWNER_PROFILE_ID: z.string().min(1).optional(),
 });
 
 export function getEnv() {

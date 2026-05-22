@@ -24,7 +24,11 @@ export function LoginForm({ nextPath = "/dashboard", turnstileSiteKey, captchaRe
   return (
     <>
       {captchaEnabled ? (
-        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+        <Script
+          id="cf-turnstile-api"
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="afterInteractive"
+        />
       ) : null}
 
       <form action={formAction} autoComplete="off" className="of-login-v2-form">

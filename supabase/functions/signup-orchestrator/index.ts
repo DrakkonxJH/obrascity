@@ -24,6 +24,13 @@ type SignupResponse = {
   empresaId?: string;
 };
 
+type TurnstileResponse = {
+  success?: boolean;
+  hostname?: string;
+  action?: string;
+  "error-codes"?: string[];
+};
+
 const DISPOSABLE_DOMAINS = new Set([
   "mailinator.com",
   "guerrillamail.com",
@@ -113,7 +120,15 @@ function parsePayload(value: unknown): { ok: true; data: Required<SignupPayload>
   if (acceptTerms !== "on") {
     return { ok: false, reason: "Aceite os termos para continuar." };
   }
-  if (!appOrigin || !/^https?:\/\//.test(appOrigin)) {
+  if (!appOrigin) {
+    return { ok: false, reason: "Origem da aplicação inválida." };
+  }
+  try {
+    const parsedOrigin = new URL(appOrigin);
+    if (!/^https?:$/.test(parsedOrigin.protocol) || !parsedOrigin.hostname) {
+      return { ok: false, reason: "Origem da aplicação inválida." };
+    }
+  } catch {
     return { ok: false, reason: "Origem da aplicação inválida." };
   }
 
@@ -143,7 +158,34 @@ async function sha256Hex(input: string) {
     .join("");
 }
 
-async function verifyTurnstileToken(token: string, secret: string | undefined, captchaEnabled: boolean) {
+function normalizeHost(value: string | null | undefined) {
+  if (!value) return null;
+  return value.trim().toLowerCase();
+}
+
+function getAllowedHostnames(rawAllowed: string | undefined, appOrigin: string) {
+  const hostnames = new Set<string>();
+  const fromEnv = rawAllowed
+    ?.split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+
+  for (const hostname of fromEnv ?? []) {
+    hostnames.add(hostname);
+  }
+
+  hostnames.add(new URL(appOrigin).hostname.toLowerCase());
+  return hostnames;
+}
+
+async function verifyTurnstileToken(
+  token: string,
+  secret: string | undefined,
+  captchaEnabled: boolean,
+  remoteIp: string,
+  appOrigin: string,
+  rawAllowedHostnames: string | undefined,
+) {
   if (!captchaEnabled || !secret) {
     return { ok: true as const };
   }
@@ -155,7 +197,11 @@ async function verifyTurnstileToken(token: string, secret: string | undefined, c
   const body = new URLSearchParams({
     secret,
     response: token,
+    idempotency_key: crypto.randomUUID(),
   });
+  if (remoteIp && remoteIp !== "unknown") {
+    body.set("remoteip", remoteIp);
+  }
 
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
@@ -167,9 +213,27 @@ async function verifyTurnstileToken(token: string, secret: string | undefined, c
     return { ok: false as const, reason: "Falha ao validar captcha." };
   }
 
-  const data = (await response.json()) as { success?: boolean };
+  const data = (await response.json()) as TurnstileResponse;
   if (!data.success) {
-    return { ok: false as const, reason: "Captcha inválido." };
+    const codes = data["error-codes"]?.filter(Boolean) ?? [];
+    const codeLabel = codes.length > 0 ? ` (${codes.join(", ")})` : "";
+    return { ok: false as const, reason: `Captcha inválido.${codeLabel}` };
+  }
+
+  const expectedHostname = normalizeHost(new URL(appOrigin).hostname);
+  const hostname = normalizeHost(data.hostname);
+  const allowedHostnames = getAllowedHostnames(rawAllowedHostnames, appOrigin);
+
+  if (!hostname) {
+    return { ok: false as const, reason: "Captcha inválido (hostname ausente)." };
+  }
+
+  if (hostname !== expectedHostname) {
+    return { ok: false as const, reason: `Captcha inválido (hostname inesperado: ${hostname}).` };
+  }
+
+  if (!allowedHostnames.has(hostname)) {
+    return { ok: false as const, reason: `Captcha inválido (hostname não permitido: ${hostname}).` };
   }
 
   return { ok: true as const };
@@ -188,6 +252,7 @@ Deno.serve(async (request) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY");
+  const turnstileAllowedHostnames = Deno.env.get("TURNSTILE_ALLOWED_HOSTNAMES");
   const edgeSecret = Deno.env.get("SIGNUP_EDGE_SHARED_SECRET");
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
@@ -235,7 +300,14 @@ Deno.serve(async (request) => {
   };
 
   const captchaEnabled = payload.captchaEnabled === true || payload.captchaEnabled === "true";
-  const captcha = await verifyTurnstileToken(payload.captchaToken, turnstileSecret, captchaEnabled);
+  const captcha = await verifyTurnstileToken(
+    payload.captchaToken,
+    turnstileSecret,
+    captchaEnabled,
+    payload.ip,
+    payload.appOrigin,
+    turnstileAllowedHostnames,
+  );
   if (!captcha.ok) {
     await logAttempt(false, captcha.reason);
     return json(400, { ok: false, message: captcha.reason });

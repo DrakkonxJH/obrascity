@@ -20,7 +20,9 @@ export async function signInAction(
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
   const nextPath = String(formData.get("next") ?? "/dashboard");
-  const captchaToken = String(formData.get("captchaToken") ?? "");
+  const captchaToken = String(
+    formData.get("captchaToken") ?? formData.get("cf-turnstile-response") ?? "",
+  );
 
   if (!email || !password) {
     return { ok: false, message: "Informe e-mail e senha." };
@@ -31,8 +33,14 @@ export async function signInAction(
     headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     headerStore.get("x-real-ip") ??
     "unknown";
+  const hostHeader = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const expectedHostname = hostHeader?.split(",")[0]?.trim().split(":")[0] ?? null;
 
-  const captchaValidation = await verifyTurnstileToken(captchaToken);
+  const captchaValidation = await verifyTurnstileToken({
+    token: captchaToken,
+    remoteIp: ip,
+    expectedHostname,
+  });
   if (!captchaValidation.ok) {
     await createSecurityAlert({
       category: "login",
