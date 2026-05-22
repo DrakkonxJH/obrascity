@@ -1,222 +1,434 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
-import { PROFILE_ROLE_LABEL, isProfileRole } from "@/lib/auth/roles";
-import { getAssinaturaAtual } from "@/lib/db/assinaturas";
-import { listMateriais } from "@/lib/db/materiais";
-import { listNotificacoes } from "@/lib/db/notificacoes";
-import { listObras } from "@/lib/db/obras";
-import { listEmpresaProfiles } from "@/lib/db/profiles";
-import { getProfileLimitByPlan } from "@/lib/billing/plans";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import {
+  listAllEmpresas,
+  listAllProfiles,
+  listRecentSecurityAlerts,
+  listRecentSignupAttempts,
+} from "@/lib/db/admin-contas";
+import {
+  suspenderEmpresaAction,
+  ativarEmpresaAction,
+  alterarPlanoAction,
+  removerPerfilAction,
+  resetarDadosEmpresaAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+const PLANOS = ["trial", "starter", "pro", "enterprise"];
+const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
-function toPercent(value: number, total: number) {
-  if (total <= 0) return 0;
-  return Math.min(100, Math.round((value / total) * 100));
+function fmtDate(d: string | null | undefined) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function getHealthLabel(usagePercent: number) {
-  if (usagePercent >= 90) return { text: "Crítico", color: "var(--of-red)" };
-  if (usagePercent >= 70) return { text: "Atenção", color: "var(--of-yellow)" };
-  return { text: "Saudável", color: "var(--of-green)" };
+function fmtDatetime(d: string | null | undefined) {
+  if (!d) return "Nunca";
+  return new Date(d).toLocaleString("pt-BR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("pt-BR");
+function hashShort(h: string | null | undefined) {
+  if (!h) return "—";
+  return h.slice(0, 8) + "…";
 }
 
-export default async function ContasPage() {
+function PlanoBadge({ plano }: { plano: string }) {
+  const colors: Record<string, string> = {
+    enterprise: "var(--of-purple)",
+    pro: "var(--of-blue)",
+    starter: "var(--of-green)",
+    trial: "var(--of-text-3)",
+  };
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "2px 8px",
+      borderRadius: 4,
+      fontSize: "0.72rem",
+      fontWeight: 600,
+      letterSpacing: "0.04em",
+      textTransform: "uppercase",
+      background: `${colors[plano] ?? "var(--of-text-3)"}22`,
+      color: colors[plano] ?? "var(--of-text-3)",
+      border: `1px solid ${colors[plano] ?? "var(--of-text-3)"}44`,
+    }}>
+      {plano}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const isActive = ACTIVE_STATUSES.has(status);
+  const color = status === "suspended" ? "var(--of-red)" : isActive ? "var(--of-green)" : "var(--of-yellow)";
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      fontSize: "0.75rem", color,
+    }}>
+      <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, display: "inline-block" }} />
+      {status}
+    </span>
+  );
+}
+
+function SeverityBadge({ severity }: { severity: string }) {
+  const color = severity === "high" ? "var(--of-red)" : "var(--of-yellow)";
+  return (
+    <span style={{
+      display: "inline-block", padding: "2px 7px", borderRadius: 4,
+      fontSize: "0.7rem", fontWeight: 600, textTransform: "uppercase",
+      background: `${color}22`, color, border: `1px solid ${color}44`,
+    }}>
+      {severity}
+    </span>
+  );
+}
+
+const TH_STYLE: React.CSSProperties = {
+  textAlign: "left", padding: "10px 8px",
+  fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.06em",
+  textTransform: "uppercase", color: "var(--of-text-3)",
+  borderBottom: "1px solid var(--of-border)",
+  whiteSpace: "nowrap",
+};
+const TD_STYLE: React.CSSProperties = {
+  padding: "10px 8px", borderBottom: "1px solid var(--of-border)",
+  fontSize: "0.85rem", color: "var(--of-text)",
+  verticalAlign: "middle",
+};
+const BTN_SM: React.CSSProperties = {
+  display: "inline-block", padding: "4px 10px", borderRadius: 6,
+  fontSize: "0.72rem", fontWeight: 600, cursor: "pointer",
+  border: "1px solid var(--of-border)", background: "transparent",
+  color: "var(--of-text-2)",
+};
+const BTN_SM_RED: React.CSSProperties = { ...BTN_SM, color: "var(--of-red)", borderColor: "var(--of-red)44" };
+const BTN_SM_GREEN: React.CSSProperties = { ...BTN_SM, color: "var(--of-green)", borderColor: "var(--of-green)44" };
+
+function TabLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link href={href} style={{
+      padding: "8px 18px", borderRadius: 6, fontSize: "0.85rem", fontWeight: 500,
+      background: active ? "var(--of-bg-4)" : "transparent",
+      color: active ? "var(--of-text)" : "var(--of-text-3)",
+      border: active ? "1px solid var(--of-border)" : "1px solid transparent",
+      transition: "all 0.15s",
+    }}>
+      {label}
+    </Link>
+  );
+}
+
+export default async function ContasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const profile = await getCurrentProfile();
-  if (!isControlTotalOwner(profile)) {
-    redirect("/dashboard");
-  }
+  if (!isControlTotalOwner(profile)) redirect("/dashboard");
 
-  const [assinatura, perfis, obras, materiais, notificacoes] = await Promise.all([
-    getAssinaturaAtual(),
-    listEmpresaProfiles(),
-    listObras(),
-    listMateriais(),
-    listNotificacoes(120),
+  const params = await searchParams;
+  const tab = params.tab ?? "empresas";
+
+  const [empresas, perfis, alertas, tentativas] = await Promise.all([
+    listAllEmpresas(),
+    listAllProfiles(),
+    listRecentSecurityAlerts(50),
+    listRecentSignupAttempts(30),
   ]);
 
-  const plan = assinatura?.plano ?? "trial";
-  const profileLimit = getProfileLimitByPlan(plan);
-  const profileUsagePercent = toPercent(perfis.length, profileLimit);
-  const materialAlerts = materiais.filter((item) => item.quantidade <= item.mínimo).length;
-
-  const estimatedMemoryMb = Math.round(
-    perfis.length * 2.2 + obras.length * 4 + materiais.length * 0.8 + notificacoes.length * 0.15,
-  );
-  const memoryLimitMb = plan === "enterprise" ? 2048 : plan === "pro" ? 1024 : 512;
-  const memoryUsagePercent = toPercent(estimatedMemoryMb, memoryLimitMb);
-
-  const profileHealth = getHealthLabel(profileUsagePercent);
-  const memoryHealth = getHealthLabel(memoryUsagePercent);
-  const subscriptionActive = ACTIVE_SUBSCRIPTION_STATUSES.has(String(assinatura?.status ?? ""));
+  const totalAtivos = empresas.filter((e) => ACTIVE_STATUSES.has(e.assinatura_status)).length;
+  const totalSuspensos = empresas.filter((e) => e.assinatura_status === "suspended").length;
+  const alertasHigh = alertas.filter((a) => a.severity === "high").length;
 
   return (
-    <section className="of-page" style={{ display: "grid", gap: 16 }}>
+    <section className="of-page" style={{ display: "grid", gap: 20 }}>
+      {/* Header */}
       <div className="of-inline-header">
         <div>
-          <h1 className="of-page-title">Gerenciamento de Contas</h1>
+          <h1 className="of-page-title">Controle Total</h1>
           <p className="of-page-description">
-            Assinaturas, usuários, consumo operacional e ações administrativas em um único painel.
+            Todas as empresas, usuários e acessos da plataforma em tempo real.
           </p>
         </div>
       </div>
 
-      <>
-        <div className="of-kpi-grid">
-          <article className="of-metric-card blue">
-            <p className="of-kpi-icon">👥</p>
-            <p className="of-kpi-label">Contas ativas</p>
-            <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>
-              {perfis.length}
-            </p>
-            <p className="of-metric-change">
-              {profileLimit} no plano atual · {profileUsagePercent}% utilizado
-            </p>
-          </article>
-          <article className="of-metric-card green">
-            <p className="of-kpi-icon">⭐</p>
-            <p className="of-kpi-label">Assinatura</p>
-            <p className="of-kpi-value" style={{ color: subscriptionActive ? "var(--of-green)" : "var(--of-red)" }}>
-              {subscriptionActive ? "Ativa" : "Atenção"}
-            </p>
-            <p className="of-metric-change">
-              Plano {plan.toUpperCase()} · Status {assinatura?.status ?? "trial"}
-            </p>
-          </article>
-          <article className="of-metric-card yellow">
-            <p className="of-kpi-icon">🧠</p>
-            <p className="of-kpi-label">Consumo de memória</p>
-            <p className="of-kpi-value" style={{ color: memoryHealth.color }}>
-              {memoryUsagePercent}%
-            </p>
-            <p className="of-metric-change">
-              {estimatedMemoryMb} MB de {memoryLimitMb} MB (estimado por carga de dados)
-            </p>
-          </article>
-          <article className="of-metric-card purple">
-            <p className="of-kpi-icon">🛟</p>
-            <p className="of-kpi-label">Funcionamento</p>
-            <p className="of-kpi-value" style={{ color: profileHealth.color }}>
-              {profileHealth.text}
-            </p>
-            <p className="of-metric-change">
-              {materialAlerts} alertas de estoque · {notificacoes.filter((n) => !n.lida).length} notificações não lidas
-            </p>
-          </article>
-        </div>
+      {/* KPIs */}
+      <div className="of-kpi-grid">
+        <article className="of-metric-card blue">
+          <p className="of-kpi-icon">🏢</p>
+          <p className="of-kpi-label">Empresas cadastradas</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{empresas.length}</p>
+          <p className="of-metric-change">{totalAtivos} ativas · {totalSuspensos} suspensas</p>
+        </article>
+        <article className="of-metric-card green">
+          <p className="of-kpi-icon">👥</p>
+          <p className="of-kpi-label">Total de usuários</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>{perfis.length}</p>
+          <p className="of-metric-change">em {empresas.length} empresas</p>
+        </article>
+        <article className="of-metric-card yellow">
+          <p className="of-kpi-icon">🔔</p>
+          <p className="of-kpi-label">Alertas de segurança</p>
+          <p className="of-kpi-value" style={{ color: alertasHigh > 0 ? "var(--of-red)" : "var(--of-yellow)" }}>
+            {alertas.length}
+          </p>
+          <p className="of-metric-change">{alertasHigh} críticos (high)</p>
+        </article>
+        <article className="of-metric-card purple">
+          <p className="of-kpi-icon">📋</p>
+          <p className="of-kpi-label">Tentativas de cadastro</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-purple)" }}>{tentativas.length}</p>
+          <p className="of-metric-change">
+            {tentativas.filter((t) => !t.success).length} falhas recentes
+          </p>
+        </article>
+      </div>
 
-        <div className="of-dashboard-grid">
-          <article className="of-card">
-            <div className="of-card-title">Controle de assinatura e cobrança</div>
-            <div className="of-list">
-              <div className="of-list-item">
-                <p className="of-list-title">Plano atual</p>
-                <p className="of-list-description">{plan.toUpperCase()}</p>
-              </div>
-              <div className="of-list-item">
-                <p className="of-list-title">Status da assinatura</p>
-                <p className="of-list-description">{assinatura?.status ?? "trial"}</p>
-              </div>
-              <div className="of-list-item">
-                <p className="of-list-title">Próximo vencimento</p>
-                <p className="of-list-description">
-                  {assinatura?.periodo_fim ? formatDate(assinatura.periodo_fim) : "Não informado"}
-                </p>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-              <Link href="/planos" className="of-btn-primary">
-                Administrar assinatura
-              </Link>
-              <Link href="/suporte" className="of-btn-ghost">
-                Solicitar reset financeiro
-              </Link>
-            </div>
-          </article>
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <TabLink href="/contas?tab=empresas" label="🏢 Empresas" active={tab === "empresas"} />
+        <TabLink href="/contas?tab=usuarios" label="👥 Usuários" active={tab === "usuarios"} />
+        <TabLink href="/contas?tab=seguranca" label="🔒 Segurança" active={tab === "seguranca"} />
+      </div>
 
-          <article className="of-card">
-            <div className="of-card-title">Estado operacional</div>
-            <ul className="of-activity-list">
-              <li className="of-activity-item">
-                <span className="of-activity-dot" style={{ background: subscriptionActive ? "var(--of-green)" : "var(--of-red)" }} />
-                <div>
-                  <p className="of-activity-title">Assinatura {subscriptionActive ? "válida" : "requer atenção"}</p>
-                  <p className="of-activity-description">status: {assinatura?.status ?? "trial"}</p>
-                </div>
-              </li>
-              <li className="of-activity-item">
-                <span className="of-activity-dot" style={{ background: profileHealth.color }} />
-                <div>
-                  <p className="of-activity-title">Uso de contas: {profileHealth.text}</p>
-                  <p className="of-activity-description">
-                    {perfis.length}/{profileLimit} contas cadastradas
-                  </p>
-                </div>
-              </li>
-              <li className="of-activity-item">
-                <span className="of-activity-dot" style={{ background: memoryHealth.color }} />
-                <div>
-                  <p className="of-activity-title">Memória operacional: {memoryHealth.text}</p>
-                  <p className="of-activity-description">
-                    {estimatedMemoryMb} MB estimados de {memoryLimitMb} MB
-                  </p>
-                </div>
-              </li>
-            </ul>
-          </article>
-        </div>
-
+      {/* ── TAB: EMPRESAS ── */}
+      {tab === "empresas" && (
         <article className="of-card">
-          <div className="of-card-title">Usuários da empresa</div>
+          <div className="of-card-title" style={{ marginBottom: 16 }}>
+            Empresas ({empresas.length})
+          </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--of-border)" }}>
-                  <th style={{ textAlign: "left", padding: "10px 6px" }}>Nome</th>
-                  <th style={{ textAlign: "left", padding: "10px 6px" }}>E-mail</th>
-                  <th style={{ textAlign: "left", padding: "10px 6px" }}>Papel</th>
-                  <th style={{ textAlign: "left", padding: "10px 6px" }}>Entrada</th>
+                <tr>
+                  <th style={TH_STYLE}>Empresa</th>
+                  <th style={TH_STYLE}>Plano</th>
+                  <th style={TH_STYLE}>Status</th>
+                  <th style={TH_STYLE}>Usuários</th>
+                  <th style={TH_STYLE}>Vencimento</th>
+                  <th style={TH_STYLE}>Criado em</th>
+                  <th style={{ ...TH_STYLE, minWidth: 320 }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {perfis.map((item) => (
-                  <tr key={item.id} style={{ borderBottom: "1px solid var(--of-border)" }}>
-                    <td style={{ padding: "10px 6px" }}>{item.nome}</td>
-                    <td style={{ padding: "10px 6px" }}>{item.email}</td>
-                    <td style={{ padding: "10px 6px" }}>
-                      {isProfileRole(item.role) ? PROFILE_ROLE_LABEL[item.role] : "Visualizador"}
-                    </td>
-                    <td style={{ padding: "10px 6px" }}>{formatDate(item.created_at)}</td>
-                  </tr>
-                ))}
-                {perfis.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} style={{ padding: "12px 6px", color: "var(--of-text-2)" }}>
-                      Nenhum usuário cadastrado.
-                    </td>
-                  </tr>
-                ) : null}
+                {empresas.map((emp) => {
+                  const suspendAction = suspenderEmpresaAction.bind(null, emp.id);
+                  const ativarAction = ativarEmpresaAction.bind(null, emp.id);
+                  const changePlanAction = alterarPlanoAction.bind(null, emp.id);
+                  const resetAction = resetarDadosEmpresaAction.bind(null, emp.id);
+                  const isSuspended = emp.assinatura_status === "suspended";
+                  return (
+                    <tr key={emp.id}>
+                      <td style={TD_STYLE}>
+                        <span style={{ fontWeight: 500 }}>{emp.nome}</span>
+                      </td>
+                      <td style={TD_STYLE}><PlanoBadge plano={emp.plano} /></td>
+                      <td style={TD_STYLE}><StatusBadge status={emp.assinatura_status} /></td>
+                      <td style={{ ...TD_STYLE, textAlign: "center" }}>{emp.profile_count}</td>
+                      <td style={TD_STYLE}>{fmtDate(emp.periodo_fim)}</td>
+                      <td style={TD_STYLE}>{fmtDate(emp.created_at)}</td>
+                      <td style={TD_STYLE}>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                          {/* Suspender / Ativar */}
+                          {isSuspended ? (
+                            <form action={ativarAction}>
+                              <button type="submit" style={BTN_SM_GREEN}>Ativar</button>
+                            </form>
+                          ) : (
+                            <form action={suspendAction}>
+                              <button type="submit" style={BTN_SM_RED}>Suspender</button>
+                            </form>
+                          )}
+
+                          {/* Alterar plano */}
+                          <form action={changePlanAction} style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <select
+                              name="plano"
+                              defaultValue={emp.plano}
+                              style={{
+                                background: "var(--of-bg-3)",
+                                border: "1px solid var(--of-border)",
+                                borderRadius: 5,
+                                color: "var(--of-text)",
+                                padding: "3px 6px",
+                                fontSize: "0.72rem",
+                              }}
+                            >
+                              {PLANOS.map((p) => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                            <button type="submit" style={BTN_SM}>Salvar plano</button>
+                          </form>
+
+                          {/* Reset dados */}
+                          <form action={resetAction}>
+                            <button type="submit" style={{ ...BTN_SM_RED, opacity: 0.7 }}>Reset dados</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {empresas.length === 0 && (
+                  <tr><td colSpan={7} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhuma empresa encontrada.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-            <Link href="/configuracoes" className="of-btn-ghost">
-              Gerenciar perfis e permissões
-            </Link>
-            <Link href="/suporte" className="of-btn-red">
-              Solicitar reset de conta
-            </Link>
+        </article>
+      )}
+
+      {/* ── TAB: USUÁRIOS ── */}
+      {tab === "usuarios" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 16 }}>
+            Todos os usuários ({perfis.length})
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={TH_STYLE}>Nome</th>
+                  <th style={TH_STYLE}>E-mail</th>
+                  <th style={TH_STYLE}>Empresa</th>
+                  <th style={TH_STYLE}>Papel</th>
+                  <th style={TH_STYLE}>Último acesso</th>
+                  <th style={TH_STYLE}>Cadastro</th>
+                  <th style={TH_STYLE}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perfis.map((p) => {
+                  const removeAction = removerPerfilAction.bind(null, p.id);
+                  return (
+                    <tr key={p.id}>
+                      <td style={TD_STYLE}><span style={{ fontWeight: 500 }}>{p.nome}</span></td>
+                      <td style={{ ...TD_STYLE, color: "var(--of-text-2)", fontSize: "0.8rem" }}>{p.email}</td>
+                      <td style={TD_STYLE}>{p.empresa_nome}</td>
+                      <td style={TD_STYLE}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--of-text-2)" }}>{p.role}</span>
+                        {p.cargo && <span style={{ fontSize: "0.7rem", color: "var(--of-text-3)", display: "block" }}>{p.cargo}</span>}
+                      </td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem", color: p.last_sign_in_at ? "var(--of-text)" : "var(--of-text-3)" }}>
+                        {fmtDatetime(p.last_sign_in_at)}
+                      </td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDate(p.created_at)}</td>
+                      <td style={TD_STYLE}>
+                        <form action={removeAction}>
+                          <button type="submit" style={BTN_SM_RED}>Remover</button>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {perfis.length === 0 && (
+                  <tr><td colSpan={7} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum usuário encontrado.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </article>
-      </>
+      )}
+
+      {/* ── TAB: SEGURANÇA ── */}
+      {tab === "seguranca" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          {/* Alertas */}
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 16 }}>
+              Alertas de segurança recentes ({alertas.length})
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Categoria</th>
+                    <th style={TH_STYLE}>Severidade</th>
+                    <th style={TH_STYLE}>Razão</th>
+                    <th style={TH_STYLE}>E-mail</th>
+                    <th style={TH_STYLE}>IP (hash)</th>
+                    <th style={TH_STYLE}>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alertas.map((a) => (
+                    <tr key={a.id}>
+                      <td style={TD_STYLE}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", color: "var(--of-text-2)" }}>
+                          {a.category}
+                        </span>
+                      </td>
+                      <td style={TD_STYLE}><SeverityBadge severity={a.severity} /></td>
+                      <td style={{ ...TD_STYLE, maxWidth: 260, fontSize: "0.8rem" }}>{a.reason}</td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem", color: "var(--of-text-2)" }}>{a.email ?? "—"}</td>
+                      <td style={{ ...TD_STYLE, fontFamily: "monospace", fontSize: "0.75rem", color: "var(--of-text-3)" }}>
+                        {hashShort(a.ip_hash)}
+                      </td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDatetime(a.created_at)}</td>
+                    </tr>
+                  ))}
+                  {alertas.length === 0 && (
+                    <tr><td colSpan={6} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum alerta registrado.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          {/* Tentativas de cadastro */}
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 16 }}>
+              Tentativas de cadastro recentes ({tentativas.length})
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>E-mail</th>
+                    <th style={TH_STYLE}>Resultado</th>
+                    <th style={TH_STYLE}>Motivo da falha</th>
+                    <th style={TH_STYLE}>IP (hash)</th>
+                    <th style={TH_STYLE}>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tentativas.map((t) => (
+                    <tr key={t.id}>
+                      <td style={{ ...TD_STYLE, fontSize: "0.82rem" }}>{t.email ?? "—"}</td>
+                      <td style={TD_STYLE}>
+                        <span style={{
+                          fontSize: "0.72rem", fontWeight: 600, padding: "2px 8px", borderRadius: 4,
+                          background: t.success ? "var(--of-green)22" : "var(--of-red)22",
+                          color: t.success ? "var(--of-green)" : "var(--of-red)",
+                        }}>
+                          {t.success ? "Sucesso" : "Falha"}
+                        </span>
+                      </td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem", color: "var(--of-text-2)" }}>
+                        {t.failure_reason ?? "—"}
+                      </td>
+                      <td style={{ ...TD_STYLE, fontFamily: "monospace", fontSize: "0.75rem", color: "var(--of-text-3)" }}>
+                        {hashShort(t.ip_hash)}
+                      </td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDatetime(t.created_at)}</td>
+                    </tr>
+                  ))}
+                  {tentativas.length === 0 && (
+                    <tr><td colSpan={5} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhuma tentativa registrada.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      )}
     </section>
   );
 }
