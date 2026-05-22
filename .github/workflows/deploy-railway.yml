@@ -1,4 +1,4 @@
-name: Deploy to Netlify
+name: Deploy to Railway
 
 on:
   push:
@@ -22,9 +22,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Deploy to Railway
+        run: |
+          npm install -g @railway/cli
+          railway deploy --token ${{ secrets.RAILWAY_TOKEN }}
         env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -40,9 +43,3 @@ jobs:
           DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
           CONTROLE_TOTAL_OWNER_EMAIL: ${{ secrets.CONTROLE_TOTAL_OWNER_EMAIL }}
           CONTROLE_TOTAL_OWNER_PROFILE_ID: ${{ secrets.CONTROLE_TOTAL_OWNER_PROFILE_ID }}
-
-      - name: Deploy to Netlify
-        run: npx netlify-cli deploy --prod --dir=.next
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
