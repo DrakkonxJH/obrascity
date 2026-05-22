@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Script from "next/script";
 
 type TurnstileFieldProps = {
   siteKey: string;
@@ -27,6 +26,8 @@ declare global {
   }
 }
 
+const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
 export function TurnstileField({ siteKey }: TurnstileFieldProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
@@ -34,6 +35,34 @@ export function TurnstileField({ siteKey }: TurnstileFieldProps) {
   const [scriptReady, setScriptReady] = useState(
     () => typeof window !== "undefined" && Boolean(window.turnstile),
   );
+
+  useEffect(() => {
+    if (window.turnstile) {
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>('script[data-turnstile-loader="true"]');
+    const handleLoad = () => setScriptReady(true);
+
+    if (existingScript) {
+      existingScript.addEventListener("load", handleLoad);
+      return () => {
+        existingScript.removeEventListener("load", handleLoad);
+      };
+    }
+
+    const script = document.createElement("script");
+    script.src = TURNSTILE_SRC;
+    script.async = true;
+    script.defer = true;
+    script.dataset.turnstileLoader = "true";
+    script.addEventListener("load", handleLoad);
+    document.head.appendChild(script);
+
+    return () => {
+      script.removeEventListener("load", handleLoad);
+    };
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -59,17 +88,9 @@ export function TurnstileField({ siteKey }: TurnstileFieldProps) {
   }, [scriptReady, siteKey]);
 
   return (
-    <>
-      <Script
-        id="cf-turnstile-api"
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-        strategy="afterInteractive"
-        onLoad={() => setScriptReady(true)}
-      />
-      <div style={{ marginBottom: 18, minHeight: 70 }}>
-        <div ref={containerRef} />
-        <input type="hidden" name="captchaToken" value={token} readOnly />
-      </div>
-    </>
+    <div style={{ marginBottom: 18, minHeight: 70 }}>
+      <div ref={containerRef} />
+      <input type="hidden" name="captchaToken" value={token} readOnly />
+    </div>
   );
 }
