@@ -9,6 +9,8 @@ import { supportsObraTrash } from "@/lib/db/obras";
 import { mapDbNotifications } from "@/lib/demo/notifications-fallback";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

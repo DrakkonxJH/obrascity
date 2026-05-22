@@ -6,6 +6,8 @@ import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { listEquipes } from "@/lib/db/equipes";
 import { isProfileRole } from "@/lib/auth/roles";
 
+export const dynamic = "force-dynamic";
+
 export default async function ConfiguracoesPage() {
   const [profile, privacyRequests, companyProfiles, equipes] = await Promise.all([
     getCurrentProfile(),
