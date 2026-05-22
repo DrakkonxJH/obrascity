@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { SignupForm } from "./signup-form";
+import { getTurnstileSecretKey, getTurnstileSiteKey } from "@/lib/security/turnstile-config";
 
 export default function CadastroPage() {
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null;
-  const captchaRequired = Boolean(turnstileSiteKey && process.env.TURNSTILE_SECRET_KEY);
+  const turnstileSiteKey = getTurnstileSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const turnstileSecret = getTurnstileSecretKey(process.env.TURNSTILE_SECRET_KEY);
+  const captchaRequired = Boolean(turnstileSiteKey && turnstileSecret);
 
   return (
     <section className="of-login-v2-layout">

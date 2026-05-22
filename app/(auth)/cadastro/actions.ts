@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
 import { getAppOrigin, getEnv } from "@/lib/validations/env";
 import { invokeSignupEdgeFunction } from "@/lib/auth/signup-edge-client";
+import { getTurnstileSecretKey, getTurnstileSiteKey } from "@/lib/security/turnstile-config";
 
 export type SignupActionState = {
   ok: boolean;
@@ -58,8 +59,10 @@ export async function signUpAction(
     acceptTerms,
   } = parsed.data;
   const env = getEnv();
+  const turnstileSiteKey = getTurnstileSiteKey(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const turnstileSecret = getTurnstileSecretKey(env.TURNSTILE_SECRET_KEY);
   const captchaEnabled = Boolean(
-    env.TURNSTILE_SECRET_KEY?.trim() && env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim(),
+    turnstileSecret && turnstileSiteKey,
   );
 
   try {

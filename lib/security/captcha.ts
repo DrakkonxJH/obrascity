@@ -1,4 +1,5 @@
 import { getEnv } from "@/lib/validations/env";
+import { getTurnstileSecretKey, getTurnstileSiteKey } from "@/lib/security/turnstile-config";
 
 type TurnstileResponse = {
   success: boolean;
@@ -45,8 +46,8 @@ export async function verifyTurnstileToken({
   expectedAction,
 }: VerifyTurnstileTokenInput) {
   const env = getEnv();
-  const secret = env.TURNSTILE_SECRET_KEY?.trim();
-  const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+  const secret = getTurnstileSecretKey(env.TURNSTILE_SECRET_KEY);
+  const siteKey = getTurnstileSiteKey(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const normalizedIp = remoteIp?.trim();
   const normalizedExpectedHostname = normalizeHost(expectedHostname);
   const allowedHostnames = getAllowedHostnames(env.TURNSTILE_ALLOWED_HOSTNAMES, env.NEXT_PUBLIC_APP_URL);
