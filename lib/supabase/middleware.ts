@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [
   "/landing.html",
   "/login",
   "/cadastro",
+  "/recuperar-senha",
+  "/redefinir-senha",
   "/como-funciona",
   "/privacidade",
   "/termos",

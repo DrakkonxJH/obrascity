@@ -60,7 +60,7 @@ export function LoginForm({ nextPath = "/dashboard", turnstileSiteKey, captchaRe
             <input type="checkbox" name="remember" />
             <span>Manter sessão ativa</span>
           </label>
-          <Link href="/cadastro" className="of-login-v2-forgot">
+          <Link href="/recuperar-senha" className="of-login-v2-forgot">
             Esqueci a senha
           </Link>
         </div>
