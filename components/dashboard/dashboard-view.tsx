@@ -1,0 +1,226 @@
+"use client";
+
+import Link from "next/link";
+import type { Obra } from "@/types/domain";
+
+const statusVisual: Record<string, { color: string; label: string; meta: string }> = {
+  planejamento: { color: "var(--of-blue)", label: "Planejamento", meta: "Em preparação" },
+  andamento: { color: "var(--of-green)", label: "Em andamento", meta: "No prazo" },
+  atencao: { color: "var(--of-yellow)", label: "Atenção", meta: "Atraso identificado" },
+  concluida: { color: "var(--of-purple)", label: "Concluída", meta: "Entrega finalizada" },
+};
+
+const activityColors = ["var(--of-green)", "var(--of-yellow)", "var(--of-blue)", "var(--of-purple)", "var(--of-green)"];
+
+const activityTimes = ["há 2 horas", "há 4 horas", "ontem, 15:30", "ontem, 10:15", "2 dias atrás"];
+
+type DashboardViewProps = {
+  resumo: { total: number; andamento: number; concluidas: number };
+  membrosCount: number;
+  obras: Obra[];
+  totalOrcado: number;
+  totalRealizado: number;
+  mediaProgresso: number;
+};
+
+const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+export function DashboardView({
+  resumo,
+  membrosCount,
+  obras,
+  totalOrcado,
+  totalRealizado,
+  mediaProgresso,
+}: DashboardViewProps) {
+  const obrasOrdenadas = [...obras].sort((a, b) => b.progresso - a.progresso);
+  const consumoPct = totalOrcado > 0 ? Math.round((totalRealizado / totalOrcado) * 100) : 0;
+
+  const alertas = [
+    ...obras
+      .filter((o) => o.status === "atencao")
+      .slice(0, 2)
+      .map((obra) => ({
+        titulo: `${obra.nome} com atraso`,
+        descricao: `Cliente ${obra.cliente} · progresso ${obra.progresso}%.`,
+        tipo: "danger" as const,
+        icon: "🚨",
+        href: "/obras",
+      })),
+    {
+      titulo: "Estoque crítico de materiais",
+      descricao: "Revise níveis mínimos e pedidos pendentes.",
+      tipo: "warn" as const,
+      icon: "⚠️",
+      href: "/materiais",
+    },
+    {
+      titulo: "Orçamento em monitoramento",
+      descricao: `${consumoPct}% do orçamento total consumido.`,
+      tipo: consumoPct >= 85 ? "warn" : "info",
+      icon: "💸",
+      href: "/financeiro",
+    },
+    {
+      titulo: "Relatório semanal pendente",
+      descricao: "Gere o relatório consolidado das equipes.",
+      tipo: "info" as const,
+      icon: "📋",
+      href: "/equipes",
+    },
+  ].slice(0, 4);
+
+  return (
+    <section className="of-page">
+      <div className="of-kpi-grid">
+        <article className="of-metric-card blue">
+          <p className="of-kpi-icon">🏗️</p>
+          <p className="of-kpi-label">Obras Ativas</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>
+            {resumo.total}
+          </p>
+          <p className="of-metric-change up">↑ visão consolidada</p>
+        </article>
+        <article className="of-metric-card yellow">
+          <p className="of-kpi-icon">⏳</p>
+          <p className="of-kpi-label">Em Andamento</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>
+            {resumo.andamento}
+          </p>
+          <p className="of-metric-change">{resumo.andamento} no prazo</p>
+        </article>
+        <article className="of-metric-card green">
+          <p className="of-kpi-icon">👷</p>
+          <p className="of-kpi-label">Profissionais</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>
+            {membrosCount}
+          </p>
+          <p className="of-metric-change up">↑ ativos</p>
+        </article>
+        <article className="of-metric-card purple">
+          <p className="of-kpi-icon">✅</p>
+          <p className="of-kpi-label">Concluídas</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-purple)" }}>
+            {resumo.concluidas}
+          </p>
+          <p className="of-metric-change up">↑ este ciclo</p>
+        </article>
+      </div>
+
+      <div className="of-dashboard-grid">
+        <article className="of-card">
+          <div className="of-card-title">
+            Progresso das Obras <span>atualizado agora</span>
+          </div>
+          {obrasOrdenadas.slice(0, 5).map((obra) => {
+            const visual = statusVisual[obra.status] ?? statusVisual.planejamento;
+            return (
+              <div key={obra.id} className="of-progress-item">
+                <div className="of-progress-header">
+                  <span className="of-progress-name">{obra.nome}</span>
+                  <span className="of-progress-pct of-mono">{obra.progresso}%</span>
+                </div>
+                <div className="of-progress-bar">
+                  <div
+                    className="of-progress-fill"
+                    style={{ width: `${obra.progresso}%`, background: visual.color }}
+                  />
+                </div>
+                <p className="of-progress-meta">
+                  Cliente: {obra.cliente} · <span style={{ color: visual.color }}>{visual.meta}</span>
+                </p>
+              </div>
+            );
+          })}
+        </article>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <article className="of-card">
+            <div className="of-card-title">Alertas Ativos</div>
+            <div className="of-alert-list">
+              {alertas.map((alerta) => (
+                <Link key={alerta.titulo} href={alerta.href} className={`of-alert-item ${alerta.tipo}`}>
+                  <p className="of-alert-title">
+                    <span className="of-alert-icon">{alerta.icon}</span>
+                    {alerta.titulo}
+                  </p>
+                  <p className="of-alert-description">{alerta.descricao}</p>
+                </Link>
+              ))}
+            </div>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title">Atividade Recente</div>
+            <ul className="of-activity-list">
+              {obras.slice(0, 5).map((obra, index) => (
+                <li key={obra.id} className="of-activity-item">
+                  <span className="of-activity-dot" style={{ background: activityColors[index % activityColors.length] }} />
+                  <div>
+                    <p className="of-activity-title">{obra.nome}</p>
+                    <p className="of-activity-description of-mono">
+                      {statusVisual[obra.status]?.label ?? "Status"} · {activityTimes[index] ?? "atualizado hoje"}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <div className="of-dash-grid-3">
+        <article className="of-card of-mini-kpi-card">
+          <div className="of-card-title">Orçamento Total</div>
+          <p className="of-mini-value">{money.format(totalOrcado)}</p>
+          <p className="of-mini-sub">across {obras.length} obras ativas</p>
+          <svg className="of-mini-chart" viewBox="0 0 200 60" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="gradOrcamento" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--of-blue)" />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+            </defs>
+            <polyline
+              points="0,50 25,40 50,42 75,28 100,30 125,18 150,20 175,12 200,8"
+              fill="none"
+              stroke="var(--of-blue)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <polygon
+              points="0,50 25,40 50,42 75,28 100,30 125,18 150,20 175,12 200,8 200,60 0,60"
+              fill="url(#gradOrcamento)"
+              opacity="0.2"
+            />
+          </svg>
+        </article>
+        <article className="of-card of-mini-kpi-card">
+          <div className="of-card-title">Gasto Acumulado</div>
+          <p className="of-mini-value" style={{ color: "var(--of-yellow)" }}>
+            {money.format(totalRealizado)}
+          </p>
+          <p className="of-mini-sub">{consumoPct}% do orçamento total</p>
+          <div className="of-progress-bar" style={{ marginTop: 14 }}>
+            <div className="of-progress-fill" style={{ width: `${consumoPct}%`, background: "var(--of-yellow)" }} />
+          </div>
+        </article>
+        <article className="of-card of-mini-kpi-card">
+          <div className="of-card-title">Média de Progresso</div>
+          <p className="of-mini-value" style={{ color: "var(--of-green)" }}>
+            {mediaProgresso}%
+          </p>
+          <p className="of-mini-sub">obras em execução</p>
+          <svg className="of-mini-chart" viewBox="0 0 200 60" preserveAspectRatio="none">
+            <polyline
+              points="0,55 25,48 50,44 75,36 100,32 125,25 150,22 175,18 200,15"
+              fill="none"
+              stroke="var(--of-green)"
+              strokeWidth="2"
+            />
+          </svg>
+        </article>
+      </div>
+    </section>
+  );
+}

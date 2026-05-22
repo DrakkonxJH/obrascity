@@ -1,0 +1,132 @@
+.legalFooter {
+  background: var(--of-bg);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 60px 0 32px;
+}
+
+.footerContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.footerGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+
+.navLogo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.navLogoMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff6b1a, #cc5200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  box-shadow: 0 4px 16px rgba(255, 107, 26, 0.4);
+}
+
+.navLogoText {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--of-text);
+  letter-spacing: 0.5px;
+}
+
+.navLogoText em {
+  color: #ff6b1a;
+  font-style: normal;
+}
+
+.footerBrandDesc {
+  font-size: 0.85rem;
+  color: var(--of-text-2);
+  line-height: 1.7;
+  margin-top: 14px;
+  max-width: 240px;
+}
+
+.footerColTitle {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--of-text);
+  margin-bottom: 16px;
+}
+
+.footerLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footerLink {
+  font-size: 0.83rem;
+  color: var(--of-text-2);
+  transition: color 0.2s;
+}
+
+.footerLink:hover {
+  color: #ff6b1a;
+}
+
+.footerBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 0.78rem;
+  color: var(--of-text-2);
+}
+
+.footerBadges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--of-text-2);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6rem;
+}
+
+@media (max-width: 1024px) {
+  .footerGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .footerContainer {
+    padding: 0 20px;
+  }
+
+  .footerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .footerBottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
