@@ -1,5 +1,12 @@
 export type PlanId = "trial" | "starter" | "pro" | "enterprise";
 
+export const PLAN_PROFILE_LIMIT: Record<PlanId, number> = {
+  trial: 10,
+  starter: 10,
+  pro: 30,
+  enterprise: 80,
+};
+
 export type PlanFeature =
   | "dashboard"
   | "obras_basic"
@@ -105,4 +112,10 @@ export function assertSubscriptionFeature(
       message ?? "Recurso disponivel em planos superiores. Faca upgrade para continuar.",
     );
   }
+}
+
+export function getProfileLimitByPlan(plan: string | null | undefined): number {
+  if (!plan) return PLAN_PROFILE_LIMIT.trial;
+  const normalized = String(plan).trim().toLowerCase() as PlanId;
+  return PLAN_PROFILE_LIMIT[normalized] ?? PLAN_PROFILE_LIMIT.trial;
 }

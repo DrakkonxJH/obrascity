@@ -31,6 +31,7 @@ const navSections: Array<{ title: string; items: NavItem[] }> = [
     title: "Sistema",
     items: [
       { href: "/planos", label: "Planos", icon: "⭐" },
+      { href: "/contas", label: "Contas", icon: "🧾" },
       { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
       { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
       { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
