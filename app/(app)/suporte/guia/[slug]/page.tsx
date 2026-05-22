@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getGuiaBySlug, listGuias } from "../data";
+import { getGuiaBySlug } from "../data";
 
 type GuiaDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -9,9 +9,7 @@ type GuiaDetailPageProps = {
 
 type Hotspot = { x: number; y: number; label: string };
 
-export async function generateStaticParams() {
-  return listGuias().map((guia) => ({ slug: guia.slug }));
-}
+export const dynamic = "force-dynamic";
 
 function nivelLabel(nivel: "inicial" | "intermediario" | "avancado") {
   if (nivel === "inicial") return "Inicial";
