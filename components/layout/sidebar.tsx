@@ -30,6 +30,7 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
           { href: "/contas?tab=seguranca", label: "Segurança", icon: "🔒" },
           { href: "/contas?tab=auditoria", label: "Auditoria", icon: "🧾" },
           { href: "/contas?tab=runbooks", label: "Runbooks", icon: "📚" },
+          { href: "/contas?tab=terminal", label: "Terminal TI", icon: "🖥️" },
         ],
       },
     ];

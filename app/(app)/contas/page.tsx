@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { OpsTerminal } from "@/components/master/ops-terminal";
 import {
   listAllEmpresas,
   listAllProfiles,
@@ -230,6 +231,7 @@ export default async function ContasPage({
         <TabLink href="/contas?tab=suporte" label="🆘 Suporte" active={tab === "suporte"} />
         <TabLink href="/contas?tab=auditoria" label="🧾 Auditoria" active={tab === "auditoria"} />
         <TabLink href="/contas?tab=runbooks" label="📚 Runbooks" active={tab === "runbooks"} />
+        <TabLink href="/contas?tab=terminal" label="🖥️ Terminal TI" active={tab === "terminal"} />
         <TabLink href="/contas?tab=seguranca" label="🔒 Segurança" active={tab === "seguranca"} />
       </div>
 
@@ -724,6 +726,16 @@ export default async function ContasPage({
               <p className="of-list-description">Avaliar impacto, executar reset controlado por empresa e registrar auditoria.</p>
             </li>
           </ul>
+        </article>
+      )}
+
+      {tab === "terminal" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Terminal de Operações (MASTER)</div>
+          <p className="of-page-description" style={{ marginBottom: 12 }}>
+            Execução real de comandos de suporte TI com auditoria.
+          </p>
+          <OpsTerminal />
         </article>
       )}
 
