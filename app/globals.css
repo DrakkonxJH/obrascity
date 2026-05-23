@@ -966,6 +966,97 @@ a {
   .of-dash-grid-3 {
     grid-template-columns: 1fr;
   }
+
+  .of-page {
+    gap: 14px;
+  }
+
+  .of-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .of-card-title {
+    margin-bottom: 12px;
+    font-size: 0.78rem;
+  }
+
+  .of-topbar-title {
+    font-size: 1rem;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .of-kpi-value {
+    font-size: 1.8rem;
+  }
+
+  .of-dashboard-grid {
+    gap: 12px;
+  }
+
+  .of-progress-name {
+    font-size: 0.88rem;
+  }
+
+  .of-progress-meta {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .of-alert-item {
+    padding: 10px 12px;
+  }
+
+  .of-alert-title {
+    font-size: 0.84rem;
+  }
+
+  .of-alert-description {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .of-activity-title {
+    font-size: 0.8rem;
+  }
+
+  .of-mini-value {
+    font-size: 1.7rem;
+  }
+
+  .of-table-wrap {
+    overflow-x: auto;
+  }
+
+  .of-table {
+    min-width: 640px;
+  }
+}
+
+@media (max-width: 480px) {
+  .of-main-content {
+    padding: 12px;
+  }
+
+  .of-topbar {
+    padding: 0 10px;
+  }
+
+  .of-topbar-title {
+    font-size: 0.92rem;
+    max-width: 62vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .of-metric-card {
+    padding: 14px;
+  }
+
+  .of-kpi-value {
+    font-size: 1.55rem;
+  }
 }
 
 /* Module parity with demo layout */
