@@ -267,7 +267,7 @@ Pendências:
 - [ ] Plano de rollback testado.
 - [ ] Janela de go-live com monitoramento ativo nas primeiras 2h.
 - [ ] Ambiente de homologação com paridade mínima de produção.
-- [ ] Procedimento de rollback de banco (quando aplicável) explicitado.
+- [x] Procedimento de rollback de banco (quando aplicável) explicitado.
 
 Smoke test mínimo:
 1. Home e login respondem.
@@ -332,6 +332,8 @@ Smoke test mínimo:
 - Runbook operacional de incidente publicado no `DEPLOYMENT_SETUP.md` (worker + Stripe webhook).
 - Smoke do webhook Stripe implementado com assinatura válida (`npm run stripe:webhook-smoke`) e retorno 2xx.
 - Monitoramento automático publicado em `.github/workflows/ops-monitor.yml` (health, ops health e métricas de fila a cada 10 min).
+- Validação de SLO operacional automatizada (`npm run ops:slo-check`) com limiares de falha/fila.
+- Procedimento de rollback web + banco explicitado no `DEPLOYMENT_SETUP.md`.
 
 ---
 

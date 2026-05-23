@@ -91,3 +91,32 @@ Arquivos de processo:
 2. Confirmar endpoint ativo: `https://obrasflow.vercel.app/api/webhooks/stripe`
 3. Revisar eventos e tentativas no dashboard Stripe
 4. Reprocessar eventos pendentes após correção
+
+## Rollback (web + banco) — procedimento operacional
+
+### Rollback da aplicação web (Vercel)
+
+1. Listar deploys recentes no painel da Vercel (projeto `obrasflow`).
+2. Selecionar último deployment estável.
+3. Promover deployment estável para Production (alias `obrasflow.vercel.app`).
+4. Rodar smoke imediato:
+   - `/api/health`
+   - `/api/health/ops`
+   - `/login`
+   - `/planos`
+
+### Rollback de variáveis críticas
+
+1. Reverter `STRIPE_WEBHOOK_SECRET` e `STRIPE_PRICE_*_IDS` para o conjunto anterior se o erro for de billing.
+2. Reverter `RESEND_API_KEY`/`RESEND_FROM_EMAIL` se falha for de envio.
+3. Fazer novo deploy após ajuste de variável.
+
+### Rollback de banco (Supabase)
+
+1. Confirmar backup disponível antes de restore.
+2. Restaurar backup em homologação primeiro e validar:
+   - login
+   - leitura/escrita em módulos críticos
+   - assinatura/plano da empresa
+3. Aplicar restore em produção somente após validação.
+4. Reconciliar eventos Stripe pendentes após restore para evitar divergência.

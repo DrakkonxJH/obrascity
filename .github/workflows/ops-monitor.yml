@@ -10,6 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Check app health
         run: |
           curl -fsS "https://obrasflow.vercel.app/api/health" >/tmp/health.json
@@ -24,3 +33,8 @@ jobs:
         run: |
           curl -fsS "https://obrasflow.vercel.app/api/queue/metrics" >/tmp/queue.json
           cat /tmp/queue.json
+
+      - name: Enforce SLO thresholds
+        env:
+          NEXT_PUBLIC_APP_URL: https://obrasflow.vercel.app
+        run: npm run ops:slo-check
