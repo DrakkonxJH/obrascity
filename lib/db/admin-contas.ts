@@ -71,27 +71,47 @@ export type MasterAuditLog = {
   created_at: string;
 };
 
+type AssinaturaRow = {
+  empresa_id: string;
+  id: string;
+  plano: string;
+  status: string;
+  periodo_fim: string | null;
+  created_at: string;
+};
+
+function pickCurrentSubscription(rows: AssinaturaRow[]) {
+  const activeRows = rows.filter((row) => ["active", "trialing"].includes(String(row.status).toLowerCase()));
+  const source = activeRows.length > 0 ? activeRows : rows;
+  return source[0] ?? null;
+}
+
 export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   const admin = createAdminClient();
 
   const [empresasRes, assinaturasRes, profilesRes] = await Promise.all([
     admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }),
-    admin.from("assinaturas").select("empresa_id, id, plano, status, periodo_fim").order("created_at", { ascending: false }),
+    admin
+      .from("assinaturas")
+      .select("empresa_id, id, plano, status, periodo_fim, created_at")
+      .order("created_at", { ascending: false }),
     admin.from("profiles").select("empresa_id"),
   ]);
 
   if (empresasRes.error) throw new Error(empresasRes.error.message);
 
-  const assinMap = new Map<string, { id: string; plano: string; status: string; periodo_fim: string | null }>();
+  const assinMap = new Map<string, AssinaturaRow[]>();
   for (const a of assinaturasRes.data ?? []) {
-    if (!assinMap.has(a.empresa_id)) {
-      assinMap.set(a.empresa_id, {
-        id: a.id,
-        plano: a.plano,
-        status: a.status,
-        periodo_fim: a.periodo_fim ?? null,
-      });
-    }
+    const list = assinMap.get(a.empresa_id) ?? [];
+    list.push({
+      empresa_id: a.empresa_id,
+      id: a.id,
+      plano: a.plano,
+      status: a.status,
+      periodo_fim: a.periodo_fim ?? null,
+      created_at: a.created_at ?? "",
+    });
+    assinMap.set(a.empresa_id, list);
   }
 
   const profileCountMap = new Map<string, number>();
@@ -99,16 +119,19 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
     profileCountMap.set(p.empresa_id, (profileCountMap.get(p.empresa_id) ?? 0) + 1);
   }
 
-  return (empresasRes.data ?? []).map((e) => ({
-    id: e.id,
-    nome: e.nome,
-    created_at: e.created_at,
-    plano: assinMap.get(e.id)?.plano ?? "trial",
-    assinatura_status: assinMap.get(e.id)?.status ?? "trial",
-    assinatura_id: assinMap.get(e.id)?.id ?? null,
-    periodo_fim: assinMap.get(e.id)?.periodo_fim ?? null,
-    profile_count: profileCountMap.get(e.id) ?? 0,
-  }));
+  return (empresasRes.data ?? []).map((e) => {
+    const assinatura = pickCurrentSubscription(assinMap.get(e.id) ?? []);
+    return {
+      id: e.id,
+      nome: e.nome,
+      created_at: e.created_at,
+      plano: assinatura?.plano ?? "trial",
+      assinatura_status: assinatura?.status ?? "trial",
+      assinatura_id: assinatura?.id ?? null,
+      periodo_fim: assinatura?.periodo_fim ?? null,
+      profile_count: profileCountMap.get(e.id) ?? 0,
+    };
+  });
 }
 
 export async function listAllProfiles(): Promise<AdminProfile[]> {

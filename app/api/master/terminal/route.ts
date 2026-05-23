@@ -20,6 +20,19 @@ function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleString("pt-BR");
 }
 
+type SubscriptionRow = {
+  empresa_id: string;
+  plano: string;
+  status: string;
+  created_at: string;
+};
+
+function pickCurrentSubscription(rows: SubscriptionRow[]) {
+  const activeRows = rows.filter((row) => ["active", "trialing"].includes(String(row.status).toLowerCase()));
+  const source = activeRows.length > 0 ? activeRows : rows;
+  return source[0] ?? null;
+}
+
 async function buildQueueStatus() {
   const queues = getManagedQueues();
   const stats = await Promise.all(
@@ -151,18 +164,21 @@ async function executeCommand(rawCommand: string): Promise<CommandResult> {
     const limit = parseLimit(args[0], 10, 100);
     const [empresasRes, assinaturasRes, profilesRes] = await Promise.all([
       admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }).limit(limit),
-      admin.from("assinaturas").select("empresa_id, plano, status").order("created_at", { ascending: false }),
+      admin
+        .from("assinaturas")
+        .select("empresa_id, plano, status, created_at")
+        .order("created_at", { ascending: false }),
       admin.from("profiles").select("empresa_id"),
     ]);
     if (empresasRes.error) throw new Error(empresasRes.error.message);
     if (assinaturasRes.error) throw new Error(assinaturasRes.error.message);
     if (profilesRes.error) throw new Error(profilesRes.error.message);
 
-    const assMap = new Map<string, { plano: string; status: string }>();
+    const assMap = new Map<string, SubscriptionRow[]>();
     for (const item of assinaturasRes.data ?? []) {
-      if (!assMap.has(item.empresa_id)) {
-        assMap.set(item.empresa_id, { plano: item.plano, status: item.status });
-      }
+      const list = assMap.get(item.empresa_id) ?? [];
+      list.push(item as SubscriptionRow);
+      assMap.set(item.empresa_id, list);
     }
     const profileCountMap = new Map<string, number>();
     for (const item of profilesRes.data ?? []) {
@@ -173,7 +189,7 @@ async function executeCommand(rawCommand: string): Promise<CommandResult> {
       ok: true,
       output: (empresasRes.data ?? [])
         .map((item) => {
-          const assinatura = assMap.get(item.id);
+          const assinatura = pickCurrentSubscription(assMap.get(item.id) ?? []);
           return `${item.nome} | plano=${assinatura?.plano ?? "trial"} | status=${assinatura?.status ?? "trial"} | usuarios=${
             profileCountMap.get(item.id) ?? 0
           } | criado=${formatDate(item.created_at)}`;
