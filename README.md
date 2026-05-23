@@ -127,7 +127,8 @@ types/             # TypeScript types
 
 - `STRIPE_*` para billing
 - `RESEND_API_KEY` para e-mails
-- `SIGNUP_EDGE_SHARED_SECRET` para o fluxo de cadastro
+- `RESEND_FROM_EMAIL` para o remetente das confirmações
+- `SIGNUP_EDGE_SHARED_SECRET` para o fluxo antigo de cadastro
 
 **Importante:** Use chaves de produção do Stripe (`sk_live_*`) para produção.
 

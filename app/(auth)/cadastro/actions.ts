@@ -1,10 +1,16 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
 import { getAppOrigin } from "@/lib/validations/env";
-import { invokeSignupEdgeFunction } from "@/lib/auth/signup-edge-client";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { assertSignupRateLimits, emailAlreadyRegistered } from "@/lib/security/signup-guard";
+import {
+  deleteSignupVerificationByEmail,
+  findPendingSignupVerification,
+  issueSignupVerification,
+} from "@/lib/auth/signup-verification";
+import { createSecurityAlert } from "@/lib/security/security-alerts";
 
 export type SignupActionState = {
   ok: boolean;
@@ -52,52 +58,111 @@ export async function signUpAction(
     empresaNome,
     email,
     password,
-    confirmPassword,
-    acceptTerms,
   } = parsed.data;
 
-  try {
-    const edgeResult = await invokeSignupEdgeFunction({
-      nome,
-      empresaNome,
-      email,
-      password,
-      confirmPassword,
-      acceptTerms,
-      ip,
-      userAgent,
-      appOrigin: requestOrigin ?? getAppOrigin(),
-    });
+  let createdUserId: string | null = null;
+  const admin = createAdminClient();
 
-    if (!edgeResult.ok) {
-      return { ok: false, message: edgeResult.message };
+  try {
+    await assertSignupRateLimits({ email, ip: ip ?? null });
+
+    if (await emailAlreadyRegistered(email)) {
+      return {
+        ok: false,
+        message: "Este e-mail já possui cadastro. Faça login.",
+      };
     }
 
-    if (edgeResult.accessToken && edgeResult.refreshToken) {
-      const supabase = await createServerClient();
-      const { error } = await supabase.auth.setSession({
-        access_token: edgeResult.accessToken,
-        refresh_token: edgeResult.refreshToken,
+    const appOrigin = requestOrigin ?? getAppOrigin();
+    const existingPending = await findPendingSignupVerification(email);
+
+    if (existingPending) {
+      if (!existingPending.user_id) {
+        throw new Error("Cadastro pendente incompleto. Solicite um novo link.");
+      }
+
+      await issueSignupVerification({
+        email,
+        nome,
+        empresaNome,
+        userId: existingPending.user_id,
+        appOrigin,
       });
 
-      if (error) {
-        return {
-          ok: true,
-          message: "Conta criada com sucesso. Entre com e-mail e senha para acessar o sistema.",
-          needsEmailConfirmation: edgeResult.needsEmailConfirmation,
-          needsLogin: true,
-        };
-      }
+      return {
+        ok: true,
+        message:
+          "Enviamos novamente o link único de confirmação para seu e-mail. Ele expira em 30 minutos.",
+        needsEmailConfirmation: true,
+        needsLogin: true,
+      };
     }
+
+    const { data: createdUser, error: createUserError } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: false,
+      user_metadata: {
+        nome,
+        empresa_nome: empresaNome,
+      },
+    });
+
+    if (createUserError || !createdUser.user?.id) {
+      throw new Error(createUserError?.message ?? "Não foi possível criar o usuário.");
+    }
+
+    createdUserId = createdUser.user.id;
+
+    await issueSignupVerification({
+      email,
+      nome,
+      empresaNome,
+      userId: createdUserId,
+      appOrigin,
+    });
 
     return {
       ok: true,
-      needsEmailConfirmation: edgeResult.needsEmailConfirmation,
-      needsLogin: Boolean(edgeResult.needsEmailConfirmation),
-      message: edgeResult.message,
+      needsEmailConfirmation: true,
+      needsLogin: true,
+      message: `Conta criada! Enviamos um link único para seu e-mail. Ele expira em 30 minutos.`,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao criar conta";
+    if (createdUserId) {
+      const cleanupResults = await Promise.allSettled([
+        deleteSignupVerificationByEmail(email),
+        admin.auth.admin.deleteUser(createdUserId),
+      ]);
+      const cleanupErrors = cleanupResults
+        .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+        .map((result) => (result.reason instanceof Error ? result.reason.message : String(result.reason)));
+
+      if (cleanupErrors.length > 0) {
+        await createSecurityAlert({
+          category: "signup",
+          severity: "medium",
+          reason: "signup_cleanup_error",
+          email,
+          ip: ip ?? null,
+          metadata: {
+            cleanupErrors,
+          },
+        });
+      }
+    }
+    await createSecurityAlert({
+      category: "signup",
+      severity: "medium",
+      reason: "signup_flow_error",
+      email,
+      ip: ip ?? null,
+      metadata: {
+        error: message,
+        userAgent,
+      },
+    });
     return { ok: false, message };
   }
 }

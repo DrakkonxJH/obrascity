@@ -16,7 +16,7 @@ export default function CadastroPage() {
             CONTROLE
           </h1>
           <p className="of-login-v2-subtitle">
-            Cadastro rápido para equipes de engenharia e construtoras. 14 dias grátis para validar sua operação na
+            Cadastro rápido com link único de confirmação por e-mail. 14 dias grátis para validar sua operação na
             prática.
           </p>
         </div>
