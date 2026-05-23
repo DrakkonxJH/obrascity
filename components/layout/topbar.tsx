@@ -17,6 +17,7 @@ const pageMeta: Record<string, { title: string; icon: string }> = {
   "/planos": { title: "Planos", icon: "⭐" },
   "/portal": { title: "Portal do Cliente", icon: "🌐" },
   "/configuracoes": { title: "Configurações", icon: "⚙️" },
+  "/contas": { title: "Gerenciamento de Contas", icon: "🏢" },
 };
 
 function getPageMeta(pathname: string) {
@@ -30,9 +31,10 @@ function getPageMeta(pathname: string) {
 
 type TopbarProps = {
   summary: LayoutSummary;
+  adminManagementOnly: boolean;
 };
 
-export function Topbar({ summary }: TopbarProps) {
+export function Topbar({ summary, adminManagementOnly }: TopbarProps) {
   const pathname = usePathname();
   const meta = getPageMeta(pathname);
   const { toggleNotif, toggleMobileSidebar, openNovaObra, notifOpen } = useAppUi();
@@ -60,9 +62,11 @@ export function Topbar({ summary }: TopbarProps) {
           🔔
           {count > 0 ? <span className="of-btn-notif-count">{count}</span> : null}
         </button>
-        <button type="button" className="of-btn-primary" onClick={openNovaObra}>
-          + Nova Obra
-        </button>
+        {!adminManagementOnly ? (
+          <button type="button" className="of-btn-primary" onClick={openNovaObra}>
+            + Nova Obra
+          </button>
+        ) : null}
       </div>
     </header>
   );

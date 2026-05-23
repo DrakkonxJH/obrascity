@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import type { LayoutSummary } from "@/lib/db/layout-summary";
 import type { EquipeItem } from "@/lib/db/equipes";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -17,6 +19,7 @@ type AppShellProps = {
   equipes: EquipeItem[];
   trashEnabled: boolean;
   canAccessControlTotal: boolean;
+  adminManagementOnly: boolean;
   children: ReactNode;
 };
 
@@ -26,20 +29,36 @@ export function AppShell({
   equipes,
   trashEnabled,
   canAccessControlTotal,
+  adminManagementOnly,
   children,
 }: AppShellProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (adminManagementOnly && !pathname.startsWith("/contas")) {
+      router.replace("/contas");
+    }
+  }, [adminManagementOnly, pathname, router]);
+
+  const blockedByAdminView = adminManagementOnly && !pathname.startsWith("/contas");
+
   return (
     <AppUiProvider trashEnabled={trashEnabled}>
       <div className="of-app-shell">
-        <Sidebar summary={summary} canAccessControlTotal={canAccessControlTotal} />
+        <Sidebar
+          summary={summary}
+          canAccessControlTotal={canAccessControlTotal}
+          adminManagementOnly={adminManagementOnly}
+        />
         <div className="of-main-shell">
-          <Topbar summary={summary} />
-          <main className="of-main-content of-page-enter">{children}</main>
+          <Topbar summary={summary} adminManagementOnly={adminManagementOnly} />
+          <main className="of-main-content of-page-enter">{blockedByAdminView ? null : children}</main>
         </div>
       </div>
       <NotificationPanel items={notifications} />
-      <NovaObraModal />
-      <AddMemberModal equipes={equipes} />
+      {!adminManagementOnly ? <NovaObraModal /> : null}
+      {!adminManagementOnly ? <AddMemberModal equipes={equipes} /> : null}
       <DetailPanel />
     </AppUiProvider>
   );

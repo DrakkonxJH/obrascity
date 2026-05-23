@@ -13,7 +13,7 @@ export const PROFILE_ROLE_LABEL: Record<ProfileRole, string> = {
   gestor: "Gestor",
   engenheiro: "Engenheiro",
   tecnico: "Tecnico",
-  visualizador: "Visualizador",
+  visualizador: "Usuario",
 };
 
 export function isProfileRole(value: string): value is ProfileRole {

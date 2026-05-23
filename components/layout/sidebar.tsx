@@ -9,7 +9,16 @@ import { useAppUi } from "@/components/shell/app-ui-provider";
 type NavItem = { href: string; label: string; icon: string; badge?: number };
 type NavSection = { title: string; items: NavItem[] };
 
-function buildNavSections(canAccessControlTotal: boolean): NavSection[] {
+function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: boolean): NavSection[] {
+  if (adminManagementOnly) {
+    return [
+      {
+        title: "Administracao",
+        items: [{ href: "/contas", label: "Gerenciamento de Contas", icon: "🏢" }],
+      },
+    ];
+  }
+
   const sections: NavSection[] = [
     {
       title: "Principal",
@@ -60,12 +69,13 @@ function isActive(pathname: string, href: string) {
 type SidebarProps = {
   summary: LayoutSummary;
   canAccessControlTotal: boolean;
+  adminManagementOnly: boolean;
 };
 
-export function Sidebar({ summary, canAccessControlTotal }: SidebarProps) {
+export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }: SidebarProps) {
   const pathname = usePathname();
   const { sidebarCollapsed, mobileSidebarOpen, toggleSidebar, closeMobileSidebar } = useAppUi();
-  const navSections = buildNavSections(canAccessControlTotal);
+  const navSections = buildNavSections(canAccessControlTotal, adminManagementOnly);
 
   const materiaisBadge = summary.materiaisCriticos > 0 ? summary.materiaisCriticos : undefined;
 

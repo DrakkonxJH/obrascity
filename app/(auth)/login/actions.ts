@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { normalizeEmail } from "@/lib/security/signup-guard";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
+import { isControlTotalOwner } from "@/lib/auth/control-total";
 
 export type LoginActionState = {
   ok: boolean;
@@ -70,17 +71,19 @@ export async function signInAction(
     return { ok: false, message: error.message };
   }
 
+  let profileRole = "";
   const userId = data.user?.id;
   if (userId) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
+      .select("id, email, role")
       .eq("id", userId)
       .maybeSingle();
 
     if (profileError) {
       throw new Error(`Erro ao validar perfil apos login: ${profileError.message}`);
     }
+    profileRole = String(profile?.role ?? "");
 
     if (profile?.role === "administrador" && (data.user?.factors?.length ?? 0) === 0) {
       await createSecurityAlert({
@@ -93,6 +96,15 @@ export async function signInAction(
     }
   }
 
-  const safeNext = nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard";
+  const isAdminOwner = isControlTotalOwner({
+    id: data.user?.id,
+    email: data.user?.email ?? null,
+    role: profileRole,
+  });
+  const safeNext = isAdminOwner
+    ? "/contas"
+    : nextPath.startsWith("/") && !nextPath.startsWith("//")
+      ? nextPath
+      : "/dashboard";
   redirect(safeNext);
 }

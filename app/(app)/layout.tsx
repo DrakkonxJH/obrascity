@@ -25,6 +25,7 @@ export default async function AppLayout({
     redirect("/conta-pendente");
   }
   const canAccessControlTotal = isControlTotalOwner(profile);
+  const adminManagementOnly = canAccessControlTotal;
 
   const [summary, notificacoes, equipes, trashEnabled] = await Promise.all([
     getLayoutSummary(),
@@ -42,6 +43,7 @@ export default async function AppLayout({
       equipes={equipes}
       trashEnabled={trashEnabled}
       canAccessControlTotal={canAccessControlTotal}
+      adminManagementOnly={adminManagementOnly}
     >
       {children}
     </AppShell>

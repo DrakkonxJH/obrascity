@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { isProfileRole, PROFILE_ROLE_LABEL } from "@/lib/auth/roles";
 
 export type LayoutSummary = {
   userName: string;
@@ -61,9 +62,11 @@ export async function getLayoutSummary(): Promise<LayoutSummary> {
     (profile?.nome as string | null) ??
     user.email?.split("@")[0] ??
     "Administrador";
+  const profileRole = String(profile?.role ?? "");
+  const roleLabel = isProfileRole(profileRole) ? PROFILE_ROLE_LABEL[profileRole] : profileRole;
   const userRole =
     (profile?.cargo as string | null) ??
-    (profile?.role as string | null) ??
+    roleLabel ??
     "Administrador";
 
   const materiaisCriticos = (materiaisResult.data ?? []).filter((item: Record<string, unknown>) => {
