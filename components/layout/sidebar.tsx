@@ -13,8 +13,21 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
   if (adminManagementOnly) {
     return [
       {
-        title: "Administracao",
-        items: [{ href: "/contas", label: "Gerenciamento de Contas", icon: "🏢" }],
+        title: "SaaS",
+        items: [
+          { href: "/contas?tab=empresas", label: "Clientes (Empresas)", icon: "🏢" },
+          { href: "/contas?tab=usuarios", label: "Usuários da Plataforma", icon: "👥" },
+          { href: "/contas?tab=faturamento", label: "Faturamento e Planos", icon: "💳" },
+        ],
+      },
+      {
+        title: "Operacao",
+        items: [
+          { href: "/contas?tab=operacao", label: "Operação e SLO", icon: "📈" },
+          { href: "/contas?tab=integracoes", label: "Integrações", icon: "🔌" },
+          { href: "/contas?tab=deploy", label: "Deploy e Domínio", icon: "🚀" },
+          { href: "/contas?tab=seguranca", label: "Segurança", icon: "🔒" },
+        ],
       },
     ];
   }

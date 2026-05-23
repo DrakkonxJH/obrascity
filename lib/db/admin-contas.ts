@@ -107,17 +107,20 @@ export async function listAllProfiles(): Promise<AdminProfile[]> {
     authMap.set(u.id, u.last_sign_in_at ?? null);
   }
 
-  return (profilesRes.data ?? []).map((p) => ({
+  return (profilesRes.data ?? []).map((p) => {
+    const isMaster = String(p.role ?? "").toLowerCase() === "master";
+    return {
     id: p.id,
     nome: p.nome,
     email: p.email,
     role: p.role,
     cargo: p.cargo ?? null,
     empresa_id: p.empresa_id,
-    empresa_nome: empresaMap.get(p.empresa_id) ?? "—",
+    empresa_nome: isMaster ? "Plataforma ObrasFlow" : empresaMap.get(p.empresa_id) ?? "—",
     created_at: p.created_at,
     last_sign_in_at: authMap.get(p.id) ?? null,
-  }));
+    };
+  });
 }
 
 export async function listRecentSecurityAlerts(limit = 50): Promise<AdminSecurityAlert[]> {

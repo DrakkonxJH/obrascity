@@ -20,6 +20,12 @@ export const dynamic = "force-dynamic";
 
 const PLANOS = ["trial", "starter", "pro", "enterprise"];
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+const PLANO_MRR: Record<string, number> = {
+  trial: 0,
+  starter: 79,
+  pro: 229,
+  enterprise: 799,
+};
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
@@ -147,6 +153,18 @@ export default async function ContasPage({
   const totalAtivos = empresas.filter((e) => ACTIVE_STATUSES.has(e.assinatura_status)).length;
   const totalSuspensos = empresas.filter((e) => e.assinatura_status === "suspended").length;
   const alertasHigh = alertas.filter((a) => a.severity === "high").length;
+  const empresasTrial = empresas.filter((e) => e.assinatura_status === "trialing").length;
+  const empresasPagantes = empresas.filter((e) => e.assinatura_status === "active").length;
+  const mrrEstimado = empresas.reduce((acc, e) => acc + (PLANO_MRR[e.plano] ?? 0), 0);
+  const setup = {
+    stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
+    resend: Boolean(process.env.RESEND_API_KEY),
+    supabase: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    redis: Boolean(process.env.REDIS_URL),
+    turnstile: Boolean(process.env.TURNSTILE_SECRET_KEY),
+  };
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://obrasflow.vercel.app";
+  const vercelDomain = "https://obrasflow.vercel.app";
 
   return (
     <section className="of-page" style={{ display: "grid", gap: 20 }}>
@@ -196,6 +214,10 @@ export default async function ContasPage({
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <TabLink href="/contas?tab=empresas" label="🏢 Empresas" active={tab === "empresas"} />
         <TabLink href="/contas?tab=usuarios" label="👥 Usuários" active={tab === "usuarios"} />
+        <TabLink href="/contas?tab=faturamento" label="💳 Faturamento" active={tab === "faturamento"} />
+        <TabLink href="/contas?tab=operacao" label="📈 Operação" active={tab === "operacao"} />
+        <TabLink href="/contas?tab=integracoes" label="🔌 Integrações" active={tab === "integracoes"} />
+        <TabLink href="/contas?tab=deploy" label="🚀 Deploy" active={tab === "deploy"} />
         <TabLink href="/contas?tab=seguranca" label="🔒 Segurança" active={tab === "seguranca"} />
       </div>
 
@@ -334,6 +356,154 @@ export default async function ContasPage({
               </tbody>
             </table>
           </div>
+        </article>
+      )}
+
+      {tab === "faturamento" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <div className="of-kpi-grid">
+            <article className="of-metric-card green">
+              <p className="of-kpi-icon">💰</p>
+              <p className="of-kpi-label">MRR estimado</p>
+              <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>
+                R$ {mrrEstimado.toLocaleString("pt-BR")}
+              </p>
+              <p className="of-metric-change">baseado no plano atual de cada empresa</p>
+            </article>
+            <article className="of-metric-card blue">
+              <p className="of-kpi-icon">✅</p>
+              <p className="of-kpi-label">Clientes pagantes</p>
+              <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{empresasPagantes}</p>
+              <p className="of-metric-change">assinaturas ativas</p>
+            </article>
+            <article className="of-metric-card yellow">
+              <p className="of-kpi-icon">🧪</p>
+              <p className="of-kpi-label">Clientes em trial</p>
+              <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{empresasTrial}</p>
+              <p className="of-metric-change">potencial de conversão</p>
+            </article>
+          </div>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 16 }}>Carteira por plano</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Plano</th>
+                    <th style={TH_STYLE}>Empresas</th>
+                    <th style={TH_STYLE}>MRR unitário</th>
+                    <th style={TH_STYLE}>MRR total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {PLANOS.map((plano) => {
+                    const total = empresas.filter((e) => e.plano === plano).length;
+                    return (
+                      <tr key={plano}>
+                        <td style={TD_STYLE}><PlanoBadge plano={plano} /></td>
+                        <td style={TD_STYLE}>{total}</td>
+                        <td style={TD_STYLE}>R$ {(PLANO_MRR[plano] ?? 0).toLocaleString("pt-BR")}</td>
+                        <td style={TD_STYLE}>R$ {((PLANO_MRR[plano] ?? 0) * total).toLocaleString("pt-BR")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      )}
+
+      {tab === "operacao" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 10 }}>Operação e SLO</div>
+            <p className="of-page-description" style={{ marginBottom: 12 }}>
+              Monitoramento de saúde da plataforma e capacidade operacional.
+            </p>
+            <ul className="of-list">
+              <li className="of-list-item">
+                <p className="of-list-title">Healthcheck da API</p>
+                <p className="of-list-description">
+                  Endpoint: <a href="/api/health" style={{ color: "var(--of-blue)" }}>/api/health</a>
+                </p>
+              </li>
+              <li className="of-list-item">
+                <p className="of-list-title">Métricas de fila</p>
+                <p className="of-list-description">
+                  Endpoint: <a href="/api/queue/metrics" style={{ color: "var(--of-blue)" }}>/api/queue/metrics</a>
+                </p>
+              </li>
+              <li className="of-list-item">
+                <p className="of-list-title">Ops e worker</p>
+                <p className="of-list-description">
+                  Endpoint: <a href="/api/health/ops" style={{ color: "var(--of-blue)" }}>/api/health/ops</a>
+                </p>
+              </li>
+            </ul>
+          </article>
+        </div>
+      )}
+
+      {tab === "integracoes" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Integrações críticas SaaS</div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={TH_STYLE}>Serviço</th>
+                  <th style={TH_STYLE}>Status</th>
+                  <th style={TH_STYLE}>Uso principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["Supabase", setup.supabase, "Banco, autenticação e storage"],
+                  ["Stripe", setup.stripe, "Assinaturas e cobrança recorrente"],
+                  ["Resend", setup.resend, "E-mails transacionais"],
+                  ["Redis", setup.redis, "Fila, rate limit e cache operacional"],
+                  ["Turnstile", setup.turnstile, "Anti-bot em login/cadastro"],
+                ].map(([name, enabled, purpose]) => (
+                  <tr key={String(name)}>
+                    <td style={TD_STYLE}>{name}</td>
+                    <td style={TD_STYLE}>
+                      <span style={{ color: enabled ? "var(--of-green)" : "var(--of-red)", fontWeight: 600 }}>
+                        {enabled ? "Configurado" : "Pendente"}
+                      </span>
+                    </td>
+                    <td style={TD_STYLE}>{purpose}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {tab === "deploy" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Deploy, domínio e operação web</div>
+          <ul className="of-list">
+            <li className="of-list-item">
+              <p className="of-list-title">Domínio primário</p>
+              <p className="of-list-description">
+                <a href={vercelDomain} style={{ color: "var(--of-blue)" }}>{vercelDomain}</a>
+              </p>
+            </li>
+            <li className="of-list-item">
+              <p className="of-list-title">URL pública da aplicação</p>
+              <p className="of-list-description">
+                <a href={appUrl} style={{ color: "var(--of-blue)" }}>{appUrl}</a>
+              </p>
+            </li>
+            <li className="of-list-item">
+              <p className="of-list-title">Guia operacional</p>
+              <p className="of-list-description">
+                Consulte `DEPLOYMENT_SETUP.md` para rollback, worker, monitoramento e incidentes.
+              </p>
+            </li>
+          </ul>
         </article>
       )}
 
