@@ -360,7 +360,7 @@ export default async function ReportTypePage({ params }: PageParams) {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {meta.formats.map((formato) => exportForm(formato))}
-          <Link href="/relatórios" className="of-btn-ghost">
+          <Link href="/relatorios" className="of-btn-ghost">
             Voltar
           </Link>
         </div>

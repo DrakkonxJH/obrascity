@@ -12,7 +12,7 @@ const reportCards = [
     foot: "Atualizado hoje",
     badge: "of-badge-green",
     badgeLabel: "PDF / Excel",
-    href: "/relatórios/progresso",
+    href: "/relatorios/progresso",
   },
   {
     tipo: "financeiro",
@@ -22,7 +22,7 @@ const reportCards = [
     foot: `Dados: ${new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}`,
     badge: "of-badge-blue",
     badgeLabel: "PDF / Excel",
-    href: "/relatórios/financeiro",
+    href: "/relatorios/financeiro",
   },
   {
     tipo: "equipes",
@@ -32,7 +32,7 @@ const reportCards = [
     foot: "Semana atual",
     badge: "of-badge-purple",
     badgeLabel: "PDF",
-    href: "/relatórios/equipes",
+    href: "/relatorios/equipes",
   },
   {
     tipo: "materiais",
@@ -42,7 +42,7 @@ const reportCards = [
     foot: "Em tempo real",
     badge: "of-badge-yellow",
     badgeLabel: "PDF / Excel",
-    href: "/relatórios/materiais",
+    href: "/relatorios/materiais",
   },
   {
     tipo: "diario",
@@ -62,15 +62,29 @@ const reportCards = [
     foot: "Mensal",
     badge: "of-badge-green",
     badgeLabel: "PDF",
-    href: "/relatórios/executivo",
+    href: "/relatorios/executivo",
   },
 ];
 
 export default async function RelatóriosPage() {
-  const [relatórios, obras] = await Promise.all([listRelatorios(), listObras()]);
+  let relatórios: Awaited<ReturnType<typeof listRelatorios>> = [];
+  let obras: Awaited<ReturnType<typeof listObras>> = [];
+  let loadError: string | null = null;
+
+  try {
+    [relatórios, obras] = await Promise.all([listRelatorios(), listObras()]);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Erro ao carregar relatórios.";
+  }
 
   return (
     <section className="of-page">
+      {loadError ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
+          <p className="of-card-title">Falha ao carregar dados de relatórios</p>
+          <p className="of-empty-text">{loadError}</p>
+        </article>
+      ) : null}
       <p className="of-empty-text" style={{ marginBottom: 20 }}>
         Gere e exporte relatórios gerenciais das suas obras
       </p>

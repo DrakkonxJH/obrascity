@@ -505,7 +505,7 @@ const GUIAS_BASE: GuiaBase[] = [
           "Padronize recorte temporal, fonte de dados e checklist de revisao antes do envio.",
       },
     ],
-    rota: "/relatórios",
+    rota: "/relatorios",
   },
   {
     slug: "configuracoes",

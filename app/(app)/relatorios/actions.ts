@@ -27,5 +27,5 @@ export async function solicitarRelatórioAction(formData: FormData) {
     },
   );
 
-  revalidatePath("/relatórios");
+  revalidatePath("/relatorios");
 }

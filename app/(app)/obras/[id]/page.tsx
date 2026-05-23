@@ -123,7 +123,7 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
         <Link href="/materiais" className="of-btn-ghost">
           Materiais e compras
         </Link>
-        <Link href="/relatórios" className="of-btn-ghost">
+        <Link href="/relatorios" className="of-btn-ghost">
           Relatórios
         </Link>
       </div>

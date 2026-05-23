@@ -13,7 +13,7 @@ const pageMeta: Record<string, { title: string; icon: string }> = {
   "/materiais": { title: "Materiais", icon: "📦" },
   "/diario": { title: "Diário de Obra", icon: "📋" },
   "/qualidade": { title: "Qualidade e SSMA", icon: "🛡️" },
-  "/relatórios": { title: "Relatórios", icon: "📋" },
+  "/relatorios": { title: "Relatórios", icon: "📋" },
   "/planos": { title: "Planos", icon: "⭐" },
   "/portal": { title: "Portal do Cliente", icon: "🌐" },
   "/configuracoes": { title: "Configurações", icon: "⚙️" },

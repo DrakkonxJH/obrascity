@@ -20,12 +20,22 @@ function statusLabel(consumo: number) {
 }
 
 export default async function FinanceiroPage() {
-  const [rows, obras, medicoes, evm] = await Promise.all([
-    listFinanceiro(),
-    listObras(),
-    listMedicoes(),
-    getEvmIndicadores(),
-  ]);
+  let rows: Awaited<ReturnType<typeof listFinanceiro>> = [];
+  let obras: Awaited<ReturnType<typeof listObras>> = [];
+  let medicoes: Awaited<ReturnType<typeof listMedicoes>> = [];
+  let evm: Awaited<ReturnType<typeof getEvmIndicadores>> = { pv: 0, ev: 0, ac: 0, cpi: 0, spi: 0, eac: 0 };
+  let loadError: string | null = null;
+
+  try {
+    [rows, obras, medicoes, evm] = await Promise.all([
+      listFinanceiro(),
+      listObras(),
+      listMedicoes(),
+      getEvmIndicadores(),
+    ]);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Erro ao carregar módulo financeiro.";
+  }
 
   const totalOrcado = rows.reduce((acc, row) => acc + row.orcado, 0);
   const totalRealizado = rows.reduce((acc, row) => acc + row.realizado, 0);
@@ -34,6 +44,12 @@ export default async function FinanceiroPage() {
 
   return (
     <section className="of-page">
+      {loadError ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
+          <p className="of-card-title">Falha ao carregar dados financeiros</p>
+          <p className="of-empty-text">{loadError}</p>
+        </article>
+      ) : null}
       <div className="of-fin-metrics">
         <article className="of-fin-card">
           <p className="of-fin-label">Orçamento Total</p>

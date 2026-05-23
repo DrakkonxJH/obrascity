@@ -67,18 +67,37 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
     to: params.to || undefined,
   };
 
-  const [obras, responsaveis, ncRows, checklist] = await Promise.all([
-    listObras(),
-    listQualidadeResponsaveis(),
-    listNaoConformidades(filters),
-    listChecklistItems(filters),
-  ]);
-  const ncIds = ncRows.map((item) => item.id);
-  const [planosAcao, evidencias] = await Promise.all([listPlanosAcao(ncIds), listEvidencias(ncIds)]);
+  let obras: Awaited<ReturnType<typeof listObras>> = [];
+  let responsaveis: Awaited<ReturnType<typeof listQualidadeResponsaveis>> = [];
+  let ncRows: Awaited<ReturnType<typeof listNaoConformidades>> = [];
+  let checklist: Awaited<ReturnType<typeof listChecklistItems>> = [];
+  let planosAcao: Awaited<ReturnType<typeof listPlanosAcao>> = [];
+  let evidencias: Awaited<ReturnType<typeof listEvidencias>> = [];
+  let loadError: string | null = null;
+
+  try {
+    [obras, responsaveis, ncRows, checklist] = await Promise.all([
+      listObras(),
+      listQualidadeResponsaveis(),
+      listNaoConformidades(filters),
+      listChecklistItems(filters),
+    ]);
+    const ncIds = ncRows.map((item) => item.id);
+    [planosAcao, evidencias] = await Promise.all([listPlanosAcao(ncIds), listEvidencias(ncIds)]);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Erro ao carregar módulo de qualidade.";
+  }
+
   const kpis = buildQualidadeKpis(ncRows);
 
   return (
     <section className="of-page">
+      {loadError ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
+          <p className="of-card-title">Falha ao carregar dados de qualidade</p>
+          <p className="of-empty-text">{loadError}</p>
+        </article>
+      ) : null}
       <div className="of-inline-header" style={{ marginBottom: 20 }}>
         <p className="of-empty-text">
           Gestão de Qualidade e SSMA com CAPA, indicadores, inspeções, evidências e rastreabilidade completa.
