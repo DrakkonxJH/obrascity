@@ -38,6 +38,14 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
           </button>
         </div>
         <div className="of-notif-list">
+          {items.length === 0 ? (
+            <div className="of-notif-item" style={{ cursor: "default" }}>
+              <p className="of-notif-item-title">Nenhuma pendência da plataforma</p>
+              <p className="of-notif-item-desc">
+                Quando houver alertas de segurança ou tickets de suporte, eles aparecem aqui.
+              </p>
+            </div>
+          ) : null}
           {items.map((item) => {
             const content = (
               <>
