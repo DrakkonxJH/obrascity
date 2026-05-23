@@ -15,7 +15,7 @@ export function SignupForm() {
   const router = useRouter();
 
   useEffect(() => {
-    if (state.ok && !state.needsEmailConfirmation) {
+    if (state.ok && !state.needsLogin) {
       router.replace("/dashboard");
       router.refresh();
     }
@@ -129,7 +129,7 @@ export function SignupForm() {
           </p>
         ) : null}
 
-        {state.ok && state.needsEmailConfirmation ? (
+        {state.ok && state.needsLogin ? (
           <Link href="/login" className="of-login-v2-submit of-login-v2-submit-link">
             Ir para login
           </Link>

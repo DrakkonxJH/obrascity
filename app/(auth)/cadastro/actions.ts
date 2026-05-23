@@ -10,6 +10,7 @@ export type SignupActionState = {
   ok: boolean;
   message: string;
   needsEmailConfirmation?: boolean;
+  needsLogin?: boolean;
 };
 
 export async function signUpAction(
@@ -81,9 +82,10 @@ export async function signUpAction(
 
       if (error) {
         return {
-          ok: false,
-          message: `Conta criada, mas não foi possivel abrir sessao automaticamente: ${error.message}`,
+          ok: true,
+          message: "Conta criada com sucesso. Entre com e-mail e senha para acessar o sistema.",
           needsEmailConfirmation: edgeResult.needsEmailConfirmation,
+          needsLogin: true,
         };
       }
     }
@@ -91,6 +93,7 @@ export async function signUpAction(
     return {
       ok: true,
       needsEmailConfirmation: edgeResult.needsEmailConfirmation,
+      needsLogin: Boolean(edgeResult.needsEmailConfirmation),
       message: edgeResult.message,
     };
   } catch (error) {
