@@ -114,10 +114,10 @@ Obrigatórias (Production):
 - [x] `NEXT_PUBLIC_APP_URL` (URL pública real)
 
 Essenciais por módulo:
-- [ ] `RESEND_API_KEY`
-- [ ] `RESEND_FROM_EMAIL`
-- [ ] `STRIPE_SECRET_KEY`
-- [ ] `STRIPE_WEBHOOK_SECRET`
+- [x] `RESEND_API_KEY`
+- [x] `RESEND_FROM_EMAIL`
+- [x] `STRIPE_SECRET_KEY`
+- [x] `STRIPE_WEBHOOK_SECRET`
 - [x] `SIGNUP_EDGE_SHARED_SECRET` (se manter fallback legado)
 - [ ] `CONTROLE_TOTAL_OWNER_EMAIL` (se usar painel de controle total)
 - [ ] `CONTROLE_TOTAL_OWNER_PROFILE_ID` (se usar painel de controle total)
@@ -203,10 +203,10 @@ Teste de aceite (após DNS ok):
 
 ## Fase F - Billing (Stripe)
 
-- [ ] Produto e preços criados no Stripe (Starter/Pro/Enterprise).
-- [ ] Price IDs configurados no ambiente.
-- [ ] Webhook apontando para rota de produção.
-- [ ] `STRIPE_WEBHOOK_SECRET` válido em produção.
+- [x] Produto e preços criados no Stripe (Starter/Pro/Enterprise).
+- [x] Price IDs configurados no ambiente.
+- [x] Webhook apontando para rota de produção.
+- [x] `STRIPE_WEBHOOK_SECRET` válido em produção.
 - [ ] Teste de checkout aprovado.
 - [ ] Teste de atualização de assinatura no banco.
 - [ ] Teste de cancelamento/downgrade.
@@ -322,6 +322,12 @@ Smoke test mínimo:
 - Correção aplicada no `proxy.ts`: manutenção agora depende de `MAINTENANCE_MODE=true` (não bloqueia produção por padrão).
 - Smoke pós-deploy em produção: `/` = 307, `/login` = 200, `/cadastro` = 200, `/api/health` = 200, `/api/health/ops` = 200, `/api/queue/metrics` = 200.
 - Resend API key local é restrita a envio (`restricted_api_key`), sem permissão para listar/verificar domínios por API.
+- Stripe em modo teste configurado: produtos/preços de Starter/Pro/Enterprise criados com IDs válidos.
+- Variáveis Stripe/Resend aplicadas em **Production** na Vercel: `STRIPE_SECRET_KEY`, `STRIPE_PRICE_*_IDS`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`.
+- Endpoint Stripe criado: `https://obrasflow.vercel.app/api/webhooks/stripe` (`we_1TaAMEFJTwlYxOjq89yT3jG2`) e secret registrado na Vercel.
+- Re-deploy de produção executado após configuração de variáveis de billing.
+- Endpoint de webhook responde em produção (400 esperado sem assinatura `stripe-signature`).
+- Resend API key fornecida agora aceita listagem da conta (retorno sem domínios cadastrados no momento).
 
 ---
 
