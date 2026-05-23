@@ -258,7 +258,7 @@ Pendências:
 - [x] Runbook de incidente publicado.
 - [ ] Definir alertas de custo (Vercel, Supabase, Stripe, Resend, Redis).
 - [ ] Definir limites de taxa para proteção operacional (rate limiting por rota).
-- [ ] Monitor de disponibilidade externo (uptime check) com alerta.
+- [x] Monitor de disponibilidade externo (uptime check) com alerta.
 
 ## Fase J - Deploy e rollback
 
@@ -330,6 +330,8 @@ Smoke test mínimo:
 - Resend API key fornecida agora aceita listagem da conta (retorno sem domínios cadastrados no momento).
 - Processo contínuo do worker documentado com PM2 (`ecosystem.config.cjs`) e script de healthcheck (`npm run worker:health`).
 - Runbook operacional de incidente publicado no `DEPLOYMENT_SETUP.md` (worker + Stripe webhook).
+- Smoke do webhook Stripe implementado com assinatura válida (`npm run stripe:webhook-smoke`) e retorno 2xx.
+- Monitoramento automático publicado em `.github/workflows/ops-monitor.yml` (health, ops health e métricas de fila a cada 10 min).
 
 ---
 
@@ -363,7 +365,7 @@ Smoke test mínimo:
 - [x] Validar variáveis Production na Vercel.
 - [x] Rodar `lint`, `typecheck`, `build`.
 - [ ] Validar Stripe webhook + checkout teste.
-- [ ] Definir execução contínua do worker com monitoramento.
+- [x] Definir execução contínua do worker com monitoramento.
 
 ### Bloco 3 - Pré go-live
 - [ ] Rodar smoke test completo.

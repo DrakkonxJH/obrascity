@@ -1,0 +1,26 @@
+name: ops-monitor
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check app health
+        run: |
+          curl -fsS "https://obrasflow.vercel.app/api/health" >/tmp/health.json
+          cat /tmp/health.json
+
+      - name: Check ops health
+        run: |
+          curl -fsS "https://obrasflow.vercel.app/api/health/ops" >/tmp/ops.json
+          cat /tmp/ops.json
+
+      - name: Check queue metrics
+        run: |
+          curl -fsS "https://obrasflow.vercel.app/api/queue/metrics" >/tmp/queue.json
+          cat /tmp/queue.json

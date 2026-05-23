@@ -11,6 +11,7 @@
     "worker:dev": "tsx worker/src/index.ts",
     "worker:start": "NODE_ENV=production tsx worker/src/index.ts",
     "worker:health": "node scripts/worker-healthcheck.mjs",
+    "stripe:webhook-smoke": "node scripts/stripe-webhook-smoke.mjs",
     "push": "bash scripts/push.sh"
   },
   "dependencies": {
