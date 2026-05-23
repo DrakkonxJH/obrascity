@@ -153,6 +153,7 @@ types/             # TypeScript types
 **Erro Supabase:** Verifique credenciais e conexão  
 **Erro Stripe:** Configure variáveis quando estiver pronto
 **Erro no cadastro:** aplique a migration `supabase/migrations/0015_signup_email_verification.sql` antes de publicar; sem ela, a verificação usa fallback legado.
+**Limite de cadastro por e-mail:** só é aplicado quando o e-mail já possui cadastro; e-mails novos ficam sujeitos apenas ao limite por IP.
 
 ## 📞 Suporte
 

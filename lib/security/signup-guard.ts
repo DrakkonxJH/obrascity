@@ -32,19 +32,13 @@ export async function assertSignupRateLimits(input: {
 }) {
   const email = normalizeEmail(input.email);
   const ip = input.ip ?? "unknown";
+  const registered = await emailAlreadyRegistered(email);
 
-  const [byIp, byEmail] = await Promise.all([
-    checkRateLimit({
-      key: `signup:ip:${ip}`,
-      limit: 8,
-      windowSeconds: 60 * 60,
-    }),
-    checkRateLimit({
-      key: `signup:email:${email}`,
-      limit: 3,
-      windowSeconds: 60 * 60 * 24,
-    }),
-  ]);
+  const byIp = await checkRateLimit({
+    key: `signup:ip:${ip}`,
+    limit: 8,
+    windowSeconds: 60 * 60,
+  });
 
   if (!byIp.allowed) {
     await createSecurityAlert({
@@ -60,6 +54,16 @@ export async function assertSignupRateLimits(input: {
     });
     throw new Error("Muitas tentativas deste IP. Tente novamente mais tarde.");
   }
+
+  if (!registered) {
+    return;
+  }
+
+  const byEmail = await checkRateLimit({
+    key: `signup:email:${email}`,
+    limit: 3,
+    windowSeconds: 60 * 60 * 24,
+  });
 
   if (!byEmail.allowed) {
     await createSecurityAlert({
