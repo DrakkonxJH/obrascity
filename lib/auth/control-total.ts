@@ -16,6 +16,10 @@ export function isControlTotalOwner(profile: ProfileLike | null | undefined) {
   const ownerEmail = normalizeEmail(process.env.CONTROLE_TOTAL_OWNER_EMAIL);
   const profileId = String(profile.id ?? "").trim();
   const profileEmail = normalizeEmail(profile.email);
+  const hasOwnerBinding = Boolean(ownerId || ownerEmail);
+
+  // Ambiente sem binding explícito (ex: localhost): qualquer role master entra no modo Controle Total.
+  if (!hasOwnerBinding) return true;
 
   if (ownerId && profileId && ownerId === profileId) return true;
   if (ownerEmail && profileEmail && ownerEmail === profileEmail) return true;
