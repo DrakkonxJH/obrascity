@@ -508,7 +508,9 @@
   background: var(--of-bg-3);
 }
 .of-notif-item.unread {
-  background: var(--of-accent-glow);
+  background: rgba(255, 107, 26, 0.04);
+  border-left: 3px solid rgba(255, 107, 26, 0.8);
+  padding-left: 13px;
 }
 .of-notif-item-title {
   font-size: 0.83rem;
