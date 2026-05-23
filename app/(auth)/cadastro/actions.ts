@@ -206,6 +206,11 @@ export async function signUpAction(
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao criar conta";
+    
+    if (isInvalidJwtLikeError(error)) {
+      return await runLegacySignupFlow();
+    }
+
     if (createdUserId) {
       const cleanupResults = await Promise.allSettled([
         deleteSignupVerificationByEmail(email),
