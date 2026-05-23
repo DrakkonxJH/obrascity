@@ -281,7 +281,7 @@ Smoke test mínimo:
 
 ## Fase K - Operação comercial e suporte (faltava no guia)
 
-- [ ] Política de suporte definida (SLA inicial, canais, horário).
+- [x] Política de suporte definida (SLA inicial, canais, horário).
 - [ ] Templates de resposta para problemas comuns (cadastro, login, cobrança).
 - [ ] Página de status/contato para incidentes.
 - [ ] Processo de onboarding de novos clientes.
@@ -337,6 +337,8 @@ Smoke test mínimo:
 - Teste de integração Stripe executado contra produção (modo teste): `checkout.session.completed`, `customer.subscription.updated`, `past_due` e `deleted` com retorno HTTP 200.
 - Idempotência básica validada no webhook Stripe com reenvio do mesmo evento de checkout (duas execuções HTTP 200).
 - Assinatura refletiu mudanças no banco após eventos Stripe (plano atualizado e status final `canceled` conforme evento de cancelamento).
+- Migration `0018_master_support_ops.sql` aplicada no remoto (`support_tickets`, `support_ticket_events`, `master_audit_logs`).
+- Painel MASTER expandido com abas de suporte, auditoria e runbooks; abertura/atualização de ticket, extensão de período e reset de senha com trilha de auditoria.
 
 ---
 

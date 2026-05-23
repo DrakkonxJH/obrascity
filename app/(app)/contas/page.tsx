@@ -5,14 +5,20 @@ import { isControlTotalOwner } from "@/lib/auth/control-total";
 import {
   listAllEmpresas,
   listAllProfiles,
+  listMasterAuditLogs,
   listRecentSecurityAlerts,
   listRecentSignupAttempts,
+  listSupportTickets,
 } from "@/lib/db/admin-contas";
 import {
   suspenderEmpresaAction,
   ativarEmpresaAction,
   alterarPlanoAction,
+  atualizarTicketSuporteAction,
+  criarTicketSuporteAction,
+  estenderPeriodoEmpresaAction,
   removerPerfilAction,
+  resetarSenhaUsuarioAction,
   resetarDadosEmpresaAction,
 } from "./actions";
 
@@ -143,11 +149,13 @@ export default async function ContasPage({
   const params = await searchParams;
   const tab = params.tab ?? "empresas";
 
-  const [empresas, perfis, alertas, tentativas] = await Promise.all([
+  const [empresas, perfis, alertas, tentativas, tickets, auditLogs] = await Promise.all([
     listAllEmpresas(),
     listAllProfiles(),
     listRecentSecurityAlerts(50),
     listRecentSignupAttempts(30),
+    listSupportTickets(120),
+    listMasterAuditLogs(150),
   ]);
 
   const totalAtivos = empresas.filter((e) => ACTIVE_STATUSES.has(e.assinatura_status)).length;
@@ -156,6 +164,7 @@ export default async function ContasPage({
   const empresasTrial = empresas.filter((e) => e.assinatura_status === "trialing").length;
   const empresasPagantes = empresas.filter((e) => e.assinatura_status === "active").length;
   const mrrEstimado = empresas.reduce((acc, e) => acc + (PLANO_MRR[e.plano] ?? 0), 0);
+  const ticketsAbertos = tickets.filter((t) => t.status !== "resolvido" && t.status !== "fechado").length;
   const setup = {
     stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     resend: Boolean(process.env.RESEND_API_KEY),
@@ -218,6 +227,9 @@ export default async function ContasPage({
         <TabLink href="/contas?tab=operacao" label="📈 Operação" active={tab === "operacao"} />
         <TabLink href="/contas?tab=integracoes" label="🔌 Integrações" active={tab === "integracoes"} />
         <TabLink href="/contas?tab=deploy" label="🚀 Deploy" active={tab === "deploy"} />
+        <TabLink href="/contas?tab=suporte" label="🆘 Suporte" active={tab === "suporte"} />
+        <TabLink href="/contas?tab=auditoria" label="🧾 Auditoria" active={tab === "auditoria"} />
+        <TabLink href="/contas?tab=runbooks" label="📚 Runbooks" active={tab === "runbooks"} />
         <TabLink href="/contas?tab=seguranca" label="🔒 Segurança" active={tab === "seguranca"} />
       </div>
 
@@ -245,6 +257,7 @@ export default async function ContasPage({
                   const suspendAction = suspenderEmpresaAction.bind(null, emp.id);
                   const ativarAction = ativarEmpresaAction.bind(null, emp.id);
                   const changePlanAction = alterarPlanoAction.bind(null, emp.id);
+                  const extendAction = estenderPeriodoEmpresaAction.bind(null, emp.id);
                   const resetAction = resetarDadosEmpresaAction.bind(null, emp.id);
                   const isSuspended = emp.assinatura_status === "suspended";
                   return (
@@ -293,6 +306,25 @@ export default async function ContasPage({
                           <form action={resetAction}>
                             <button type="submit" style={{ ...BTN_SM_RED, opacity: 0.7 }}>Reset dados</button>
                           </form>
+
+                          <form action={extendAction} style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <input
+                              type="number"
+                              name="days"
+                              min={1}
+                              defaultValue={7}
+                              style={{
+                                width: 64,
+                                background: "var(--of-bg-3)",
+                                border: "1px solid var(--of-border)",
+                                borderRadius: 5,
+                                color: "var(--of-text)",
+                                padding: "3px 6px",
+                                fontSize: "0.72rem",
+                              }}
+                            />
+                            <button type="submit" style={BTN_SM}>+ prazo</button>
+                          </form>
                         </div>
                       </td>
                     </tr>
@@ -329,6 +361,7 @@ export default async function ContasPage({
               <tbody>
                 {perfis.map((p) => {
                   const removeAction = removerPerfilAction.bind(null, p.id);
+                  const resetPasswordAction = resetarSenhaUsuarioAction.bind(null, p.id);
                   return (
                     <tr key={p.id}>
                       <td style={TD_STYLE}><span style={{ fontWeight: 500 }}>{p.nome}</span></td>
@@ -343,9 +376,28 @@ export default async function ContasPage({
                       </td>
                       <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDate(p.created_at)}</td>
                       <td style={TD_STYLE}>
-                        <form action={removeAction}>
-                          <button type="submit" style={BTN_SM_RED}>Remover</button>
-                        </form>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          <form action={removeAction}>
+                            <button type="submit" style={BTN_SM_RED}>Remover</button>
+                          </form>
+                          <form action={resetPasswordAction} style={{ display: "flex", gap: 4 }}>
+                            <input
+                              type="text"
+                              name="password"
+                              placeholder="Nova senha"
+                              style={{
+                                width: 120,
+                                background: "var(--of-bg-3)",
+                                border: "1px solid var(--of-border)",
+                                borderRadius: 5,
+                                color: "var(--of-text)",
+                                padding: "3px 6px",
+                                fontSize: "0.72rem",
+                              }}
+                            />
+                            <button type="submit" style={BTN_SM}>Reset senha</button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -416,6 +468,14 @@ export default async function ContasPage({
 
       {tab === "operacao" && (
         <div style={{ display: "grid", gap: 20 }}>
+          <div className="of-kpi-grid">
+            <article className="of-metric-card yellow">
+              <p className="of-kpi-icon">🎫</p>
+              <p className="of-kpi-label">Tickets em aberto</p>
+              <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{ticketsAbertos}</p>
+              <p className="of-metric-change">incidentes e solicitações ativos</p>
+            </article>
+          </div>
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 10 }}>Operação e SLO</div>
             <p className="of-page-description" style={{ marginBottom: 12 }}>
@@ -502,6 +562,166 @@ export default async function ContasPage({
               <p className="of-list-description">
                 Consulte `DEPLOYMENT_SETUP.md` para rollback, worker, monitoramento e incidentes.
               </p>
+            </li>
+          </ul>
+        </article>
+      )}
+
+      {tab === "suporte" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Novo ticket de suporte</div>
+            <form action={criarTicketSuporteAction} className="of-form-grid md:grid-cols-6">
+              <select name="empresa_id" required className="of-input">
+                <option value="">Empresa</option>
+                {empresas.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.nome}</option>
+                ))}
+              </select>
+              <input name="title" className="of-input" placeholder="Título do ticket" required />
+              <input name="category" className="of-input" defaultValue="suporte" placeholder="Categoria" />
+              <select name="priority" defaultValue="media" className="of-input">
+                <option value="baixa">Baixa</option>
+                <option value="media">Média</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
+              <input
+                name="sla_hours"
+                type="number"
+                min={1}
+                defaultValue={24}
+                className="of-input"
+                placeholder="SLA (h)"
+              />
+              <button type="submit" className="of-btn-primary">Abrir ticket</button>
+              <textarea
+                name="description"
+                className="of-input md:col-span-6"
+                placeholder="Descrição técnica, impacto e contexto."
+              />
+            </form>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Fila de suporte ({tickets.length})</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Empresa</th>
+                    <th style={TH_STYLE}>Ticket</th>
+                    <th style={TH_STYLE}>Prioridade</th>
+                    <th style={TH_STYLE}>Status</th>
+                    <th style={TH_STYLE}>Dono</th>
+                    <th style={TH_STYLE}>SLA</th>
+                    <th style={TH_STYLE}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickets.map((ticket) => {
+                    const updateAction = atualizarTicketSuporteAction.bind(null, ticket.id);
+                    return (
+                      <tr key={ticket.id}>
+                        <td style={TD_STYLE}>{ticket.empresa_nome}</td>
+                        <td style={TD_STYLE}>
+                          <p style={{ margin: 0, fontWeight: 600 }}>{ticket.title}</p>
+                          <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--of-text-3)" }}>
+                            {ticket.category}
+                          </p>
+                        </td>
+                        <td style={TD_STYLE}>{ticket.priority}</td>
+                        <td style={TD_STYLE}>{ticket.status}</td>
+                        <td style={TD_STYLE}>{ticket.owner_nome ?? "—"}</td>
+                        <td style={TD_STYLE}>{fmtDatetime(ticket.sla_deadline)}</td>
+                        <td style={TD_STYLE}>
+                          <form action={updateAction} style={{ display: "grid", gap: 4 }}>
+                            <select name="status" defaultValue={ticket.status} className="of-input">
+                              <option value="aberto">Aberto</option>
+                              <option value="em_andamento">Em andamento</option>
+                              <option value="aguardando_cliente">Aguardando cliente</option>
+                              <option value="resolvido">Resolvido</option>
+                              <option value="fechado">Fechado</option>
+                            </select>
+                            <select name="owner_profile_id" defaultValue={ticket.owner_profile_id ?? ""} className="of-input">
+                              <option value="">Sem dono</option>
+                              {perfis.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.nome}
+                                </option>
+                              ))}
+                            </select>
+                            <input name="comment" className="of-input" placeholder="Comentário de atualização" />
+                            <button type="submit" style={BTN_SM}>Atualizar</button>
+                          </form>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {tickets.length === 0 ? (
+                    <tr><td colSpan={7} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum ticket na fila.</td></tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      )}
+
+      {tab === "auditoria" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>
+            Trilhas de auditoria do MASTER ({auditLogs.length})
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={TH_STYLE}>Quando</th>
+                  <th style={TH_STYLE}>Ator</th>
+                  <th style={TH_STYLE}>Ação</th>
+                  <th style={TH_STYLE}>Alvo</th>
+                  <th style={TH_STYLE}>Empresa</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditLogs.map((log) => (
+                  <tr key={log.id}>
+                    <td style={TD_STYLE}>{fmtDatetime(log.created_at)}</td>
+                    <td style={TD_STYLE}>{log.actor_email ?? "—"}</td>
+                    <td style={TD_STYLE}>{log.action}</td>
+                    <td style={TD_STYLE}>{log.target_type}{log.target_id ? ` · ${log.target_id}` : ""}</td>
+                    <td style={TD_STYLE}>{log.empresa_nome ?? "Plataforma"}</td>
+                  </tr>
+                ))}
+                {auditLogs.length === 0 ? (
+                  <tr><td colSpan={5} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Sem registros de auditoria.</td></tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {tab === "runbooks" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Runbooks de suporte e incidentes</div>
+          <ul className="of-list">
+            <li className="of-list-item">
+              <p className="of-list-title">Login e autenticação indisponíveis</p>
+              <p className="of-list-description">Checar Supabase Auth, rate-limit, status de sessão e alertas de login.</p>
+            </li>
+            <li className="of-list-item">
+              <p className="of-list-title">Cobrança/assinatura divergente</p>
+              <p className="of-list-description">Comparar assinatura local x eventos Stripe e reprocessar webhook se necessário.</p>
+            </li>
+            <li className="of-list-item">
+              <p className="of-list-title">Fila/worker travado</p>
+              <p className="of-list-description">Validar `/api/health/ops`, métricas de fila e reiniciar processo contínuo do worker.</p>
+            </li>
+            <li className="of-list-item">
+              <p className="of-list-title">Recuperação de tenant</p>
+              <p className="of-list-description">Avaliar impacto, executar reset controlado por empresa e registrar auditoria.</p>
             </li>
           </ul>
         </article>

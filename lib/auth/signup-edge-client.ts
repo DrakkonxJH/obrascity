@@ -28,13 +28,19 @@ export async function invokeSignupEdgeFunction(payload: SignupEdgePayload): Prom
   }
 
   const url = `${env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/signup-orchestrator`;
+  const apiKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const isJwtLikeKey = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(apiKey);
 
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-      apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      ...(isJwtLikeKey
+        ? {
+            Authorization: `Bearer ${apiKey}`,
+          }
+        : {}),
+      apikey: apiKey,
       ...(env.SIGNUP_EDGE_SHARED_SECRET
         ? {
             "x-signup-edge-secret": env.SIGNUP_EDGE_SHARED_SECRET,

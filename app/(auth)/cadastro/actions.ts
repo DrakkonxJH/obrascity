@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
-import { getAppOrigin } from "@/lib/validations/env";
+import { getAppOrigin, getEnv } from "@/lib/validations/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSignupRateLimits, emailAlreadyRegistered } from "@/lib/security/signup-guard";
 import {
@@ -69,6 +69,8 @@ export async function signUpAction(
 
   let createdUserId: string | null = null;
   let admin;
+  const env = getEnv();
+  const canUseLegacyEdgeFallback = /^eyJ[A-Za-z0-9_-]+\./.test(env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   try {
     admin = createAdminClient();
@@ -96,6 +98,14 @@ export async function signUpAction(
   }
 
   async function runLegacySignupFlow() {
+    if (!canUseLegacyEdgeFallback) {
+      return {
+        ok: false,
+        message:
+          "Fluxo legado de cadastro indisponível com chave publishable atual. Aplique a migration de verificação (0015) e recarregue o schema cache do Supabase.",
+      };
+    }
+
     const edgeResult = await invokeSignupEdgeFunction({
       nome,
       empresaNome,
@@ -161,7 +171,11 @@ export async function signUpAction(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error ?? "");
       if (message.includes("signup_verification_tokens")) {
-        return await runLegacySignupFlow();
+        return {
+          ok: false,
+          message:
+            "Cadastro bloqueado: tabela de verificação ainda não está disponível no schema cache do Supabase. Execute a migration 0015 e recarregue o cache.",
+        };
       }
       if (isInvalidJwtLikeError(error)) {
         return await runLegacySignupFlow();

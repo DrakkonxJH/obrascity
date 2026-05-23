@@ -24,9 +24,12 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
         title: "Operacao",
         items: [
           { href: "/contas?tab=operacao", label: "Operação e SLO", icon: "📈" },
+          { href: "/contas?tab=suporte", label: "Suporte e SLA", icon: "🆘" },
           { href: "/contas?tab=integracoes", label: "Integrações", icon: "🔌" },
           { href: "/contas?tab=deploy", label: "Deploy e Domínio", icon: "🚀" },
           { href: "/contas?tab=seguranca", label: "Segurança", icon: "🔒" },
+          { href: "/contas?tab=auditoria", label: "Auditoria", icon: "🧾" },
+          { href: "/contas?tab=runbooks", label: "Runbooks", icon: "📚" },
         ],
       },
     ];

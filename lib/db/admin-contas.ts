@@ -43,6 +43,34 @@ export type AdminSignupAttempt = {
   created_at: string;
 };
 
+export type AdminSupportTicket = {
+  id: string;
+  empresa_id: string;
+  empresa_nome: string;
+  title: string;
+  category: string;
+  priority: string;
+  status: string;
+  owner_profile_id: string | null;
+  owner_nome: string | null;
+  sla_deadline: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MasterAuditLog = {
+  id: string;
+  actor_profile_id: string | null;
+  actor_email: string | null;
+  action: string;
+  target_type: string;
+  target_id: string | null;
+  empresa_id: string | null;
+  empresa_nome: string | null;
+  details: Record<string, unknown>;
+  created_at: string;
+};
+
 export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   const admin = createAdminClient();
 
@@ -145,4 +173,76 @@ export async function listRecentSignupAttempts(limit = 30): Promise<AdminSignupA
 
   if (error) throw new Error(error.message);
   return (data ?? []) as AdminSignupAttempt[];
+}
+
+export async function listSupportTickets(limit = 100): Promise<AdminSupportTicket[]> {
+  const admin = createAdminClient();
+  const [ticketsRes, empresasRes, profilesRes] = await Promise.all([
+    admin
+      .from("support_tickets")
+      .select("id, empresa_id, title, category, priority, status, owner_profile_id, sla_deadline, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    admin.from("empresas").select("id, nome"),
+    admin.from("profiles").select("id, nome"),
+  ]);
+
+  if (ticketsRes.error) throw new Error(ticketsRes.error.message);
+
+  const empresaMap = new Map<string, string>();
+  for (const e of empresasRes.data ?? []) {
+    empresaMap.set(e.id, e.nome);
+  }
+
+  const profileMap = new Map<string, string>();
+  for (const p of profilesRes.data ?? []) {
+    profileMap.set(p.id, p.nome);
+  }
+
+  return (ticketsRes.data ?? []).map((item) => ({
+    id: item.id,
+    empresa_id: item.empresa_id,
+    empresa_nome: empresaMap.get(item.empresa_id) ?? "—",
+    title: item.title,
+    category: item.category,
+    priority: item.priority,
+    status: item.status,
+    owner_profile_id: item.owner_profile_id ?? null,
+    owner_nome: item.owner_profile_id ? profileMap.get(item.owner_profile_id) ?? null : null,
+    sla_deadline: item.sla_deadline ?? null,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+  }));
+}
+
+export async function listMasterAuditLogs(limit = 120): Promise<MasterAuditLog[]> {
+  const admin = createAdminClient();
+  const [logsRes, empresasRes] = await Promise.all([
+    admin
+      .from("master_audit_logs")
+      .select("id, actor_profile_id, actor_email, action, target_type, target_id, empresa_id, details, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    admin.from("empresas").select("id, nome"),
+  ]);
+
+  if (logsRes.error) throw new Error(logsRes.error.message);
+
+  const empresaMap = new Map<string, string>();
+  for (const e of empresasRes.data ?? []) {
+    empresaMap.set(e.id, e.nome);
+  }
+
+  return (logsRes.data ?? []).map((log) => ({
+    id: log.id,
+    actor_profile_id: log.actor_profile_id ?? null,
+    actor_email: log.actor_email ?? null,
+    action: log.action,
+    target_type: log.target_type,
+    target_id: log.target_id ?? null,
+    empresa_id: log.empresa_id ?? null,
+    empresa_nome: log.empresa_id ? empresaMap.get(log.empresa_id) ?? null : null,
+    details: (log.details ?? {}) as Record<string, unknown>,
+    created_at: log.created_at,
+  }));
 }
