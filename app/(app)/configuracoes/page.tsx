@@ -5,6 +5,7 @@ import { listPrivacyRequests } from "@/lib/db/privacy";
 import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { listEquipes } from "@/lib/db/equipes";
 import { isProfileRole } from "@/lib/auth/roles";
+import { isControlTotalOwner } from "@/lib/auth/control-total";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,11 @@ export default async function ConfiguracoesPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const rawRole = String(profile?.role ?? "");
   const userRole = isProfileRole(rawRole) ? rawRole : "visualizador";
-  const isMaster = userRole === "master";
+  const canSeeSupabaseIntegration = isControlTotalOwner({
+    id: profile?.id,
+    email: profile?.email,
+    role: userRole,
+  });
 
   return (
     <ConfigView
@@ -30,7 +35,7 @@ export default async function ConfiguracoesPage() {
       userName={profile?.nome ?? profile?.email?.split("@")[0] ?? "Usuário"}
       userEmail={profile?.email ?? ""}
       userRole={userRole}
-      isMaster={isMaster}
+      isMaster={canSeeSupabaseIntegration}
       companyProfiles={companyProfiles}
       equipes={equipes}
       privacyRequests={privacyRequests}
