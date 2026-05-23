@@ -19,7 +19,7 @@ Concluído no projeto:
 Pendente para go-live real:
 - [ ] Domínio de e-mail no Resend `obrasflow.com` ainda não verificado (status pendente).
 - [ ] DNS público do domínio `obrasflow.com` não resolvendo (`NS/A` vazios no teste atual).
-- [ ] Confirmar e validar todas variáveis no ambiente **Production** da Vercel.
+- [x] Confirmar e validar todas variáveis no ambiente **Production** da Vercel.
 - [ ] Validar fluxo Stripe ponta a ponta com webhook.
 - [ ] Garantir worker em execução contínua em ambiente produtivo.
 - [ ] Fechar runbook de observabilidade, alerta e incidentes.
@@ -143,7 +143,7 @@ Status atual local:
 ## Fase D - Domínio e DNS
 
 Objetivo:
-- Aplicação pública respondendo no domínio final.
+- Aplicação pública respondendo no domínio final (`obrasflow.vercel.app` até domínio próprio).
 - E-mail de transação autenticado (SPF/DKIM/MX).
 
 Pendências críticas detectadas:
@@ -318,6 +318,7 @@ Smoke test mínimo:
 - Vercel Production validado via CLI (`vercel env ls production`) com `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`, `DATA_ENCRYPTION_KEY`, `SIGNUP_EDGE_SHARED_SECRET`, `NEXT_PUBLIC_APP_URL`.
 - Vercel Preview validado via CLI (`vercel env ls preview`) sem variáveis cadastradas.
 - Deploy de produção realizado com alias `https://obrasflow.vercel.app` (build concluído e publicado).
+- Decisão operacional atual: manter `https://obrasflow.vercel.app` como domínio público da aplicação até registrar/validar domínio próprio.
 - Correção aplicada no `proxy.ts`: manutenção agora depende de `MAINTENANCE_MODE=true` (não bloqueia produção por padrão).
 - Smoke pós-deploy em produção: `/` = 307, `/login` = 200, `/cadastro` = 200, `/api/health` = 200, `/api/health/ops` = 200, `/api/queue/metrics` = 200.
 - Resend API key local é restrita a envio (`restricted_api_key`), sem permissão para listar/verificar domínios por API.
