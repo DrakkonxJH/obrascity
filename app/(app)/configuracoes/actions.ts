@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
-  isProfileRole,
+  isAssignableProfileRole,
   PROFILE_ROLE_LABEL,
   type ProfileRole,
 } from "@/lib/auth/roles";
@@ -63,12 +63,12 @@ async function requireAdminContext() {
   };
 }
 
-function parseRole(rawRole: FormDataEntryValue | null): ProfileRole {
+function parseRole(rawRole: FormDataEntryValue | null): Exclude<ProfileRole, "master"> {
   const value = String(rawRole ?? "").trim().toLowerCase();
-  if (!isProfileRole(value)) {
+  if (!isAssignableProfileRole(value)) {
     throw new Error("Papel de acesso invalido.");
   }
-  return value;
+  return value as Exclude<ProfileRole, "master">;
 }
 
 export async function createPrivacyRequestAction(

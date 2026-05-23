@@ -1,4 +1,4 @@
-export type Role = "administrador" | "gestor" | "engenheiro" | "tecnico" | "visualizador";
+export type Role = "master" | "administrador" | "gestor" | "engenheiro" | "tecnico" | "visualizador";
 
 export type ObraStatus = "planejamento" | "andamento" | "atencao" | "concluida";
 

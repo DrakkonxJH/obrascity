@@ -96,12 +96,12 @@ export async function signInAction(
     }
   }
 
-  const isAdminOwner = isControlTotalOwner({
+  const isMasterOwner = isControlTotalOwner({
     id: data.user?.id,
     email: data.user?.email ?? null,
     role: profileRole,
   });
-  const safeNext = isAdminOwner
+  const safeNext = isMasterOwner
     ? "/contas"
     : nextPath.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath

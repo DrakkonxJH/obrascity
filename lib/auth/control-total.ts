@@ -10,7 +10,7 @@ function normalizeEmail(value: string | null | undefined) {
 
 export function isControlTotalOwner(profile: ProfileLike | null | undefined) {
   if (!profile) return false;
-  if (String(profile.role ?? "").trim().toLowerCase() !== "administrador") return false;
+  if (String(profile.role ?? "").trim().toLowerCase() !== "master") return false;
 
   const ownerId = String(process.env.CONTROLE_TOTAL_OWNER_PROFILE_ID ?? "").trim();
   const ownerEmail = normalizeEmail(process.env.CONTROLE_TOTAL_OWNER_EMAIL);

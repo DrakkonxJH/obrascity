@@ -10,8 +10,8 @@ import {
   updateFuncionarioRoleAction,
 } from "@/app/(app)/configuracoes/actions";
 import {
+  ASSIGNABLE_PROFILE_ROLE_OPTIONS,
   PROFILE_ROLE_LABEL,
-  PROFILE_ROLE_OPTIONS,
   type ProfileRole,
 } from "@/lib/auth/roles";
 import type { EquipeItem } from "@/lib/db/equipes";
@@ -152,7 +152,7 @@ export function ConfigView({
               />
               <input name="cargo" className="of-input" placeholder="Cargo (ex: Engenheiro Civil)" />
               <select name="role" className="of-input" defaultValue="visualizador" required>
-                {PROFILE_ROLE_OPTIONS.map((role) => (
+                {ASSIGNABLE_PROFILE_ROLE_OPTIONS.map((role) => (
                   <option key={role} value={role}>
                     {PROFILE_ROLE_LABEL[role]}
                   </option>
@@ -219,7 +219,7 @@ export function ConfigView({
                         defaultValue={item.role}
                         disabled={rolePending}
                       >
-                        {PROFILE_ROLE_OPTIONS.map((role) => (
+                        {ASSIGNABLE_PROFILE_ROLE_OPTIONS.map((role) => (
                           <option key={role} value={role}>
                             {PROFILE_ROLE_LABEL[role]}
                           </option>
