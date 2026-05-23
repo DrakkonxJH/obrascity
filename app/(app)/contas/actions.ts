@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { isAssignableProfileRole, type ProfileRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 async function assertControlTotal() {
@@ -265,5 +266,67 @@ export async function resetarSenhaUsuarioAction(profileId: string, formData: For
     targetType: "profile",
     targetId: profileId,
   });
+  revalidatePath("/contas");
+}
+
+export async function atualizarPerfilUsuarioAction(profileId: string, formData: FormData) {
+  await assertControlTotal();
+  const cargo = String(formData.get("cargo") ?? "").trim();
+  const roleRaw = String(formData.get("role") ?? "").trim().toLowerCase();
+  const role = roleRaw ? (roleRaw as ProfileRole) : null;
+
+  if (role && !isAssignableProfileRole(role)) {
+    throw new Error("Papel inválido");
+  }
+
+  const admin = createAdminClient();
+  const { data: targetProfile, error: loadError } = await admin
+    .from("profiles")
+    .select("id, empresa_id, role")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  if (loadError) {
+    throw new Error(`Erro ao carregar perfil: ${loadError.message}`);
+  }
+
+  if (!targetProfile?.id) {
+    throw new Error("Perfil não encontrado");
+  }
+
+  if (String(targetProfile.role ?? "").toLowerCase() === "master") {
+    throw new Error("Perfil master não pode ser alterado por esta tela");
+  }
+
+  const updatePayload: Record<string, unknown> = {
+    cargo: cargo || null,
+  };
+  if (role) {
+    updatePayload.role = role;
+  }
+
+  const { error } = await admin
+    .from("profiles")
+    .update(updatePayload)
+    .eq("id", profileId);
+
+  if (error) {
+    throw new Error(`Erro ao atualizar perfil: ${error.message}`);
+  }
+
+  await admin
+    .from("membros")
+    .update({ cargo: cargo || null })
+    .eq("empresa_id", targetProfile.empresa_id)
+    .eq("profile_id", profileId);
+
+  await logMasterAudit({
+    action: "perfil_atualizado",
+    targetType: "profile",
+    targetId: profileId,
+    empresaId: targetProfile.empresa_id,
+    details: { cargo: cargo || null, role: role ?? null },
+  });
+
   revalidatePath("/contas");
 }

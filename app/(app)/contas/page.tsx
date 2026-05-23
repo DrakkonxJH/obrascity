@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
 import { OpsTerminal } from "@/components/master/ops-terminal";
+import { ASSIGNABLE_PROFILE_ROLE_OPTIONS, PROFILE_ROLE_LABEL } from "@/lib/auth/roles";
 import {
   listAllEmpresas,
   listAllProfiles,
@@ -14,6 +15,7 @@ import {
   suspenderEmpresaAction,
   ativarEmpresaAction,
   alterarPlanoAction,
+  atualizarPerfilUsuarioAction,
   atualizarTicketSuporteAction,
   criarTicketSuporteAction,
   estenderPeriodoEmpresaAction,
@@ -127,13 +129,14 @@ const BTN_SM_GREEN: React.CSSProperties = { ...BTN_SM, color: "var(--of-green)",
 export default async function ContasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const profile = await getCurrentProfile();
   if (!isControlTotalOwner(profile)) redirect("/dashboard");
 
   const params = await searchParams;
   const tab = params.tab ?? "empresas";
+  const auditQuery = String(params.q ?? "").trim().toLowerCase();
 
   const [empresas, perfis, alertas, tentativas, tickets, auditLogs] = await Promise.all([
     listAllEmpresas(),
@@ -151,6 +154,21 @@ export default async function ContasPage({
   const empresasPagantes = empresas.filter((e) => e.assinatura_status === "active").length;
   const mrrEstimado = empresas.reduce((acc, e) => acc + (PLANO_MRR[e.plano] ?? 0), 0);
   const ticketsAbertos = tickets.filter((t) => t.status !== "resolvido" && t.status !== "fechado").length;
+  const filteredAuditLogs = auditLogs.filter((log) => {
+    if (!auditQuery) return true;
+    const haystack = [
+      log.actor_email,
+      log.action,
+      log.target_type,
+      log.target_id,
+      log.empresa_nome,
+      JSON.stringify(log.details ?? {}),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(auditQuery);
+  });
   const setup = {
     stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     resend: Boolean(process.env.RESEND_API_KEY),
@@ -334,6 +352,7 @@ export default async function ContasPage({
                 {perfis.map((p) => {
                   const removeAction = removerPerfilAction.bind(null, p.id);
                   const resetPasswordAction = resetarSenhaUsuarioAction.bind(null, p.id);
+                  const updateProfileAction = atualizarPerfilUsuarioAction.bind(null, p.id);
                   return (
                     <tr key={p.id}>
                       <td style={TD_STYLE}><span style={{ fontWeight: 500 }}>{p.nome}</span></td>
@@ -348,27 +367,70 @@ export default async function ContasPage({
                       </td>
                       <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDate(p.created_at)}</td>
                       <td style={TD_STYLE}>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          <form action={removeAction}>
-                            <button type="submit" style={BTN_SM_RED}>Remover</button>
+                        <div style={{ display: "grid", gap: 8 }}>
+                          <form action={updateProfileAction} style={{ display: "grid", gap: 4 }}>
+                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+                              <select
+                                name="role"
+                                defaultValue={p.role === "master" ? "" : p.role}
+                                disabled={p.role === "master"}
+                                style={{
+                                  minWidth: 140,
+                                  background: "var(--of-bg-3)",
+                                  border: "1px solid var(--of-border)",
+                                  borderRadius: 5,
+                                  color: "var(--of-text)",
+                                  padding: "3px 6px",
+                                  fontSize: "0.72rem",
+                                }}
+                              >
+                                <option value="">{p.role === "master" ? "Master" : "Papel"}</option>
+                                {ASSIGNABLE_PROFILE_ROLE_OPTIONS.map((role) => (
+                                  <option key={role} value={role}>
+                                    {PROFILE_ROLE_LABEL[role]}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                type="text"
+                                name="cargo"
+                                defaultValue={p.cargo ?? ""}
+                                placeholder="Cargo"
+                                style={{
+                                  minWidth: 120,
+                                  background: "var(--of-bg-3)",
+                                  border: "1px solid var(--of-border)",
+                                  borderRadius: 5,
+                                  color: "var(--of-text)",
+                                  padding: "3px 6px",
+                                  fontSize: "0.72rem",
+                                }}
+                              />
+                              <button type="submit" style={BTN_SM}>Salvar</button>
+                            </div>
                           </form>
-                          <form action={resetPasswordAction} style={{ display: "flex", gap: 4 }}>
-                            <input
-                              type="text"
-                              name="password"
-                              placeholder="Nova senha"
-                              style={{
-                                width: 120,
-                                background: "var(--of-bg-3)",
-                                border: "1px solid var(--of-border)",
-                                borderRadius: 5,
-                                color: "var(--of-text)",
-                                padding: "3px 6px",
-                                fontSize: "0.72rem",
-                              }}
-                            />
-                            <button type="submit" style={BTN_SM}>Reset senha</button>
-                          </form>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            <form action={removeAction}>
+                              <button type="submit" style={BTN_SM_RED}>Remover</button>
+                            </form>
+                            <form action={resetPasswordAction} style={{ display: "flex", gap: 4 }}>
+                              <input
+                                type="text"
+                                name="password"
+                                placeholder="Nova senha"
+                                style={{
+                                  width: 120,
+                                  background: "var(--of-bg-3)",
+                                  border: "1px solid var(--of-border)",
+                                  borderRadius: 5,
+                                  color: "var(--of-text)",
+                                  padding: "3px 6px",
+                                  fontSize: "0.72rem",
+                                }}
+                              />
+                              <button type="submit" style={BTN_SM}>Reset senha</button>
+                            </form>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -643,8 +705,36 @@ export default async function ContasPage({
       {tab === "auditoria" && (
         <article className="of-card">
           <div className="of-card-title" style={{ marginBottom: 12 }}>
-            Trilhas de auditoria do MASTER ({auditLogs.length})
+            Trilhas de auditoria do MASTER ({filteredAuditLogs.length})
           </div>
+          <form method="get" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+            <input type="hidden" name="tab" value="auditoria" />
+            <input
+              name="q"
+              defaultValue={params.q ?? ""}
+              placeholder="Buscar por ação, ator, alvo ou empresa"
+              className="of-input"
+              style={{ maxWidth: 340 }}
+            />
+            <button type="submit" className="of-btn-primary">Filtrar</button>
+            {auditQuery ? (
+              <a
+                href="/contas?tab=auditoria"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--of-border)",
+                  background: "transparent",
+                  color: "var(--of-text-2)",
+                  fontWeight: 600,
+                }}
+              >
+                Limpar
+              </a>
+            ) : null}
+          </form>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -657,7 +747,7 @@ export default async function ContasPage({
                 </tr>
               </thead>
               <tbody>
-                {auditLogs.map((log) => (
+                {filteredAuditLogs.map((log) => (
                   <tr key={log.id}>
                     <td style={TD_STYLE}>{fmtDatetime(log.created_at)}</td>
                     <td style={TD_STYLE}>{log.actor_email ?? "—"}</td>
@@ -666,7 +756,7 @@ export default async function ContasPage({
                     <td style={TD_STYLE}>{log.empresa_nome ?? "Plataforma"}</td>
                   </tr>
                 ))}
-                {auditLogs.length === 0 ? (
+                {filteredAuditLogs.length === 0 ? (
                   <tr><td colSpan={5} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Sem registros de auditoria.</td></tr>
                 ) : null}
               </tbody>
