@@ -78,6 +78,7 @@ export async function getMasterNotifications(limit = 30): Promise<MasterNotifica
       tempo: formatRelative(row.created_at),
       unread: true,
       href: "/contas?tab=seguranca",
+      destino: "Segurança",
       createdAt: new Date(row.created_at).getTime(),
     })),
     ...(ticketsRes.data ?? []).map((row: SupportTicketRow) => ({
@@ -87,6 +88,7 @@ export async function getMasterNotifications(limit = 30): Promise<MasterNotifica
       tempo: formatRelative(row.created_at),
       unread: OPEN_TICKET_STATUSES.has(row.status),
       href: "/contas?tab=suporte",
+      destino: "Suporte e SLA",
       createdAt: new Date(row.created_at).getTime(),
     })),
   ].sort((a, b) => b.createdAt - a.createdAt);

@@ -10,6 +10,7 @@ export type NotifDisplay = {
   tempo: string;
   unread: boolean;
   href?: string;
+  destino?: string;
 };
 
 type NotificationPanelProps = {
@@ -51,6 +52,7 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
               <>
                 <p className="of-notif-item-title">{item.titulo}</p>
                 <p className="of-notif-item-desc">{item.descricao}</p>
+                {item.destino ? <p className="of-notif-item-desc">{`Abre em: ${item.destino}`}</p> : null}
                 <p className="of-notif-item-time">{item.tempo}</p>
               </>
             );
@@ -61,6 +63,7 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
                   href={item.href}
                   className={`of-notif-item ${item.unread ? "unread" : ""}`}
                   onClick={closeNotif}
+                  title={item.destino ? `Abrir em ${item.destino}` : "Abrir notificação"}
                 >
                   {content}
                 </Link>
