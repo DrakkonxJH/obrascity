@@ -97,7 +97,10 @@ function normalizeDateEnd(value?: string) {
 
 function isMissingSchemaResource(message: string, resources: string[]) {
   const text = message.toLowerCase();
-  if (!text.includes("does not exist")) return false;
+  const isMissingResource =
+    text.includes("does not exist") ||
+    (text.includes("could not find the table") && text.includes("schema cache"));
+  if (!isMissingResource) return false;
   return resources.some((resource) => text.includes(resource.toLowerCase()));
 }
 

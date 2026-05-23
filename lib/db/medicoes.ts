@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
-import { ensureObraAtiva, listActiveObraIds } from "@/lib/db/obras";
+import { ensureObraAtiva, listActiveObraIds, listObras } from "@/lib/db/obras";
 
 export type MedicaoItem = {
   id: string;
@@ -71,27 +71,22 @@ export async function getEvmIndicadores() {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
 
-  const [financeiro, obras] = await Promise.all([
+  const [financeiro, obrasAtivas] = await Promise.all([
     supabase
       .from("obras_financeiro")
       .select("orcado, realizado")
       .eq("empresa_id", empresaId),
-    supabase.from("obras").select("progresso").eq("empresa_id", empresaId).is("deleted_at", null),
+    listObras(),
   ]);
 
   if (financeiro.error) {
     throw new Error(`Erro ao calcular EVM financeiro: ${financeiro.error.message}`);
   }
-  if (obras.error) {
-    throw new Error(`Erro ao calcular EVM obras: ${obras.error.message}`);
-  }
-
   const pv = (financeiro.data ?? []).reduce((acc, row) => acc + Number(row.orcado ?? 0), 0);
   const ac = (financeiro.data ?? []).reduce((acc, row) => acc + Number(row.realizado ?? 0), 0);
   const progressoMedio =
-    (obras.data ?? []).length > 0
-      ? (obras.data ?? []).reduce((acc, row) => acc + Number(row.progresso ?? 0), 0) /
-        (obras.data ?? []).length
+    obrasAtivas.length > 0
+      ? obrasAtivas.reduce((acc, row) => acc + Number(row.progresso ?? 0), 0) / obrasAtivas.length
       : 0;
   const ev = pv * (progressoMedio / 100);
 
