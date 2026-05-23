@@ -339,6 +339,7 @@ Smoke test mínimo:
 - Assinatura refletiu mudanças no banco após eventos Stripe (plano atualizado e status final `canceled` conforme evento de cancelamento).
 - Migration `0018_master_support_ops.sql` aplicada no remoto (`support_tickets`, `support_ticket_events`, `master_audit_logs`).
 - Painel MASTER expandido com abas de suporte, auditoria e runbooks; abertura/atualização de ticket, extensão de período e reset de senha com trilha de auditoria.
+- Terminal de operações do MASTER publicado em `/contas?tab=terminal`, com comandos reais de status, filas, alertas, tickets, tenants e logs (auditado em `master_audit_logs`).
 
 ---
 
