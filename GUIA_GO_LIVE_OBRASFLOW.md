@@ -207,11 +207,11 @@ Teste de aceite (após DNS ok):
 - [x] Price IDs configurados no ambiente.
 - [x] Webhook apontando para rota de produção.
 - [x] `STRIPE_WEBHOOK_SECRET` válido em produção.
-- [ ] Teste de checkout aprovado.
-- [ ] Teste de atualização de assinatura no banco.
+- [x] Teste de checkout aprovado.
+- [x] Teste de atualização de assinatura no banco.
 - [ ] Teste de cancelamento/downgrade.
-- [ ] Teste de evento fora de ordem no webhook (idempotência).
-- [ ] Teste de assinatura `past_due`/falha de pagamento.
+- [x] Teste de evento fora de ordem no webhook (idempotência).
+- [x] Teste de assinatura `past_due`/falha de pagamento.
 - [ ] Página de planos bloqueando ações por role corretamente.
 - [ ] Conferir impostos/fiscalidade aplicável (se houver cobrança no Brasil).
 
@@ -334,6 +334,9 @@ Smoke test mínimo:
 - Monitoramento automático publicado em `.github/workflows/ops-monitor.yml` (health, ops health e métricas de fila a cada 10 min).
 - Validação de SLO operacional automatizada (`npm run ops:slo-check`) com limiares de falha/fila.
 - Procedimento de rollback web + banco explicitado no `DEPLOYMENT_SETUP.md`.
+- Teste de integração Stripe executado contra produção (modo teste): `checkout.session.completed`, `customer.subscription.updated`, `past_due` e `deleted` com retorno HTTP 200.
+- Idempotência básica validada no webhook Stripe com reenvio do mesmo evento de checkout (duas execuções HTTP 200).
+- Assinatura refletiu mudanças no banco após eventos Stripe (plano atualizado e status final `canceled` conforme evento de cancelamento).
 
 ---
 
@@ -366,7 +369,7 @@ Smoke test mínimo:
 ### Bloco 2 - Em seguida (estabilização)
 - [x] Validar variáveis Production na Vercel.
 - [x] Rodar `lint`, `typecheck`, `build`.
-- [ ] Validar Stripe webhook + checkout teste.
+- [x] Validar Stripe webhook + checkout teste.
 - [x] Definir execução contínua do worker com monitoramento.
 
 ### Bloco 3 - Pré go-live
