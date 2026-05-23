@@ -70,6 +70,11 @@ export async function signUpAction(
   let createdUserId: string | null = null;
   const admin = createAdminClient();
 
+  function isInvalidJwtLikeError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    return /invalid jwt|jwt|auth session/i.test(message);
+  }
+
   async function runLegacySignupFlow() {
     const edgeResult = await invokeSignupEdgeFunction({
       nome,
@@ -115,11 +120,18 @@ export async function signUpAction(
   try {
     await assertSignupRateLimits({ email, ip: ip ?? null });
 
-    if (await emailAlreadyRegistered(email)) {
-      return {
-        ok: false,
-        message: "Este e-mail já possui cadastro. Faça login.",
-      };
+    try {
+      if (await emailAlreadyRegistered(email)) {
+        return {
+          ok: false,
+          message: "Este e-mail já possui cadastro. Faça login.",
+        };
+      }
+    } catch (error) {
+      if (isInvalidJwtLikeError(error)) {
+        return await runLegacySignupFlow();
+      }
+      throw error;
     }
 
     const appOrigin = requestOrigin ?? getAppOrigin();
@@ -129,6 +141,9 @@ export async function signUpAction(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error ?? "");
       if (message.includes("signup_verification_tokens")) {
+        return await runLegacySignupFlow();
+      }
+      if (isInvalidJwtLikeError(error)) {
         return await runLegacySignupFlow();
       }
       throw error;
@@ -167,6 +182,9 @@ export async function signUpAction(
     });
 
     if (createUserError || !createdUser.user?.id) {
+      if (isInvalidJwtLikeError(createUserError)) {
+        return await runLegacySignupFlow();
+      }
       throw new Error(createUserError?.message ?? "Não foi possível criar o usuário.");
     }
 

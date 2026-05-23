@@ -308,6 +308,20 @@ Deno.serve(async (request) => {
     return json(500, { ok: false, message: "Erro ao provisionar conta trial." });
   }
 
+  const { error: roleError } = await admin
+    .from("profiles")
+    .update({ role: "visualizador" })
+    .eq("id", userId);
+
+  if (roleError) {
+    await logAttempt(false, "trial_role_update_error");
+    await createAlert("high", "trial_role_update_error", {
+      error: roleError.message,
+      userId,
+    });
+    return json(500, { ok: false, message: "Erro ao ajustar perfil do cliente." });
+  }
+
   await admin.from("consent_events").insert({
     empresa_id: empresaId,
     profile_id: userId,

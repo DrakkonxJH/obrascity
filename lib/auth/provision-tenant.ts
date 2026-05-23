@@ -18,5 +18,14 @@ export async function provisionTrialTenant(input: {
     throw new Error(`Erro ao provisionar conta trial: ${error.message}`);
   }
 
+  const { error: roleError } = await admin
+    .from("profiles")
+    .update({ role: "visualizador" })
+    .eq("id", input.userId);
+
+  if (roleError) {
+    throw new Error(`Erro ao ajustar perfil cliente: ${roleError.message}`);
+  }
+
   return data as string;
 }

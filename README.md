@@ -153,6 +153,8 @@ types/             # TypeScript types
 **Erro Supabase:** Verifique credenciais e conexão  
 **Erro Stripe:** Configure variáveis quando estiver pronto
 **Erro no cadastro:** aplique a migration `supabase/migrations/0015_signup_email_verification.sql` antes de publicar; sem ela, a verificação usa fallback legado.
+**Erro `Invalid JWT` no cadastro:** confirme `SUPABASE_SERVICE_KEY` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`; se houver falha no fluxo novo, o cadastro cai automaticamente para o fluxo legado enquanto a origem do JWT é corrigida.
+**Conta criada como admin:** aplique também `supabase/migrations/0016_trial_signup_client_role.sql` para que novos cadastros trial sejam criados como `visualizador`, sem permissões de controle de outras contas.
 **Limite de cadastro por e-mail:** só é aplicado quando o e-mail já possui cadastro; e-mails novos ficam sujeitos apenas ao limite por IP.
 
 ## 📞 Suporte
