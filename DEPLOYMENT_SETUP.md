@@ -54,3 +54,40 @@ No painel da Vercel, em cada deployment, confira:
 ---
 
 **Workflow opcional:** `.github/workflows/deploy-vercel.yml`
+
+## Worker em execução contínua (produção)
+
+Como o worker não deve rodar junto da instância web, mantenha um processo dedicado.
+
+### Scripts já prontos
+
+- `npm run worker:start` -> inicia worker em modo produção
+- `npm run worker:health` -> valida Redis + `/api/health/ops`
+
+### Operação recomendada com PM2
+
+1. Instalar PM2 no host do worker: `npm i -g pm2`
+2. Iniciar: `pm2 start ecosystem.config.cjs`
+3. Persistir boot: `pm2 save && pm2 startup`
+4. Verificar saúde: `npm run worker:health`
+
+Arquivos de processo:
+- `ecosystem.config.cjs` (processo `obrasflow-worker`)
+- logs em `/tmp/obrasflow-worker.out.log` e `/tmp/obrasflow-worker.err.log`
+
+## Runbook operacional (incidente rápido)
+
+### Sintoma: jobs acumulando / falhando
+
+1. Verificar API operacional: `GET /api/health/ops`
+2. Verificar worker: `pm2 status obrasflow-worker`
+3. Reiniciar worker: `pm2 restart obrasflow-worker`
+4. Rodar healthcheck: `npm run worker:health`
+5. Se Redis estiver com política diferente de `noeviction`, ajustar no provedor gerenciado.
+
+### Sintoma: webhook Stripe falhando
+
+1. Confirmar `STRIPE_WEBHOOK_SECRET` no ambiente
+2. Confirmar endpoint ativo: `https://obrasflow.vercel.app/api/webhooks/stripe`
+3. Revisar eventos e tentativas no dashboard Stripe
+4. Reprocessar eventos pendentes após correção

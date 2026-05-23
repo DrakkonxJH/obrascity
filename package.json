@@ -9,6 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "worker:dev": "tsx worker/src/index.ts",
+    "worker:start": "NODE_ENV=production tsx worker/src/index.ts",
+    "worker:health": "node scripts/worker-healthcheck.mjs",
     "push": "bash scripts/push.sh"
   },
   "dependencies": {

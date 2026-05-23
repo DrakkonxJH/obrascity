@@ -223,8 +223,8 @@ Base existente:
 
 Pendências:
 - [ ] Provisionar Redis produtivo estável.
-- [ ] Definir processo contínuo de worker em produção (separado da web).
-- [ ] Definir estratégia de restart automático e health checks do worker.
+- [x] Definir processo contínuo de worker em produção (separado da web).
+- [x] Definir estratégia de restart automático e health checks do worker.
 - [ ] Monitorar jobs falhos e dead-letter strategy.
 - [ ] Definir concorrência por fila e limites para evitar sobrecarga.
 - [ ] Definir política de retry/backoff por tipo de job.
@@ -255,7 +255,7 @@ Pendências:
   - erro de webhook Stripe,
   - aumento de jobs falhos.
 - [ ] Dashboard de métricas operacionais e erro.
-- [ ] Runbook de incidente publicado.
+- [x] Runbook de incidente publicado.
 - [ ] Definir alertas de custo (Vercel, Supabase, Stripe, Resend, Redis).
 - [ ] Definir limites de taxa para proteção operacional (rate limiting por rota).
 - [ ] Monitor de disponibilidade externo (uptime check) com alerta.
@@ -328,6 +328,8 @@ Smoke test mínimo:
 - Re-deploy de produção executado após configuração de variáveis de billing.
 - Endpoint de webhook responde em produção (400 esperado sem assinatura `stripe-signature`).
 - Resend API key fornecida agora aceita listagem da conta (retorno sem domínios cadastrados no momento).
+- Processo contínuo do worker documentado com PM2 (`ecosystem.config.cjs`) e script de healthcheck (`npm run worker:health`).
+- Runbook operacional de incidente publicado no `DEPLOYMENT_SETUP.md` (worker + Stripe webhook).
 
 ---
 
