@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
@@ -125,20 +124,6 @@ const BTN_SM: React.CSSProperties = {
 const BTN_SM_RED: React.CSSProperties = { ...BTN_SM, color: "var(--of-red)", borderColor: "var(--of-red)44" };
 const BTN_SM_GREEN: React.CSSProperties = { ...BTN_SM, color: "var(--of-green)", borderColor: "var(--of-green)44" };
 
-function TabLink({ href, label, active }: { href: string; label: string; active: boolean }) {
-  return (
-    <Link href={href} style={{
-      padding: "8px 18px", borderRadius: 6, fontSize: "0.85rem", fontWeight: 500,
-      background: active ? "var(--of-bg-4)" : "transparent",
-      color: active ? "var(--of-text)" : "var(--of-text-3)",
-      border: active ? "1px solid var(--of-border)" : "1px solid transparent",
-      transition: "all 0.15s",
-    }}>
-      {label}
-    </Link>
-  );
-}
-
 export default async function ContasPage({
   searchParams,
 }: {
@@ -218,21 +203,6 @@ export default async function ContasPage({
             {tentativas.filter((t) => !t.success).length} falhas recentes
           </p>
         </article>
-      </div>
-
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        <TabLink href="/contas?tab=empresas" label="🏢 Empresas" active={tab === "empresas"} />
-        <TabLink href="/contas?tab=usuarios" label="👥 Usuários" active={tab === "usuarios"} />
-        <TabLink href="/contas?tab=faturamento" label="💳 Faturamento" active={tab === "faturamento"} />
-        <TabLink href="/contas?tab=operacao" label="📈 Operação" active={tab === "operacao"} />
-        <TabLink href="/contas?tab=integracoes" label="🔌 Integrações" active={tab === "integracoes"} />
-        <TabLink href="/contas?tab=deploy" label="🚀 Deploy" active={tab === "deploy"} />
-        <TabLink href="/contas?tab=suporte" label="🆘 Suporte" active={tab === "suporte"} />
-        <TabLink href="/contas?tab=auditoria" label="🧾 Auditoria" active={tab === "auditoria"} />
-        <TabLink href="/contas?tab=runbooks" label="📚 Runbooks" active={tab === "runbooks"} />
-        <TabLink href="/contas?tab=terminal" label="🖥️ Terminal TI" active={tab === "terminal"} />
-        <TabLink href="/contas?tab=seguranca" label="🔒 Segurança" active={tab === "seguranca"} />
       </div>
 
       {/* ── TAB: EMPRESAS ── */}
