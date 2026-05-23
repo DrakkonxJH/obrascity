@@ -68,7 +68,27 @@ export async function signUpAction(
   } = signupData;
 
   let createdUserId: string | null = null;
-  const admin = createAdminClient();
+  let admin;
+
+  try {
+    admin = createAdminClient();
+  } catch (adminError) {
+    const message = adminError instanceof Error ? adminError.message : "Erro ao configurar admin";
+    await createSecurityAlert({
+      category: "signup",
+      severity: "high",
+      reason: "admin_client_init_error",
+      email,
+      ip: ip ?? null,
+      metadata: {
+        error: message,
+      },
+    });
+    return {
+      ok: false,
+      message: "Sistema indisponível. Tente novamente em alguns minutos.",
+    };
+  }
 
   function isInvalidJwtLikeError(error: unknown) {
     const message = error instanceof Error ? error.message : String(error ?? "");
