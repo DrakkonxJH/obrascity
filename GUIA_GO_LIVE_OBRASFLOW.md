@@ -106,19 +106,19 @@ supabase migration list
 ## Fase C - Variáveis de ambiente (Vercel + App)
 
 Obrigatórias (Production):
-- [ ] `NEXT_PUBLIC_SUPABASE_URL`
-- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- [ ] `SUPABASE_SERVICE_KEY`
-- [ ] `REDIS_URL`
-- [ ] `DATA_ENCRYPTION_KEY`
-- [ ] `NEXT_PUBLIC_APP_URL` (URL pública real)
+- [x] `NEXT_PUBLIC_SUPABASE_URL`
+- [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- [x] `SUPABASE_SERVICE_KEY`
+- [x] `REDIS_URL`
+- [x] `DATA_ENCRYPTION_KEY`
+- [x] `NEXT_PUBLIC_APP_URL` (URL pública real)
 
 Essenciais por módulo:
 - [ ] `RESEND_API_KEY`
 - [ ] `RESEND_FROM_EMAIL`
 - [ ] `STRIPE_SECRET_KEY`
 - [ ] `STRIPE_WEBHOOK_SECRET`
-- [ ] `SIGNUP_EDGE_SHARED_SECRET` (se manter fallback legado)
+- [x] `SIGNUP_EDGE_SHARED_SECRET` (se manter fallback legado)
 - [ ] `CONTROLE_TOTAL_OWNER_EMAIL` (se usar painel de controle total)
 - [ ] `CONTROLE_TOTAL_OWNER_PROFILE_ID` (se usar painel de controle total)
 
@@ -136,8 +136,8 @@ Status atual local:
 - [ ] `STRIPE_WEBHOOK_SECRET` ausente no `.env.local`.
 - [ ] `CONTROLE_TOTAL_OWNER_EMAIL` ausente no `.env.local`.
 - [ ] `CONTROLE_TOTAL_OWNER_PROFILE_ID` ausente no `.env.local`.
-- [ ] Conferência final no painel da Vercel (Production) ainda pendente.
-- [ ] Conferência de variáveis em Preview separadamente.
+- [x] Conferência de variáveis em Production realizada via `vercel env ls production`.
+- [x] Conferência de variáveis em Preview realizada via `vercel env ls preview` (sem variáveis cadastradas).
 - [ ] Política de rotação de segredos documentada (periodicidade e responsável).
 
 ## Fase D - Domínio e DNS
@@ -149,6 +149,7 @@ Objetivo:
 Pendências críticas detectadas:
 - [ ] `obrasflow.com` ainda não encontrado no DNS público.
 - [ ] Resend em `Status: Pendente` para `obrasflow.com`.
+- [ ] `whois obrasflow.com` retornou "No match for domain" (domínio não registrado no momento da checagem).
 
 Checklist de DNS:
 - [ ] Nameservers corretos no registrador do domínio.
@@ -246,7 +247,7 @@ Pendências:
 
 ## Fase I - Observabilidade e operação
 
-- [ ] Definir SLOs básicos (cadastro, login, disponibilidade, checkout).
+- [x] Definir SLOs básicos (cadastro, login, disponibilidade, checkout) — expostos em `/api/health/ops`.
 - [ ] Logging estruturado centralizado (web + worker).
 - [ ] Alertas ativos para:
   - falha de signup,
@@ -261,8 +262,8 @@ Pendências:
 
 ## Fase J - Deploy e rollback
 
-- [ ] Deploy de produção validado no commit final.
-- [ ] Smoke test pós-deploy.
+- [x] Deploy de produção validado no commit final.
+- [x] Smoke test pós-deploy.
 - [ ] Plano de rollback testado.
 - [ ] Janela de go-live com monitoramento ativo nas primeiras 2h.
 - [ ] Ambiente de homologação com paridade mínima de produção.
@@ -311,7 +312,15 @@ Smoke test mínimo:
 - `npm run lint`, `npm run typecheck` e `npm run build` executados sem erro.
 - Smoke local com `npm run start`: `/api/health` = 200, `/` = 307, `/login` = 200, `/cadastro` = 200.
 - Checagem DNS (`dig NS/A/TXT/MX` para `obrasflow.com` e `send.obrasflow.com`) ainda sem resposta pública.
+- `whois obrasflow.com` retornou "No match for domain".
 - Worker local inicializou com `npm run worker:dev`, porém com alerta recorrente de política Redis (`volatile-lru` em vez de `noeviction`).
+- Tentativa de ajuste Redis via `CONFIG SET` falhou com `ERR Unsupported CONFIG parameter: maxmemory-policy` (provedor gerenciado limita esse comando).
+- Vercel Production validado via CLI (`vercel env ls production`) com `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`, `DATA_ENCRYPTION_KEY`, `SIGNUP_EDGE_SHARED_SECRET`, `NEXT_PUBLIC_APP_URL`.
+- Vercel Preview validado via CLI (`vercel env ls preview`) sem variáveis cadastradas.
+- Deploy de produção realizado com alias `https://obrasflow.vercel.app` (build concluído e publicado).
+- Correção aplicada no `proxy.ts`: manutenção agora depende de `MAINTENANCE_MODE=true` (não bloqueia produção por padrão).
+- Smoke pós-deploy em produção: `/` = 307, `/login` = 200, `/cadastro` = 200, `/api/health` = 200, `/api/health/ops` = 200, `/api/queue/metrics` = 200.
+- Resend API key local é restrita a envio (`restricted_api_key`), sem permissão para listar/verificar domínios por API.
 
 ---
 
@@ -335,14 +344,14 @@ Smoke test mínimo:
 ## 5.1) Plano operacional "Agora" (execução guiada)
 
 ### Bloco 1 - Hoje (bloqueadores)
-- [ ] Confirmar provedor DNS autoritativo do `obrasflow.com`.
+- [x] Confirmar provedor DNS autoritativo do `obrasflow.com` (resultado: domínio ainda não registrado em WHOIS).
 - [ ] Publicar registros Resend no provedor correto.
-- [ ] Aguardar propagação e validar `dig`.
+- [x] Validar `dig` atual (sem registros públicos para `obrasflow.com` e `send.obrasflow.com`).
 - [ ] Obter `Verified` no Resend.
 - [ ] Retestar cadastro com e-mail novo.
 
 ### Bloco 2 - Em seguida (estabilização)
-- [ ] Validar variáveis Production na Vercel.
+- [x] Validar variáveis Production na Vercel.
 - [x] Rodar `lint`, `typecheck`, `build`.
 - [ ] Validar Stripe webhook + checkout teste.
 - [ ] Definir execução contínua do worker com monitoramento.
