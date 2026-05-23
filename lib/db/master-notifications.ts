@@ -34,9 +34,17 @@ function formatRelative(iso: string) {
   return "ontem";
 }
 
-export async function getMasterNotifications(limit = 8): Promise<MasterNotificationResult> {
+export async function getMasterNotifications(limit = 30): Promise<MasterNotificationResult> {
   const admin = createAdminClient();
-  const [alertsRes, ticketsRes, empresasRes] = await Promise.all([
+  const [alertsCountRes, ticketsCountRes, alertsRes, ticketsRes, empresasRes] = await Promise.all([
+    admin
+      .from("security_alerts")
+      .select("id", { head: true, count: "exact" })
+      .eq("severity", "high"),
+    admin
+      .from("support_tickets")
+      .select("id", { head: true, count: "exact" })
+      .in("status", Array.from(OPEN_TICKET_STATUSES)),
     admin
       .from("security_alerts")
       .select("id, category, severity, reason, created_at")
@@ -52,6 +60,8 @@ export async function getMasterNotifications(limit = 8): Promise<MasterNotificat
     admin.from("empresas").select("id, nome"),
   ]);
 
+  if (alertsCountRes.error) throw new Error(alertsCountRes.error.message);
+  if (ticketsCountRes.error) throw new Error(ticketsCountRes.error.message);
   if (alertsRes.error) throw new Error(alertsRes.error.message);
   if (ticketsRes.error) throw new Error(ticketsRes.error.message);
 
@@ -83,6 +93,6 @@ export async function getMasterNotifications(limit = 8): Promise<MasterNotificat
 
   return {
     items: items.slice(0, limit),
-    unreadCount: items.filter((item) => item.unread).length,
+    unreadCount: (alertsCountRes.count ?? 0) + (ticketsCountRes.count ?? 0),
   };
 }
