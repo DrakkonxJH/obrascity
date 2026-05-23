@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
 import { getAppOrigin } from "@/lib/validations/env";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -10,6 +11,7 @@ import {
   findPendingSignupVerification,
   issueSignupVerification,
 } from "@/lib/auth/signup-verification";
+import { invokeSignupEdgeFunction } from "@/lib/auth/signup-edge-client";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
 
 export type SignupActionState = {
@@ -53,15 +55,62 @@ export async function signUpAction(
     return { ok: false, message };
   }
 
+  const signupData = parsed.data;
+  if (!signupData) {
+    return { ok: false, message: "Dados invalidos" };
+  }
+
   const {
     nome,
     empresaNome,
     email,
     password,
-  } = parsed.data;
+  } = signupData;
 
   let createdUserId: string | null = null;
   const admin = createAdminClient();
+
+  async function runLegacySignupFlow() {
+    const edgeResult = await invokeSignupEdgeFunction({
+      nome,
+      empresaNome,
+      email,
+      password,
+      confirmPassword: signupData.confirmPassword,
+      acceptTerms: signupData.acceptTerms,
+      ip: ip ?? null,
+      userAgent,
+      appOrigin: requestOrigin ?? getAppOrigin(),
+    });
+
+    if (!edgeResult.ok) {
+      return { ok: false, message: edgeResult.message };
+    }
+
+    if (edgeResult.accessToken && edgeResult.refreshToken) {
+      const supabase = await createServerClient();
+      const { error } = await supabase.auth.setSession({
+        access_token: edgeResult.accessToken,
+        refresh_token: edgeResult.refreshToken,
+      });
+
+      if (error) {
+        return {
+          ok: true,
+          message: "Conta criada com sucesso. Entre com e-mail e senha para acessar o sistema.",
+          needsEmailConfirmation: edgeResult.needsEmailConfirmation,
+          needsLogin: true,
+        };
+      }
+    }
+
+    return {
+      ok: true,
+      needsEmailConfirmation: edgeResult.needsEmailConfirmation,
+      needsLogin: Boolean(edgeResult.needsEmailConfirmation),
+      message: edgeResult.message,
+    };
+  }
 
   try {
     await assertSignupRateLimits({ email, ip: ip ?? null });
@@ -74,7 +123,16 @@ export async function signUpAction(
     }
 
     const appOrigin = requestOrigin ?? getAppOrigin();
-    const existingPending = await findPendingSignupVerification(email);
+    let existingPending;
+    try {
+      existingPending = await findPendingSignupVerification(email);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "");
+      if (message.includes("signup_verification_tokens")) {
+        return await runLegacySignupFlow();
+      }
+      throw error;
+    }
 
     if (existingPending) {
       if (!existingPending.user_id) {
