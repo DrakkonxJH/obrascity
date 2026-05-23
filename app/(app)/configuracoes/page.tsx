@@ -20,6 +20,7 @@ export default async function ConfiguracoesPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const rawRole = String(profile?.role ?? "");
   const userRole = isProfileRole(rawRole) ? rawRole : "visualizador";
+  const isMaster = userRole === "master";
 
   return (
     <ConfigView
@@ -29,6 +30,7 @@ export default async function ConfiguracoesPage() {
       userName={profile?.nome ?? profile?.email?.split("@")[0] ?? "Usuário"}
       userEmail={profile?.email ?? ""}
       userRole={userRole}
+      isMaster={isMaster}
       companyProfiles={companyProfiles}
       equipes={equipes}
       privacyRequests={privacyRequests}

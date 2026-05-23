@@ -24,6 +24,7 @@ type ConfigViewProps = {
   userName: string;
   userEmail: string;
   userRole: ProfileRole;
+  isMaster: boolean;
   companyProfiles: EmpresaProfileItem[];
   equipes: EquipeItem[];
   privacyRequests: Array<{
@@ -43,6 +44,7 @@ export function ConfigView({
   userName,
   userEmail,
   userRole,
+  isMaster,
   companyProfiles,
   equipes,
   privacyRequests,
@@ -64,32 +66,34 @@ export function ConfigView({
   return (
     <section className="of-page">
       <div className="of-config-grid">
-        <article className="of-config-section">
-          <p className="of-config-title">🔗 Integração Supabase</p>
-          <p className="of-config-desc">Conecte seu banco de dados para persistência real de dados</p>
-          <div className="of-sb-connection-card">
-            <span className={`of-sb-dot ${isConnected ? "connected" : "disconnected"}`} />
-            <div>
-              <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>
-                {isConnected ? "Conectado (Supabase Live)" : "Desconectado (modo demo)"}
-              </p>
-              <p style={{ fontSize: "0.75rem", color: "var(--of-text-2)" }}>
-                {supabaseUrl || "Nenhuma URL configurada"}
-              </p>
+        {isMaster ? (
+          <article className="of-config-section">
+            <p className="of-config-title">🔗 Integração Supabase</p>
+            <p className="of-config-desc">Conecte seu banco de dados para persistência real de dados</p>
+            <div className="of-sb-connection-card">
+              <span className={`of-sb-dot ${isConnected ? "connected" : "disconnected"}`} />
+              <div>
+                <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                  {isConnected ? "Conectado (Supabase Live)" : "Desconectado (modo demo)"}
+                </p>
+                <p style={{ fontSize: "0.75rem", color: "var(--of-text-2)" }}>
+                  {supabaseUrl || "Nenhuma URL configurada"}
+                </p>
+              </div>
             </div>
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="of-form-label">Supabase URL</label>
-            <input className="of-input" readOnly value={supabaseUrl} placeholder="https://xxxx.supabase.co" />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="of-form-label">Anon Key</label>
-            <input className="of-input" readOnly type="password" value="••••••••••••" placeholder="eyJhbGc..." />
-          </div>
-          <button type="button" className="of-btn-primary" style={{ width: "100%" }} disabled={!isConnected}>
-            Salvar e Conectar
-          </button>
-        </article>
+            <div style={{ marginBottom: 16 }}>
+              <label className="of-form-label">Supabase URL</label>
+              <input className="of-input" readOnly value={supabaseUrl} placeholder="https://xxxx.supabase.co" />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label className="of-form-label">Anon Key</label>
+              <input className="of-input" readOnly type="password" value="••••••••••••" placeholder="eyJhbGc..." />
+            </div>
+            <button type="button" className="of-btn-primary" style={{ width: "100%" }} disabled={!isConnected}>
+              Salvar e Conectar
+            </button>
+          </article>
+        ) : null}
 
         <article className="of-config-section">
           <p className="of-config-title">⚙️ Preferências</p>

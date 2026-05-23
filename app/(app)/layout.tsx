@@ -21,10 +21,10 @@ export default async function AppLayout({
   }
 
   const profile = await getCurrentProfile();
-  if (!profile?.empresa_id) {
+  const canAccessControlTotal = isControlTotalOwner(profile);
+  if (!profile?.empresa_id && !canAccessControlTotal) {
     redirect("/conta-pendente");
   }
-  const canAccessControlTotal = isControlTotalOwner(profile);
   const adminManagementOnly = canAccessControlTotal;
 
   const [summary, notificacoes, equipes, trashEnabled] = await Promise.all([

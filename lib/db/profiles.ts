@@ -18,6 +18,7 @@ export async function listEmpresaProfiles(): Promise<EmpresaProfileItem[]> {
     .from("profiles")
     .select("id, nome, email, cargo, role, created_at")
     .eq("empresa_id", empresaId)
+    .neq("role", "master")
     .order("created_at", { ascending: true });
 
   if (error) {
