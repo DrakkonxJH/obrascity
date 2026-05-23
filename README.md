@@ -152,6 +152,7 @@ types/             # TypeScript types
 **Erro Redis:** Verifique `REDIS_URL` em `.env.local`  
 **Erro Supabase:** Verifique credenciais e conexão  
 **Erro Stripe:** Configure variáveis quando estiver pronto
+**Erro no cadastro:** aplique a migration `supabase/migrations/0015_signup_email_verification.sql` antes de publicar; sem ela, a verificação usa fallback legado.
 
 ## 📞 Suporte
 

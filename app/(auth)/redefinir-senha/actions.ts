@@ -21,21 +21,35 @@ export async function resetPasswordAction(
     return { ok: false, message: "As senhas não conferem." };
   }
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  function isInvalidAuthSessionError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    return /invalid jwt|jwt|auth session/i.test(message);
+  }
 
-  if (!user) {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    if (isInvalidAuthSessionError(error)) {
+      return {
+        ok: false,
+        message: "Sessão de recuperação inválida. Solicite um novo link.",
+      };
+    }
+
+    throw error;
+  }
+
+  if (!data.user) {
     return {
       ok: false,
       message: "Sessão de recuperação inválida. Solicite um novo link.",
     };
   }
 
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) {
-    return { ok: false, message: error.message };
+  const { error: updateError } = await supabase.auth.updateUser({ password });
+  if (updateError) {
+    return { ok: false, message: updateError.message };
   }
 
   return { ok: true, message: "Senha redefinida com sucesso." };
