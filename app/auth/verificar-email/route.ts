@@ -47,7 +47,13 @@ export async function GET(request: Request) {
       nome: claimed.nome,
       empresaNome: claimed.empresa_nome,
     });
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    if (/invalid jwt|jwt|auth session/i.test(message)) {
+      return NextResponse.redirect(
+        new URL("/login?error=verification_jwt_failed", requestUrl.origin),
+      );
+    }
     return NextResponse.redirect(
       new URL("/login?error=verification_provision_failed", requestUrl.origin),
     );
@@ -58,6 +64,12 @@ export async function GET(request: Request) {
   });
 
   if (confirmError) {
+    const message = confirmError instanceof Error ? confirmError.message : String(confirmError ?? "");
+    if (/invalid jwt|jwt|auth session/i.test(message)) {
+      return NextResponse.redirect(
+        new URL("/login?error=verification_jwt_failed", requestUrl.origin),
+      );
+    }
     return NextResponse.redirect(
       new URL("/login?error=verification_confirm_failed", requestUrl.origin),
     );
