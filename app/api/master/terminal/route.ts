@@ -151,7 +151,7 @@ async function executeCommand(rawCommand: string): Promise<CommandResult> {
     const limit = parseLimit(args[0], 10, 100);
     const [empresasRes, assinaturasRes, profilesRes] = await Promise.all([
       admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }).limit(limit),
-      admin.from("assinaturas").select("empresa_id, plano, status"),
+      admin.from("assinaturas").select("empresa_id, plano, status").order("created_at", { ascending: false }),
       admin.from("profiles").select("empresa_id"),
     ]);
     if (empresasRes.error) throw new Error(empresasRes.error.message);

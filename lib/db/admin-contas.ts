@@ -76,7 +76,7 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
 
   const [empresasRes, assinaturasRes, profilesRes] = await Promise.all([
     admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }),
-    admin.from("assinaturas").select("empresa_id, id, plano, status, periodo_fim"),
+    admin.from("assinaturas").select("empresa_id, id, plano, status, periodo_fim").order("created_at", { ascending: false }),
     admin.from("profiles").select("empresa_id"),
   ]);
 
