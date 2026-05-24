@@ -30,32 +30,15 @@ const nextConfig: NextConfig = {
         },
         {
           key: "Content-Security-Policy",
-            value:
+          value:
             "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
         },
       );
     }
 
-    const crmProxyHeaders = headers.filter((header) => header.key !== "X-Frame-Options");
-    if (process.env.NODE_ENV === "production") {
-      for (let index = crmProxyHeaders.length - 1; index >= 0; index -= 1) {
-        if (crmProxyHeaders[index]?.key === "Content-Security-Policy") {
-          crmProxyHeaders.splice(index, 1);
-        }
-      }
-      crmProxyHeaders.push({
-        key: "Content-Security-Policy",
-        value: "frame-ancestors 'self';",
-      });
-    }
-
     return [
       {
-        source: "/api/crm/proxy/:path*",
-        headers: crmProxyHeaders,
-      },
-      {
-        source: "/((?!api/crm/proxy).*)",
+        source: "/(.*)",
         headers,
       },
     ];

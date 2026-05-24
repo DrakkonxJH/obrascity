@@ -30,13 +30,25 @@ const DISPOSABLE_DOMAINS = new Set([
   "yopmail.com",
 ]);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signup-edge-secret",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOWED_ORIGINS = new Set([
+  "https://obrasflow.com",
+  "https://www.obrasflow.com",
+  "https://obrasflow.vercel.app",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+]);
 
-function json(status: number, body: SignupResponse) {
+function buildCorsHeaders(origin: string | null) {
+  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://obrasflow.com";
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signup-edge-secret",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
+
+function json(status: number, body: SignupResponse, corsHeaders: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -146,12 +158,15 @@ async function sha256Hex(input: string) {
 }
 
 Deno.serve(async (request) => {
+  const origin = request.headers.get("origin");
+  const corsHeaders = buildCorsHeaders(origin);
+
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   if (request.method !== "POST") {
-    return json(405, { ok: false, message: "Método não permitido." });
+    return json(405, { ok: false, message: "Método não permitido." }, corsHeaders);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -160,19 +175,19 @@ Deno.serve(async (request) => {
   const edgeSecret = Deno.env.get("SIGNUP_EDGE_SHARED_SECRET");
 
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
-    return json(500, { ok: false, message: "Configuração do backend incompleta." });
+    return json(500, { ok: false, message: "Configuração do backend incompleta." }, corsHeaders);
   }
 
   if (edgeSecret) {
     const requestSecret = request.headers.get("x-signup-edge-secret");
     if (requestSecret !== edgeSecret) {
-      return json(401, { ok: false, message: "Solicitação não autorizada." });
+      return json(401, { ok: false, message: "Solicitação não autorizada." }, corsHeaders);
     }
   }
 
   const payloadResult = parsePayload(await request.json());
   if (!payloadResult.ok) {
-    return json(400, { ok: false, message: payloadResult.reason });
+    return json(400, { ok: false, message: payloadResult.reason }, corsHeaders);
   }
 
   const payload = payloadResult.data;
@@ -233,12 +248,12 @@ Deno.serve(async (request) => {
     return json(429, {
       ok: false,
       message: "Muitas tentativas de cadastro. Aguarde e tente novamente.",
-    });
+    }, corsHeaders);
   }
 
   if (isDisposableEmail(email)) {
     await logAttempt(false, "disposable_email");
-    return json(400, { ok: false, message: "Use um e-mail corporativo ou pessoal válido." });
+    return json(400, { ok: false, message: "Use um e-mail corporativo ou pessoal válido." }, corsHeaders);
   }
 
   const { data: existingProfile, error: existingProfileError } = await admin
@@ -252,12 +267,12 @@ Deno.serve(async (request) => {
     await createAlert("medium", "email_validation_error", {
       error: existingProfileError.message,
     });
-    return json(500, { ok: false, message: "Não foi possível validar o e-mail." });
+    return json(500, { ok: false, message: "Não foi possível validar o e-mail." }, corsHeaders);
   }
 
   if (existingProfile?.id) {
     await logAttempt(false, "email_exists");
-    return json(409, { ok: false, message: "Este e-mail já possui cadastro. Faça login." });
+    return json(409, { ok: false, message: "Este e-mail já possui cadastro. Faça login." }, corsHeaders);
   }
 
   const signupClient = createClient(supabaseUrl, anonKey, {
@@ -282,14 +297,14 @@ Deno.serve(async (request) => {
     await createAlert("medium", "signup_auth_error", {
       error: signUpError.message,
     });
-    return json(400, { ok: false, message: signUpError.message });
+    return json(400, { ok: false, message: signUpError.message }, corsHeaders);
   }
 
   const userId = signUpData.user?.id;
   if (!userId) {
     await logAttempt(false, "missing_user_id");
     await createAlert("high", "missing_user_id", {});
-    return json(500, { ok: false, message: "Não foi possível criar o usuário. Tente novamente." });
+    return json(500, { ok: false, message: "Não foi possível criar o usuário. Tente novamente." }, corsHeaders);
   }
 
   const { data: empresaId, error: provisionError } = await admin.rpc("provision_trial_tenant", {
@@ -305,7 +320,7 @@ Deno.serve(async (request) => {
       error: provisionError.message,
       userId,
     });
-    return json(500, { ok: false, message: "Erro ao provisionar conta trial." });
+    return json(500, { ok: false, message: "Erro ao provisionar conta trial." }, corsHeaders);
   }
 
   const { error: roleError } = await admin
@@ -319,7 +334,7 @@ Deno.serve(async (request) => {
       error: roleError.message,
       userId,
     });
-    return json(500, { ok: false, message: "Erro ao ajustar perfil do cliente." });
+    return json(500, { ok: false, message: "Erro ao ajustar perfil do cliente." }, corsHeaders);
   }
 
   await admin.from("consent_events").insert({
@@ -347,5 +362,5 @@ Deno.serve(async (request) => {
     refreshToken: session?.refresh_token,
     userId,
     empresaId: (empresaId as string) ?? undefined,
-  });
+  }, corsHeaders);
 });

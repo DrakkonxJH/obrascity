@@ -2,9 +2,18 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { signInAction, type LoginActionState } from "./actions";
+import {
+  resendConfirmationAction,
+  signInAction,
+  type LoginActionState,
+  type ResendConfirmationState,
+} from "./actions";
 
 const initialState: LoginActionState = {
+  ok: false,
+  message: "",
+};
+const initialResendState: ResendConfirmationState = {
   ok: false,
   message: "",
 };
@@ -15,6 +24,10 @@ type LoginFormProps = {
 
 export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(signInAction, initialState);
+  const [resendState, resendAction, resendPending] = useActionState(
+    resendConfirmationAction,
+    initialResendState,
+  );
 
   return (
     <>
@@ -78,6 +91,40 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
         <Link href="/cadastro" className="of-login-v2-demo">
           Cadastre-se
         </Link>
+      </form>
+
+      <form action={resendAction} autoComplete="off" className="of-login-v2-form mt-4">
+        <div className="of-login-v2-field">
+          <label className="of-login-v2-label" htmlFor="resend-email">
+            Reenviar confirmação de e-mail
+          </label>
+          <input
+            id="resend-email"
+            name="email"
+            type="email"
+            autoComplete="off"
+            defaultValue=""
+            required
+            className="of-login-v2-input"
+            placeholder="seu-email@empresa.com.br"
+          />
+        </div>
+
+        {resendState.message ? (
+          <p
+            className={
+              resendState.ok
+                ? "of-login-v2-message of-login-v2-message-success"
+                : "of-login-v2-error"
+            }
+          >
+            {resendState.message}
+          </p>
+        ) : null}
+
+        <button type="submit" disabled={resendPending} className="of-login-v2-demo">
+          {resendPending ? "Reenviando..." : "Reenviar confirmação"}
+        </button>
       </form>
     </>
   );
