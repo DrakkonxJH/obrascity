@@ -77,7 +77,38 @@ function buildResponseHeaders(upstream: Headers, internalOrigin: string, appOrig
 async function handleProxy(request: NextRequest, context: { params: Promise<{ path?: string[] }> }) {
   const env = getEnv();
   if (!env.CRM_INTERNAL_URL) {
-    return NextResponse.json({ error: "CRM interno não configurado" }, { status: 503 });
+    const html = `<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CRM interno não configurado</title>
+    <style>
+      body { margin:0; font-family: Inter, system-ui, -apple-system, sans-serif; background:#060b18; color:#dce7ff; }
+      .wrap { max-width: 760px; margin: 40px auto; padding: 20px; }
+      .card { border:1px solid #1f355e; border-radius: 14px; background:#0b1326; padding: 18px; }
+      h1 { margin:0 0 10px; font-size: 1.2rem; }
+      p { margin:8px 0; color:#a9b8d8; line-height:1.5; }
+      code { background:#0f1e3d; border:1px solid #224476; padding:2px 6px; border-radius:6px; color:#d0e2ff; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>CRM interno não configurado</h1>
+        <p>O novo CRM foi ativado, mas a URL do WeKan interno ainda não foi definida no ambiente de produção.</p>
+        <p>Configure a variável <code>CRM_INTERNAL_URL</code> na Vercel (Production) com a URL do serviço WeKan.</p>
+      </div>
+    </div>
+  </body>
+</html>`;
+    return new NextResponse(html, {
+      status: 503,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+      },
+    });
   }
 
   let profile: Awaited<ReturnType<typeof requireClientProfileOrThrow>>;
