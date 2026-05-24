@@ -1,6 +1,13 @@
 import type { FinanceiroItem } from "@/lib/db/financeiro";
+import type { ReactNode } from "react";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const compactMoney = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 const donutColors = ["#FF6B1A", "#FF9445", "#FFD166", "#22D3EE", "#1FD07A", "#FF4060"];
 
@@ -15,30 +22,40 @@ export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChar
   for (const row of rows) {
     byObra.set(row.obra_nome, (byObra.get(row.obra_nome) ?? 0) + row.realizado);
   }
-  const slices = [...byObra.entries()].slice(0, 4);
-  const totalSlice = slices.reduce((acc, [, v]) => acc + v, 0) || 1;
 
-  let offset = 62;
-  const circles = slices.map(([label, value], index) => {
-    const pct = value / totalSlice;
-    const dash = Math.round(pct * 251);
-    const circle = (
-      <circle
-        key={label}
-        cx="55"
-        cy="55"
-        r="40"
-        fill="none"
-        stroke={donutColors[index % donutColors.length]}
-        strokeWidth="18"
-        strokeDasharray={`${dash} ${251 - dash}`}
-        strokeDashoffset={offset}
-        transform="rotate(-90 55 55)"
-      />
-    );
-    offset -= dash;
-    return circle;
-  });
+  const sortedSlices = [...byObra.entries()].sort((a, b) => b[1] - a[1]);
+  const topSlices = sortedSlices.slice(0, 4);
+  const othersTotal = sortedSlices.slice(4).reduce((acc, [, value]) => acc + value, 0);
+  const slices = othersTotal > 0 ? [...topSlices, ["Outras obras", othersTotal] as [string, number]] : topSlices;
+  const totalSlice = slices.reduce((acc, [, v]) => acc + v, 0) || 1;
+  const legendSlices = slices.map(([label, value]) => ({
+    label,
+    value,
+    percent: Math.round((value / totalSlice) * 100),
+  }));
+
+  const circles = slices.reduce<{ nodes: ReactNode[]; offset: number }>(
+    (acc, [label, value], index) => {
+      const pct = value / totalSlice;
+      const dash = Math.round(pct * 251);
+      acc.nodes.push(
+        <circle
+          key={label}
+          cx="55"
+          cy="55"
+          r="40"
+          fill="none"
+          stroke={donutColors[index % donutColors.length]}
+          strokeWidth="18"
+          strokeDasharray={`${dash} ${251 - dash}`}
+          strokeDashoffset={acc.offset}
+          transform="rotate(-90 55 55)"
+        />,
+      );
+      return { nodes: acc.nodes, offset: acc.offset - dash };
+    },
+    { nodes: [], offset: 62 },
+  ).nodes;
 
   return (
     <div className="of-fin-chart-wrap">
@@ -98,19 +115,27 @@ export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChar
             </text>
           </svg>
           <div className="of-donut-legend">
-            {slices.map(([label, value], index) => (
+            {legendSlices.map(({ label, value, percent }, index) => (
               <div key={label} className="of-donut-legend-item">
                 <span className="of-donut-legend-dot" style={{ background: donutColors[index % donutColors.length] }} />
-                <span className="of-donut-legend-label">{label}</span>
+                <span className="of-donut-legend-texts">
+                  <span className="of-donut-legend-label" title={label}>
+                    {label}
+                  </span>
+                  <span className="of-donut-legend-sub">{percent}%</span>
+                </span>
                 <span className="of-donut-legend-val">{money.format(value)}</span>
               </div>
             ))}
             {slices.length === 0 ? <p className="of-empty-text">Sem dados para distribuição.</p> : null}
           </div>
-          <p className="of-empty-text" style={{ marginTop: 8 }}>
+          <p className="of-empty-text of-donut-total">
             Orçado total: {money.format(totalOrcado)}
           </p>
         </div>
+        <p className="of-empty-text" style={{ marginTop: 10 }}>
+          Total realizado: {compactMoney.format(totalRealizado)}
+        </p>
       </article>
     </div>
   );
