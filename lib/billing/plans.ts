@@ -48,6 +48,15 @@ const PLAN_FEATURES: Record<PlanId, readonly PlanFeature[]> = {
     "relatórios_agendados",
     "notificacoes_alertas",
     "controle_acesso_avancado",
+    "financeiro_avancado",
+    "integração_whatsapp",
+    "integração_sheets",
+    "integração_zapier",
+    "automacoes_workflow",
+    "gestão_documentos",
+    "comunicação_integrada",
+    "segurança_enterprise",
+    "api_access",
   ],
   enterprise: [
     "dashboard",
@@ -72,7 +81,7 @@ const PLAN_FEATURES: Record<PlanId, readonly PlanFeature[]> = {
   ],
 };
 
-const ACTIVE_STATUSES = new Set(["trialing", "active"]);
+const ACTIVE_STATUSES = new Set(["trial", "trialing", "active"]);
 
 export type SubscriptionSnapshot = {
   plano: PlanId;
