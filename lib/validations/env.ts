@@ -10,6 +10,7 @@ const envSchema = z.object({
   SIGNUP_EDGE_SHARED_SECRET: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.string().min(1).optional(),
+  OPENAI_API_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   DATA_ENCRYPTION_KEY: z.string().min(1).optional(),
   CONTROLE_TOTAL_OWNER_EMAIL: z.string().email().optional(),

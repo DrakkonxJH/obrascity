@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listGuias } from "./guia/data";
+import { AiSupportChat } from "@/components/support/ai-support-chat";
 
 const canais = [
   {
@@ -72,6 +73,8 @@ export default function SuportePage() {
           <span className="of-badge of-badge-blue">{totalGuias} modulos documentados</span>
         </div>
       </article>
+
+      <AiSupportChat />
 
       <article className="of-card">
         <div className="of-card-title">Boas praticas recomendadas</div>
