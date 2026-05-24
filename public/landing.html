@@ -1298,7 +1298,7 @@ footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2025 ObrasFlow. Plataforma SaaS de gestão de obras. Informações legais e comerciais disponíveis no site.</span>
+      <span>© <span id="footerYear"></span> ObrasFlow. Plataforma SaaS de gestão de obras. Informações legais e comerciais disponíveis no site.</span>
       <div class="footer-badges">
         <span class="fbadge">🔒 SSL</span>
         <span class="fbadge">✓ LGPD</span>
@@ -1321,6 +1321,12 @@ function resetLandingScroll() {
 }
 
 window.addEventListener('DOMContentLoaded', resetLandingScroll, { once: true });
+window.addEventListener('DOMContentLoaded', () => {
+  const footerYear = document.getElementById('footerYear');
+  if (footerYear) {
+    footerYear.textContent = String(new Date().getFullYear());
+  }
+}, { once: true });
 window.addEventListener('pageshow', (event) => {
   if (!location.hash && event.persisted) {
     window.scrollTo(0, 0);
