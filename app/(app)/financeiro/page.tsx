@@ -4,6 +4,7 @@ import { listObras } from "@/lib/db/obras";
 import { createFinanceiroAction } from "./actions";
 import { createMedicaoAction } from "./medicoes-actions";
 import { getEvmIndicadores, listMedicoes } from "@/lib/db/medicoes";
+import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -43,7 +44,8 @@ export default async function FinanceiroPage() {
   const receitaContratada = medicoes.reduce((acc, item) => acc + item.valor + item.aditivo - item.retencao, 0);
 
   return (
-    <section className="of-page">
+    <FeatureGateWrapper feature="financeiro_avancado">
+      <section className="of-page">
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
           <p className="of-card-title">Falha ao carregar dados financeiros</p>
@@ -186,6 +188,7 @@ export default async function FinanceiroPage() {
           </p>
         </article>
       </div>
-    </section>
+      </section>
+    </FeatureGateWrapper>
   );
 }

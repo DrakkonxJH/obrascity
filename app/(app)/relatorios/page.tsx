@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "./actions";
+import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
 const reportCards = [
   {
@@ -78,7 +79,8 @@ export default async function RelatóriosPage() {
   }
 
   return (
-    <section className="of-page">
+    <FeatureGateWrapper feature="relatórios_basic">
+      <section className="of-page">
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
           <p className="of-card-title">Falha ao carregar dados de relatórios</p>
@@ -163,6 +165,7 @@ export default async function RelatóriosPage() {
           </tbody>
         </table>
       </div>
-    </section>
+      </section>
+    </FeatureGateWrapper>
   );
 }

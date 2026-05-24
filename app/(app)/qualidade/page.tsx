@@ -16,6 +16,7 @@ import {
   updateNaoConformidadeAction,
   updatePlanoAcaoStatusAction,
 } from "./actions";
+import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
 type QualidadePageProps = {
   searchParams: Promise<{
@@ -91,7 +92,8 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
   const kpis = buildQualidadeKpis(ncRows);
 
   return (
-    <section className="of-page">
+    <FeatureGateWrapper feature="qualidade_basic">
+      <section className="of-page">
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
           <p className="of-card-title">Falha ao carregar dados de qualidade</p>
@@ -492,6 +494,7 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
           </table>
         </div>
       </article>
-    </section>
+      </section>
+    </FeatureGateWrapper>
   );
 }

@@ -1,6 +1,7 @@
 import { createEquipeAction } from "./actions";
 import { listEquipes, listMembros } from "@/lib/db/equipes";
 import { EquipesView } from "@/components/equipes/equipes-view";
+import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
 export default async function EquipesPage() {
   const [equipes, membros] = await Promise.all([listEquipes(), listMembros()]);
@@ -16,5 +17,9 @@ export default async function EquipesPage() {
     </form>
   );
 
-  return <EquipesView equipes={equipes} membros={membros} formSlot={formSlot} />;
+  return (
+    <FeatureGateWrapper feature="equipes_basic">
+      <EquipesView equipes={equipes} membros={membros} formSlot={formSlot} />
+    </FeatureGateWrapper>
+  );
 }

@@ -6,6 +6,7 @@ import { MaterialCardEditor } from "@/components/materiais/material-card-editor"
 import { buildMaterialSuggestions } from "@/lib/materials/catalog";
 import { MaterialImportButton } from "@/components/materiais/material-import-button";
 import { PurchaseOrderModal } from "@/components/materiais/purchase-order-modal";
+import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -34,7 +35,8 @@ export default async function MateriaisPage() {
   const materialSuggestions = buildMaterialSuggestions(materiais.map((material) => material.nome));
 
   return (
-    <section className="of-page">
+    <FeatureGateWrapper feature="materiais_basic">
+      <section className="of-page">
       <div className="of-inline-header" style={{ marginBottom: 20, alignItems: "flex-start" }}>
         <p className="of-empty-text">Estoque geral de materiais por obra</p>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -183,6 +185,7 @@ export default async function MateriaisPage() {
           </table>
         </div>
       </article>
-    </section>
+      </section>
+    </FeatureGateWrapper>
   );
 }

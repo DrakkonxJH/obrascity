@@ -9,6 +9,7 @@ import { listDiarios } from "@/lib/db/diario";
 import { getDashboardResumo } from "@/lib/db/obras";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "../actions";
+import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
 type ReportType = "progresso" | "financeiro" | "equipes" | "materiais" | "diario" | "executivo";
 
@@ -350,7 +351,8 @@ export default async function ReportTypePage({ params }: PageParams) {
   }
 
   return (
-    <section className="of-page">
+    <FeatureGateWrapper feature="relatórios_basic">
+      <section className="of-page">
       <div className="of-inline-header" style={{ marginBottom: 16 }}>
         <div>
           <p className="of-empty-text" style={{ marginBottom: 6 }}>
@@ -410,6 +412,7 @@ export default async function ReportTypePage({ params }: PageParams) {
             : "Este painel consolida os dados do tipo selecionado e permite solicitar exportação no formato desejado."}
         </p>
       </div>
-    </section>
+      </section>
+    </FeatureGateWrapper>
   );
 }

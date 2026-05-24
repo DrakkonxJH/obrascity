@@ -13,6 +13,7 @@ export type PlanFeature =
   | "equipes_basic"
   | "materiais_basic"
   | "cronograma"
+  | "qualidade_basic"
   | "relatórios_basic"
   | "relatórios_export"
   | "relatórios_agendados"
@@ -29,13 +30,35 @@ export type PlanFeature =
   | "api_access";
 
 const PLAN_FEATURES: Record<PlanId, readonly PlanFeature[]> = {
-  trial: ["dashboard", "obras_basic", "equipes_basic", "materiais_basic", "relatórios_basic"],
+  trial: [
+    "dashboard",
+    "obras_basic",
+    "equipes_basic",
+    "materiais_basic",
+    "cronograma",
+    "qualidade_basic",
+    "relatórios_basic",
+    "relatórios_export",
+    "relatórios_agendados",
+    "notificacoes_alertas",
+    "controle_acesso_avancado",
+    "financeiro_avancado",
+    "integração_whatsapp",
+    "integração_sheets",
+    "integração_zapier",
+    "automacoes_workflow",
+    "gestão_documentos",
+    "comunicação_integrada",
+    "segurança_enterprise",
+    "api_access",
+  ],
   starter: [
     "dashboard",
     "obras_basic",
     "equipes_basic",
     "materiais_basic",
-    "relatórios_basic",
+    "cronograma",
+    "financeiro_avancado",
   ],
   pro: [
     "dashboard",
@@ -43,6 +66,7 @@ const PLAN_FEATURES: Record<PlanId, readonly PlanFeature[]> = {
     "equipes_basic",
     "materiais_basic",
     "cronograma",
+    "qualidade_basic",
     "relatórios_basic",
     "relatórios_export",
     "relatórios_agendados",
@@ -64,6 +88,7 @@ const PLAN_FEATURES: Record<PlanId, readonly PlanFeature[]> = {
     "equipes_basic",
     "materiais_basic",
     "cronograma",
+    "qualidade_basic",
     "relatórios_basic",
     "relatórios_export",
     "relatórios_agendados",
