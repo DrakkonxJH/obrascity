@@ -131,10 +131,6 @@ export default async function CrmPage({
     return acc;
   }, {});
 
-  const totalPipeline = filteredDeals.reduce((sum, deal) => sum + deal.valor, 0);
-  const wonDeals = filteredDeals.filter((deal) => deal.stage === "fechado_ganho");
-  const conversion = filteredDeals.length > 0 ? Math.round((wonDeals.length / filteredDeals.length) * 100) : 0;
-  const noActivityCount = filteredDeals.filter((deal) => !deal.last_activity_at).length;
   const proposalDeals = filteredDeals.filter((deal) => deal.stage === "proposta" || deal.stage === "negociacao");
 
   const obraStats = obras.map((obra) => {
@@ -187,52 +183,6 @@ export default async function CrmPage({
           ))}
         </div>
       </article>
-
-      <article className="of-card" style={{ marginBottom: 16 }}>
-        <form action="/crm" method="get" style={{ display: "grid", gap: 10, gridTemplateColumns: "2fr 1fr 1fr auto", alignItems: "center" }}>
-          <input name="q" className="of-input" defaultValue={q} placeholder="Buscar negócios, clientes, obras, tags e responsável..." />
-          <select name="stage" defaultValue={stageFilter} className="of-input">
-            <option value="">Todas as etapas</option>
-            {CRM_STAGES.map((stage) => (
-              <option key={stage} value={stage}>
-                {STAGE_LABEL[stage]}
-              </option>
-            ))}
-          </select>
-          <select name="view" defaultValue={view} className="of-input">
-            <option value="kanban">Visão Kanban</option>
-            <option value="lista">Visão Lista</option>
-            <option value="calendario">Visão Calendário</option>
-          </select>
-          <button type="submit" className="of-btn-ghost">
-            Aplicar
-          </button>
-          <input type="hidden" name="tab" value={tab} />
-        </form>
-      </article>
-
-      <div className="of-kpi-grid" style={{ marginBottom: 16 }}>
-        <article className="of-metric-card blue">
-          <p className="of-kpi-label">Negócios no funil</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{filteredDeals.length}</p>
-          <p className="of-metric-change">{noActivityCount} sem atividade recente</p>
-        </article>
-        <article className="of-metric-card green">
-          <p className="of-kpi-label">Valor total</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>{money.format(totalPipeline)}</p>
-          <p className="of-metric-change">Pipeline atual</p>
-        </article>
-        <article className="of-metric-card yellow">
-          <p className="of-kpi-label">Conversão</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{conversion}%</p>
-          <p className="of-metric-change">{wonDeals.length} ganhos</p>
-        </article>
-        <article className="of-metric-card purple">
-          <p className="of-kpi-label">Follow-ups abertos</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-purple)" }}>{activities.filter((item) => !item.done).length}</p>
-          <p className="of-metric-change">{activities.length} atividades totais</p>
-        </article>
-      </div>
 
       {tab === "negocios" ? (
         <>
