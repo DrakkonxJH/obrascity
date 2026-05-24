@@ -1,6 +1,6 @@
 import { getSubscriptionForCurrentTenant } from "@/lib/billing/subscription";
 import { FeatureGate } from "@/components/feature-gate";
-import { planIncludes, PlanFeature } from "@/lib/billing/plans";
+import { PlanFeature } from "@/lib/billing/plans";
 import { ReactNode } from "react";
 
 interface FeatureGateWrapperProps {
@@ -15,9 +15,7 @@ export async function FeatureGateWrapper({
   fallbackUI,
 }: FeatureGateWrapperProps) {
   const subscription = await getSubscriptionForCurrentTenant();
-  const showTrialWarning =
-    subscription?.plano === "trial" &&
-    !planIncludes("starter", feature);
+  const showTrialWarning = subscription?.plano === "trial";
 
   return (
     <>
@@ -30,7 +28,7 @@ export async function FeatureGateWrapper({
             background: "rgba(255, 209, 102, 0.08)",
           }}
         >
-          <p className="of-card-title">⚠ Acesso liberado no trial</p>
+          <p className="of-card-title">⚠ Ativo durante período de teste</p>
           <p className="of-empty-text">
             Este módulo está disponível durante os 14 dias de trial e pode deixar de ficar
             ativo após o período de avaliação, conforme o plano contratado.
