@@ -42,6 +42,14 @@ function buildForwardHeaders(request: NextRequest) {
   return headers;
 }
 
+function applyTunnelBypassHeaders(headers: Headers, targetUrl: URL) {
+  const host = targetUrl.hostname.toLowerCase();
+  if (host.endsWith(".loca.lt")) {
+    headers.set("bypass-tunnel-reminder", "true");
+    headers.set("x-tunnel-bypass", "true");
+  }
+}
+
 function buildResponseHeaders(upstream: Headers, internalOrigin: string, appOrigin: string) {
   const headers = new Headers();
   upstream.forEach((value, key) => {
@@ -132,6 +140,7 @@ async function handleProxy(request: NextRequest, context: { params: Promise<{ pa
   upstreamUrl.search = request.nextUrl.search;
 
   const headers = buildForwardHeaders(request);
+  applyTunnelBypassHeaders(headers, upstreamUrl);
   headers.set("x-obrasflow-user-id", profile.id);
   headers.set("x-obrasflow-empresa-id", profile.empresa_id);
   headers.set("x-obrasflow-role", profile.role ?? "visualizador");
