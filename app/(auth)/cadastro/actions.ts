@@ -4,14 +4,7 @@ import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
 import { getAppOrigin, getEnv } from "@/lib/validations/env";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { assertSignupRateLimits, emailAlreadyRegistered } from "@/lib/security/signup-guard";
-import {
-  deleteSignupVerificationByEmail,
-  findPendingSignupVerification,
-  issueSignupVerification,
-} from "@/lib/auth/signup-verification";
-import { invokeSignupEdgeFunction } from "@/lib/auth/signup-edge-client";
+import { assertSignupRateLimits, emailAlreadyRegistered, logSignupAttempt } from "@/lib/security/signup-guard";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
 
 export type SignupActionState = {
@@ -60,213 +53,87 @@ export async function signUpAction(
     return { ok: false, message: "Dados invalidos" };
   }
 
-  const {
-    nome,
-    empresaNome,
-    email,
-    password,
-  } = signupData;
-
-  let createdUserId: string | null = null;
-  let admin;
-  const env = getEnv();
-  const canUseLegacyEdgeFallback = /^eyJ[A-Za-z0-9_-]+\./.test(env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-  try {
-    admin = createAdminClient();
-  } catch (adminError) {
-    const message = adminError instanceof Error ? adminError.message : "Erro ao configurar admin";
-    await createSecurityAlert({
-      category: "signup",
-      severity: "high",
-      reason: "admin_client_init_error",
-      email,
-      ip: ip ?? null,
-      metadata: {
-        error: message,
-      },
-    });
-    return {
-      ok: false,
-      message: "Sistema indisponível. Tente novamente em alguns minutos.",
-    };
-  }
+  const { nome, empresaNome, email, password } = signupData;
 
   function isInvalidJwtLikeError(error: unknown) {
     const message = error instanceof Error ? error.message : String(error ?? "");
     return /invalid jwt|jwt|auth session/i.test(message);
   }
 
-  async function runLegacySignupFlow() {
-    if (!canUseLegacyEdgeFallback) {
-      return {
-        ok: false,
-        message:
-          "Fluxo legado de cadastro indisponível com chave publishable atual. Aplique a migration de verificação (0015) e recarregue o schema cache do Supabase.",
-      };
-    }
-
-    const edgeResult = await invokeSignupEdgeFunction({
-      nome,
-      empresaNome,
-      email,
-      password,
-      confirmPassword: signupData.confirmPassword,
-      acceptTerms: signupData.acceptTerms,
-      ip: ip ?? null,
-      userAgent,
-      appOrigin: requestOrigin ?? getAppOrigin(),
-    });
-
-    if (!edgeResult.ok) {
-      return { ok: false, message: edgeResult.message };
-    }
-
-    if (edgeResult.accessToken && edgeResult.refreshToken) {
-      const supabase = await createServerClient();
-      const { error } = await supabase.auth.setSession({
-        access_token: edgeResult.accessToken,
-        refresh_token: edgeResult.refreshToken,
-      });
-
-      if (error) {
-        return {
-          ok: true,
-          message: "Conta criada com sucesso. Entre com e-mail e senha para acessar o sistema.",
-          needsEmailConfirmation: edgeResult.needsEmailConfirmation,
-          needsLogin: true,
-        };
-      }
-    }
-
-    return {
-      ok: true,
-      needsEmailConfirmation: edgeResult.needsEmailConfirmation,
-      needsLogin: Boolean(edgeResult.needsEmailConfirmation),
-      message: edgeResult.message,
-    };
-  }
-
   try {
     await assertSignupRateLimits({ email, ip: ip ?? null });
 
-    try {
-      if (await emailAlreadyRegistered(email)) {
-        return {
-          ok: false,
-          message: "Este e-mail já possui cadastro. Faça login.",
-        };
-      }
-    } catch (error) {
-      if (isInvalidJwtLikeError(error)) {
-        return await runLegacySignupFlow();
-      }
-      throw error;
-    }
-
-    const appOrigin = requestOrigin ?? getAppOrigin();
-    let existingPending;
-    try {
-      existingPending = await findPendingSignupVerification(email);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error ?? "");
-      if (message.includes("signup_verification_tokens")) {
-        return {
-          ok: false,
-          message:
-            "Cadastro bloqueado: tabela de verificação ainda não está disponível no schema cache do Supabase. Execute a migration 0015 e recarregue o cache.",
-        };
-      }
-      if (isInvalidJwtLikeError(error)) {
-        return await runLegacySignupFlow();
-      }
-      throw error;
-    }
-
-    if (existingPending) {
-      if (!existingPending.user_id) {
-        throw new Error("Cadastro pendente incompleto. Solicite um novo link.");
-      }
-
-      await issueSignupVerification({
+    if (await emailAlreadyRegistered(email)) {
+      await logSignupAttempt({
         email,
-        nome,
-        empresaNome,
-        userId: existingPending.user_id,
-        appOrigin,
+        ip: ip ?? null,
+        success: false,
+        failureReason: "email_already_registered",
       });
-
       return {
-        ok: true,
-        message:
-          "Enviamos novamente o link único de confirmação para seu e-mail. Ele expira em 30 minutos.",
-        needsEmailConfirmation: true,
-        needsLogin: true,
+        ok: false,
+        message: "Este e-mail já possui cadastro. Faça login.",
       };
     }
 
-    const { data: createdUser, error: createUserError } = await admin.auth.admin.createUser({
+    const supabase = await createServerClient();
+    const appOrigin = requestOrigin ?? getAppOrigin();
+    const env = getEnv();
+    const redirectBase = env.NEXT_PUBLIC_APP_URL ?? appOrigin;
+    const redirectTo = `${redirectBase.replace(/\/$/, "")}/auth/callback`;
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: false,
-      user_metadata: {
-        nome,
-        empresa_nome: empresaNome,
+      options: {
+        emailRedirectTo: redirectTo,
+        data: {
+          nome,
+          empresa_nome: empresaNome,
+          signup_source: "obrasflow_web",
+        },
       },
     });
 
-    if (createUserError || !createdUser.user?.id) {
-      if (isInvalidJwtLikeError(createUserError)) {
-        return await runLegacySignupFlow();
+    if (signUpError) {
+      await logSignupAttempt({
+        email,
+        ip: ip ?? null,
+        success: false,
+        failureReason: signUpError.message || "signup_provider_error",
+      });
+      if (isInvalidJwtLikeError(signUpError)) {
+        return {
+          ok: false,
+          message: "Erro de autenticação com Supabase. Verifique as credenciais do projeto.",
+        };
       }
-      throw new Error(createUserError?.message ?? "Não foi possível criar o usuário.");
+      throw new Error(signUpError.message || "Não foi possível criar o usuário.");
     }
 
-    createdUserId = createdUser.user.id;
-
-    await issueSignupVerification({
+    await logSignupAttempt({
       email,
-      nome,
-      empresaNome,
-      userId: createdUserId,
-      appOrigin,
+      ip: ip ?? null,
+      success: true,
     });
 
     return {
       ok: true,
-      needsEmailConfirmation: true,
+      needsEmailConfirmation: !signUpData.session,
       needsLogin: true,
-      message: `Conta criada! Enviamos um link único para seu e-mail. Ele expira em 30 minutos.`,
+      message: signUpData.session
+        ? "Conta criada com sucesso! Entre com e-mail e senha para acessar o sistema."
+        : "Conta criada! Enviamos o e-mail de confirmação pelo Supabase. Verifique sua caixa de entrada.",
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao criar conta";
-    
-    if (isInvalidJwtLikeError(error)) {
-      return await runLegacySignupFlow();
-    }
+    await logSignupAttempt({
+      email,
+      ip: ip ?? null,
+      success: false,
+      failureReason: message,
+    });
 
-    if (createdUserId) {
-      const cleanupResults = await Promise.allSettled([
-        deleteSignupVerificationByEmail(email),
-        admin.auth.admin.deleteUser(createdUserId),
-      ]);
-      const cleanupErrors = cleanupResults
-        .filter((result): result is PromiseRejectedResult => result.status === "rejected")
-        .map((result) => (result.reason instanceof Error ? result.reason.message : String(result.reason)));
-
-      if (cleanupErrors.length > 0) {
-        await createSecurityAlert({
-          category: "signup",
-          severity: "medium",
-          reason: "signup_cleanup_error",
-          email,
-          ip: ip ?? null,
-          metadata: {
-            cleanupErrors,
-          },
-        });
-      }
-    }
     await createSecurityAlert({
       category: "signup",
       severity: "medium",
@@ -278,6 +145,7 @@ export async function signUpAction(
         userAgent,
       },
     });
+
     return { ok: false, message };
   }
 }
