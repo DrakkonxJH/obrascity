@@ -84,6 +84,8 @@ type AssinaturaRow = {
   created_at: string;
 };
 
+const ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
+
 function pickCurrentSubscription(rows: AssinaturaRow[]) {
   const activeRows = rows.filter((row) => ["active", "trialing"].includes(String(row.status).toLowerCase()));
   const source = activeRows.length > 0 ? activeRows : rows;
@@ -183,14 +185,26 @@ export async function listRecentSecurityAlerts(limit = 50): Promise<AdminSecurit
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("security_alerts")
-    .select(
-      "id, category, severity, status, reason, email, ip_hash, resolved_at, resolved_by_profile_id, resolution_note, created_at, metadata",
-    )
+    .select("id, category, severity, reason, email, ip_hash, created_at, metadata")
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as AdminSecurityAlert[];
+  return (data ?? []).map((item) => {
+    const metadata = (item.metadata ?? {}) as Record<string, unknown>;
+    const rawStatus = String(metadata.remediation_status ?? "open").toLowerCase();
+    const status = ALERT_STATUSES.has(rawStatus) ? rawStatus : "open";
+    return {
+      ...item,
+      status: status as AdminSecurityAlert["status"],
+      resolved_at: metadata.remediation_resolved_at ? String(metadata.remediation_resolved_at) : null,
+      resolved_by_profile_id: metadata.remediation_resolved_by_profile_id
+        ? String(metadata.remediation_resolved_by_profile_id)
+        : null,
+      resolution_note: metadata.remediation_note ? String(metadata.remediation_note) : null,
+      metadata,
+    };
+  }) as AdminSecurityAlert[];
 }
 
 export async function listRecentSignupAttempts(limit = 30): Promise<AdminSignupAttempt[]> {

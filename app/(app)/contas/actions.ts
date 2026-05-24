@@ -273,13 +273,29 @@ export async function atualizarSecurityAlertAction(alertId: string, formData: Fo
 
   const resolved = status === "resolved" || status === "ignored";
   const admin = createAdminClient();
+  const { data: alertData, error: alertError } = await admin
+    .from("security_alerts")
+    .select("metadata")
+    .eq("id", alertId)
+    .maybeSingle();
+
+  if (alertError) {
+    throw new Error(`Erro ao carregar alerta de segurança: ${alertError.message}`);
+  }
+
+  const currentMetadata = ((alertData?.metadata ?? {}) as Record<string, unknown>) ?? {};
+  const nextMetadata: Record<string, unknown> = {
+    ...currentMetadata,
+    remediation_status: status,
+    remediation_note: note || null,
+    remediation_resolved_at: resolved ? new Date().toISOString() : null,
+    remediation_resolved_by_profile_id: resolved ? actor?.id ?? null : null,
+  };
+
   const { error } = await admin
     .from("security_alerts")
     .update({
-      status,
-      resolved_at: resolved ? new Date().toISOString() : null,
-      resolved_by_profile_id: resolved ? actor?.id ?? null : null,
-      resolution_note: note || null,
+      metadata: nextMetadata,
     })
     .eq("id", alertId);
 

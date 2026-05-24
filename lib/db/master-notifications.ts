@@ -25,7 +25,6 @@ type SupportTicketRow = {
 };
 
 const OPEN_TICKET_STATUSES = new Set(["aberto", "em_andamento", "aguardando_cliente"]);
-const OPEN_ALERT_STATUS_FILTER = "status.is.null,status.eq.open,status.eq.in_progress";
 
 function formatRelative(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -41,8 +40,7 @@ export async function getMasterNotifications(limit = 30): Promise<MasterNotifica
     admin
       .from("security_alerts")
       .select("id", { head: true, count: "exact" })
-      .eq("severity", "high")
-      .or(OPEN_ALERT_STATUS_FILTER),
+      .eq("severity", "high"),
     admin
       .from("support_tickets")
       .select("id", { head: true, count: "exact" })
@@ -51,7 +49,6 @@ export async function getMasterNotifications(limit = 30): Promise<MasterNotifica
       .from("security_alerts")
       .select("id, category, severity, reason, created_at")
       .eq("severity", "high")
-      .or(OPEN_ALERT_STATUS_FILTER)
       .order("created_at", { ascending: false })
       .limit(limit),
     admin
