@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { listObras } from "@/lib/db/obras";
 
 export const CRM_STAGES = ["novos", "qualificacao", "proposta", "negociacao", "fechado_ganho"] as const;
 export type CrmStage = (typeof CRM_STAGES)[number];
@@ -7,6 +8,8 @@ export type CrmStage = (typeof CRM_STAGES)[number];
 export type CrmDeal = {
   id: string;
   nome: string;
+  obra_id: string | null;
+  obra_nome: string | null;
   empresa_nome: string | null;
   contato_nome: string | null;
   valor: number;
@@ -63,17 +66,18 @@ export async function listCrmDeals(): Promise<CrmDeal[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
 
-  const [dealsRes, profilesRes, companiesRes, contactsRes] = await Promise.all([
+  const [dealsRes, profilesRes, companiesRes, contactsRes, obras] = await Promise.all([
     supabase
       .from("crm_deals")
       .select(
-        "id, nome, company_id, contact_id, valor, stage, priority, owner_profile_id, next_activity_at, last_activity_at, tags, created_at, updated_at",
+        "id, nome, obra_id, company_id, contact_id, valor, stage, priority, owner_profile_id, next_activity_at, last_activity_at, tags, created_at, updated_at",
       )
       .eq("empresa_id", empresaId)
       .order("created_at", { ascending: false }),
     supabase.from("profiles").select("id, nome").eq("empresa_id", empresaId),
     supabase.from("crm_companies").select("id, nome").eq("empresa_id", empresaId),
     supabase.from("crm_contacts").select("id, nome").eq("empresa_id", empresaId),
+    listObras(),
   ]);
 
   if (dealsRes.error) {
@@ -101,10 +105,16 @@ export async function listCrmDeals(): Promise<CrmDeal[]> {
   for (const contact of contactsRes.data ?? []) {
     contactMap.set(String(contact.id), String(contact.nome ?? "Sem contato"));
   }
+  const obraMap = new Map<string, string>();
+  for (const obra of obras) {
+    obraMap.set(String(obra.id), String(obra.nome ?? "Obra"));
+  }
 
   return (dealsRes.data ?? []).map((deal) => ({
     id: String(deal.id),
     nome: String(deal.nome),
+    obra_id: deal.obra_id ? String(deal.obra_id) : null,
+    obra_nome: deal.obra_id ? obraMap.get(String(deal.obra_id)) ?? null : null,
     empresa_nome: deal.company_id ? companyMap.get(String(deal.company_id)) ?? null : null,
     contato_nome: deal.contact_id ? contactMap.get(String(deal.contact_id)) ?? null : null,
     valor: Number(deal.valor ?? 0),
@@ -230,6 +240,7 @@ export async function createCrmDeal(input: {
   stage: CrmStage;
   priority: "baixa" | "media" | "alta";
   owner_profile_id: string | null;
+  obra_id: string | null;
   tags: string[];
 }) {
   const empresaId = await getEmpresaIdFromProfile();
@@ -241,6 +252,7 @@ export async function createCrmDeal(input: {
     stage: input.stage,
     priority: input.priority,
     owner_profile_id: input.owner_profile_id,
+    obra_id: input.obra_id,
     tags: input.tags,
   });
 

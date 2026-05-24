@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { CrmKanban } from "@/components/crm/crm-kanban";
 import { CRM_STAGES, listCrmActivities, listCrmCompanies, listCrmContacts, listCrmDeals } from "@/lib/db/crm";
+import { listObras } from "@/lib/db/obras";
 import { createCrmActivityAction, createCrmDealAction } from "./actions";
 
 const TABS = [
-  { key: "negocios", label: "Negocios" },
-  { key: "contatos", label: "Contatos" },
-  { key: "empresas", label: "Empresas" },
+  { key: "negocios", label: "Negócios" },
+  { key: "clientes", label: "Clientes" },
+  { key: "obras", label: "Obras" },
   { key: "atividades", label: "Atividades" },
-  { key: "relatorios", label: "Relatorios" },
+  { key: "propostas", label: "Propostas" },
+  { key: "relatorios", label: "Relatórios" },
 ] as const;
 
 const STAGE_LABEL: Record<string, string> = {
   novos: "Novos",
-  qualificacao: "Qualificacao",
+  qualificacao: "Qualificação",
   proposta: "Proposta",
-  negociacao: "Negociacao",
+  negociacao: "Negociação",
   fechado_ganho: "Fechado ganho",
 };
 
@@ -62,12 +64,12 @@ export default async function CrmPage({
   const q = String(params.q ?? "").trim().toLowerCase();
   const stageFilter = String(params.stage ?? "").trim().toLowerCase();
 
-  const [dealsResult, contactsResult, companiesResult, activitiesResult] = await Promise.all([
+  const [dealsResult, contactsResult, companiesResult, activitiesResult, obrasResult] = await Promise.all([
     listCrmDeals()
       .then((data) => ({ data, error: null as string | null }))
       .catch((error: unknown) => ({
         data: [],
-        error: error instanceof Error ? error.message : "Erro ao carregar negocios CRM",
+        error: error instanceof Error ? error.message : "Erro ao carregar negócios CRM",
       })),
     listCrmContacts()
       .then((data) => ({ data, error: null as string | null }))
@@ -87,20 +89,36 @@ export default async function CrmPage({
         data: [],
         error: error instanceof Error ? error.message : "Erro ao carregar atividades CRM",
       })),
+    listObras()
+      .then((data) => ({ data, error: null as string | null }))
+      .catch((error: unknown) => ({
+        data: [],
+        error: error instanceof Error ? error.message : "Erro ao carregar obras",
+      })),
   ]);
+
   const deals = dealsResult.data;
   const contacts = contactsResult.data;
   const companies = companiesResult.data;
   const activities = activitiesResult.data;
-  const dealsError = dealsResult.error;
-  const contactsError = contactsResult.error;
-  const companiesError = companiesResult.error;
-  const activitiesError = activitiesResult.error;
+  const obras = obrasResult.data;
+
+  const missingTablesMessage =
+    [dealsResult.error, contactsResult.error, companiesResult.error, activitiesResult.error]
+      .join(" ")
+      .toLowerCase()
+      .includes("does not exist") ||
+    [dealsResult.error, contactsResult.error, companiesResult.error, activitiesResult.error]
+      .join(" ")
+      .toLowerCase()
+      .includes("relation")
+      ? "As tabelas do CRM ainda não existem no banco. Execute a migration 0020_crm_module.sql para liberar o módulo completo."
+      : null;
 
   const filteredDeals = deals.filter((deal) => {
     if (stageFilter && deal.stage !== stageFilter) return false;
     if (!q) return true;
-    const row = [deal.nome, deal.empresa_nome, deal.contato_nome, deal.owner_nome, ...deal.tags]
+    const row = [deal.nome, deal.empresa_nome, deal.contato_nome, deal.owner_nome, deal.obra_nome, ...deal.tags]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -117,12 +135,23 @@ export default async function CrmPage({
   const wonDeals = filteredDeals.filter((deal) => deal.stage === "fechado_ganho");
   const conversion = filteredDeals.length > 0 ? Math.round((wonDeals.length / filteredDeals.length) * 100) : 0;
   const noActivityCount = filteredDeals.filter((deal) => !deal.last_activity_at).length;
+  const proposalDeals = filteredDeals.filter((deal) => deal.stage === "proposta" || deal.stage === "negociacao");
 
-  const missingTablesMessage =
-    [dealsError, contactsError, companiesError, activitiesError].join(" ").toLowerCase().includes("does not exist") ||
-    [dealsError, contactsError, companiesError, activitiesError].join(" ").toLowerCase().includes("relation")
-      ? "As tabelas do CRM ainda nao existem no banco. Execute a migration 0020_crm_module.sql para liberar o modulo completo."
-      : null;
+  const obraStats = obras.map((obra) => {
+    const rows = deals.filter((deal) => deal.obra_id === obra.id);
+    const total = rows.reduce((sum, deal) => sum + deal.valor, 0);
+    return {
+      id: obra.id,
+      nome: obra.nome,
+      cliente: obra.cliente,
+      status: obra.status,
+      progresso: obra.progresso,
+      negocios: rows.length,
+      pipeline: total,
+      propostas: rows.filter((deal) => deal.stage === "proposta" || deal.stage === "negociacao").length,
+    };
+  });
+  const dealsSemObra = deals.filter((deal) => !deal.obra_id);
 
   return (
     <section className="of-page">
@@ -132,7 +161,7 @@ export default async function CrmPage({
             CRM de Obras
           </h1>
           <p className="of-empty-text">
-            Pipeline comercial com visoes Negocios, Contatos, Empresas, Atividades e relatorios de conversao.
+            Distribuição otimizada para construção: Negócios, Clientes, Obras, Atividades, Propostas e Relatórios.
           </p>
         </div>
       </div>
@@ -161,7 +190,7 @@ export default async function CrmPage({
 
       <article className="of-card" style={{ marginBottom: 16 }}>
         <form action="/crm" method="get" style={{ display: "grid", gap: 10, gridTemplateColumns: "2fr 1fr 1fr auto", alignItems: "center" }}>
-          <input name="q" className="of-input" defaultValue={q} placeholder="Buscar negocios, clientes, tags e responsavel..." />
+          <input name="q" className="of-input" defaultValue={q} placeholder="Buscar negócios, clientes, obras, tags e responsável..." />
           <select name="stage" defaultValue={stageFilter} className="of-input">
             <option value="">Todas as etapas</option>
             {CRM_STAGES.map((stage) => (
@@ -171,9 +200,9 @@ export default async function CrmPage({
             ))}
           </select>
           <select name="view" defaultValue={view} className="of-input">
-            <option value="kanban">Visao Kanban</option>
-            <option value="lista">Visao Lista</option>
-            <option value="calendario">Visao Calendario</option>
+            <option value="kanban">Visão Kanban</option>
+            <option value="lista">Visão Lista</option>
+            <option value="calendario">Visão Calendário</option>
           </select>
           <button type="submit" className="of-btn-ghost">
             Aplicar
@@ -184,7 +213,7 @@ export default async function CrmPage({
 
       <div className="of-kpi-grid" style={{ marginBottom: 16 }}>
         <article className="of-metric-card blue">
-          <p className="of-kpi-label">Negocios no funil</p>
+          <p className="of-kpi-label">Negócios no funil</p>
           <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{filteredDeals.length}</p>
           <p className="of-metric-change">{noActivityCount} sem atividade recente</p>
         </article>
@@ -194,7 +223,7 @@ export default async function CrmPage({
           <p className="of-metric-change">Pipeline atual</p>
         </article>
         <article className="of-metric-card yellow">
-          <p className="of-kpi-label">Conversao</p>
+          <p className="of-kpi-label">Conversão</p>
           <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{conversion}%</p>
           <p className="of-metric-change">{wonDeals.length} ganhos</p>
         </article>
@@ -208,10 +237,18 @@ export default async function CrmPage({
       {tab === "negocios" ? (
         <>
           <article className="of-card" style={{ marginBottom: 16 }}>
-            <div className="of-card-title">Novo negocio</div>
-            <form action={createCrmDealAction} className="of-form-grid md:grid-cols-5">
-              <input name="nome" className="of-input" placeholder="Nome do negocio" required />
+            <div className="of-card-title">Novo negócio</div>
+            <form action={createCrmDealAction} className="of-form-grid md:grid-cols-6">
+              <input name="nome" className="of-input" placeholder="Nome do negócio" required />
               <input name="valor" className="of-input" type="number" min="0" step="0.01" placeholder="Valor estimado" required />
+              <select name="obra_id" className="of-input" defaultValue="">
+                <option value="">Vincular a obra (opcional)</option>
+                {obras.map((obra) => (
+                  <option key={obra.id} value={obra.id}>
+                    {obra.nome}
+                  </option>
+                ))}
+              </select>
               <select name="stage" className="of-input" defaultValue="novos">
                 {CRM_STAGES.map((stage) => (
                   <option key={stage} value={stage}>
@@ -221,12 +258,12 @@ export default async function CrmPage({
               </select>
               <select name="priority" className="of-input" defaultValue="media">
                 <option value="baixa">Prioridade baixa</option>
-                <option value="media">Prioridade media</option>
+                <option value="media">Prioridade média</option>
                 <option value="alta">Prioridade alta</option>
               </select>
-              <input name="tags" className="of-input" placeholder="Tags separadas por virgula" />
+              <input name="tags" className="of-input" placeholder="Tags separadas por vírgula" />
               <button type="submit" className="of-btn-primary" style={{ minHeight: 44 }}>
-                + Criar negocio
+                + Criar negócio
               </button>
             </form>
           </article>
@@ -235,23 +272,25 @@ export default async function CrmPage({
 
           {view === "lista" ? (
             <article className="of-card">
-              <div className="of-card-title" style={{ marginBottom: 12 }}>Lista de negocios</div>
+              <div className="of-card-title" style={{ marginBottom: 12 }}>Lista de negócios</div>
               <div className="of-table-wrap" style={{ border: 0 }}>
                 <table className="of-table">
                   <thead>
                     <tr>
-                      <th>Negocio</th>
+                      <th>Negócio</th>
+                      <th>Obra</th>
                       <th>Etapa</th>
                       <th>Empresa</th>
-                      <th>Responsavel</th>
+                      <th>Responsável</th>
                       <th>Valor</th>
-                      <th>Prox. atividade</th>
+                      <th>Próx. atividade</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredDeals.map((deal) => (
                       <tr key={deal.id}>
                         <td>{deal.nome}</td>
+                        <td>{deal.obra_nome ?? "—"}</td>
                         <td>{STAGE_LABEL[deal.stage]}</td>
                         <td>{deal.empresa_nome ?? "—"}</td>
                         <td>{deal.owner_nome ?? "—"}</td>
@@ -260,7 +299,7 @@ export default async function CrmPage({
                       </tr>
                     ))}
                     {filteredDeals.length === 0 ? (
-                      <tr><td colSpan={6}>Nenhum negocio encontrado.</td></tr>
+                      <tr><td colSpan={7}>Nenhum negócio encontrado.</td></tr>
                     ) : null}
                   </tbody>
                 </table>
@@ -270,7 +309,7 @@ export default async function CrmPage({
 
           {view === "calendario" ? (
             <article className="of-card">
-              <div className="of-card-title" style={{ marginBottom: 12 }}>Calendario de atividades</div>
+              <div className="of-card-title" style={{ marginBottom: 12 }}>Calendário de atividades</div>
               <div className="of-dashboard-grid">
                 {Object.entries(activitiesByDate).map(([date, items]) => (
                   <article key={date} className="of-card" style={{ margin: 0 }}>
@@ -292,62 +331,114 @@ export default async function CrmPage({
         </>
       ) : null}
 
-      {tab === "contatos" ? (
-        <article className="of-card">
-          <div className="of-card-title" style={{ marginBottom: 12 }}>Contatos</div>
-          <div className="of-table-wrap" style={{ border: 0 }}>
-            <table className="of-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Empresa</th>
-                  <th>Cargo</th>
-                  <th>E-mail</th>
-                  <th>Telefone</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contacts.map((contact) => (
-                  <tr key={contact.id}>
-                    <td>{contact.nome}</td>
-                    <td>{contact.company_nome ?? "—"}</td>
-                    <td>{contact.cargo ?? "—"}</td>
-                    <td>{contact.email ?? "—"}</td>
-                    <td>{contact.telefone ?? "—"}</td>
+      {tab === "clientes" ? (
+        <div className="of-dashboard-grid">
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Empresas ({companies.length})</div>
+            <div className="of-table-wrap" style={{ border: 0 }}>
+              <table className="of-table">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Segmento</th>
+                    <th>Cidade</th>
                   </tr>
-                ))}
-                {contacts.length === 0 ? <tr><td colSpan={5}>Sem contatos cadastrados.</td></tr> : null}
-              </tbody>
-            </table>
-          </div>
-        </article>
+                </thead>
+                <tbody>
+                  {companies.map((company) => (
+                    <tr key={company.id}>
+                      <td>{company.nome}</td>
+                      <td>{company.segmento ?? "—"}</td>
+                      <td>{company.cidade ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {companies.length === 0 ? <tr><td colSpan={3}>Sem empresas CRM cadastradas.</td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Contatos ({contacts.length})</div>
+            <div className="of-table-wrap" style={{ border: 0 }}>
+              <table className="of-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Empresa</th>
+                    <th>Cargo</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map((contact) => (
+                    <tr key={contact.id}>
+                      <td>{contact.nome}</td>
+                      <td>{contact.company_nome ?? "—"}</td>
+                      <td>{contact.cargo ?? "—"}</td>
+                      <td>{contact.email ?? "—"}</td>
+                      <td>{contact.telefone ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {contacts.length === 0 ? <tr><td colSpan={5}>Sem contatos cadastrados.</td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
       ) : null}
 
-      {tab === "empresas" ? (
-        <article className="of-card">
-          <div className="of-card-title" style={{ marginBottom: 12 }}>Empresas CRM</div>
-          <div className="of-table-wrap" style={{ border: 0 }}>
-            <table className="of-table">
-              <thead>
-                <tr>
-                  <th>Empresa</th>
-                  <th>Segmento</th>
-                  <th>Cidade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {companies.map((company) => (
-                  <tr key={company.id}>
-                    <td>{company.nome}</td>
-                    <td>{company.segmento ?? "—"}</td>
-                    <td>{company.cidade ?? "—"}</td>
+      {tab === "obras" ? (
+        <>
+          <article className="of-card" style={{ marginBottom: 16 }}>
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Negócios por obra</div>
+            <div className="of-table-wrap" style={{ border: 0 }}>
+              <table className="of-table">
+                <thead>
+                  <tr>
+                    <th>Obra</th>
+                    <th>Cliente</th>
+                    <th>Status</th>
+                    <th>Progresso</th>
+                    <th>Negócios vinculados</th>
+                    <th>Em proposta/negociação</th>
+                    <th>Valor do pipeline</th>
                   </tr>
-                ))}
-                {companies.length === 0 ? <tr><td colSpan={3}>Sem empresas CRM cadastradas.</td></tr> : null}
-              </tbody>
-            </table>
-          </div>
-        </article>
+                </thead>
+                <tbody>
+                  {obraStats.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.nome}</td>
+                      <td>{item.cliente}</td>
+                      <td>{item.status}</td>
+                      <td>{item.progresso}%</td>
+                      <td>{item.negocios}</td>
+                      <td>{item.propostas}</td>
+                      <td>{money.format(item.pipeline)}</td>
+                    </tr>
+                  ))}
+                  {obraStats.length === 0 ? <tr><td colSpan={7}>Sem obras cadastradas.</td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title">Negócios sem obra vinculada ({dealsSemObra.length})</div>
+            <ul className="of-list">
+              {dealsSemObra.map((deal) => (
+                <li key={deal.id} className="of-list-item">
+                  <p className="of-list-title">{deal.nome}</p>
+                  <p className="of-list-description">
+                    {STAGE_LABEL[deal.stage]} · {money.format(deal.valor)} · responsável: {deal.owner_nome ?? "—"}
+                  </p>
+                </li>
+              ))}
+              {dealsSemObra.length === 0 ? <li className="of-list-item"><p className="of-empty-text">Todos os negócios já estão vinculados a obras.</p></li> : null}
+            </ul>
+          </article>
+        </>
       ) : null}
 
       {tab === "atividades" ? (
@@ -356,7 +447,7 @@ export default async function CrmPage({
             <div className="of-card-title">Nova atividade</div>
             <form action={createCrmActivityAction} className="of-form-grid md:grid-cols-4">
               <select name="deal_id" className="of-input" required>
-                <option value="">Selecionar negocio</option>
+                <option value="">Selecionar negócio</option>
                 {deals.map((deal) => (
                   <option key={deal.id} value={deal.id}>
                     {deal.nome}
@@ -365,7 +456,7 @@ export default async function CrmPage({
               </select>
               <input name="tipo" className="of-input" defaultValue="follow_up" />
               <input name="due_at" type="datetime-local" className="of-input" />
-              <input name="descricao" className="of-input" placeholder="Descricao da atividade" required />
+              <input name="descricao" className="of-input" placeholder="Descrição da atividade" required />
               <button type="submit" className="of-btn-primary" style={{ minHeight: 44 }}>
                 + Registrar atividade
               </button>
@@ -378,9 +469,9 @@ export default async function CrmPage({
               <table className="of-table">
                 <thead>
                   <tr>
-                    <th>Negocio</th>
+                    <th>Negócio</th>
                     <th>Tipo</th>
-                    <th>Descricao</th>
+                    <th>Descrição</th>
                     <th>Prazo</th>
                     <th>Status</th>
                     <th>Criada em</th>
@@ -393,7 +484,7 @@ export default async function CrmPage({
                       <td>{activity.tipo}</td>
                       <td>{activity.descricao}</td>
                       <td>{fmtDatetime(activity.due_at)}</td>
-                      <td>{activity.done ? "Concluida" : "Aberta"}</td>
+                      <td>{activity.done ? "Concluída" : "Aberta"}</td>
                       <td>{fmtDatetime(activity.created_at)}</td>
                     </tr>
                   ))}
@@ -405,17 +496,50 @@ export default async function CrmPage({
         </>
       ) : null}
 
+      {tab === "propostas" ? (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Propostas em andamento</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Negócio</th>
+                  <th>Obra</th>
+                  <th>Etapa</th>
+                  <th>Responsável</th>
+                  <th>Valor</th>
+                  <th>Próxima atividade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proposalDeals.map((deal) => (
+                  <tr key={deal.id}>
+                    <td>{deal.nome}</td>
+                    <td>{deal.obra_nome ?? "—"}</td>
+                    <td>{STAGE_LABEL[deal.stage]}</td>
+                    <td>{deal.owner_nome ?? "—"}</td>
+                    <td>{money.format(deal.valor)}</td>
+                    <td>{fmtDatetime(deal.next_activity_at)}</td>
+                  </tr>
+                ))}
+                {proposalDeals.length === 0 ? <tr><td colSpan={6}>Sem propostas em andamento.</td></tr> : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      ) : null}
+
       {tab === "relatorios" ? (
         <article className="of-card">
-          <div className="of-card-title" style={{ marginBottom: 12 }}>Relatorio do funil</div>
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Relatório do funil</div>
           <div className="of-table-wrap" style={{ border: 0 }}>
             <table className="of-table">
               <thead>
                 <tr>
                   <th>Etapa</th>
-                  <th>Negocios</th>
+                  <th>Negócios</th>
                   <th>Valor acumulado</th>
-                  <th>Ticket medio</th>
+                  <th>Ticket médio</th>
                 </tr>
               </thead>
               <tbody>
