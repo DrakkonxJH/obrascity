@@ -163,13 +163,19 @@ async function handleProxy(request: NextRequest, context: { params: Promise<{ pa
 
   let upstreamResponse: Response;
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
     upstreamResponse = await fetch(upstreamUrl, {
       method: request.method,
       headers,
       body,
       redirect: "manual",
       cache: "no-store",
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeout);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Falha ao conectar CRM interno";
     return NextResponse.json({ error: message }, { status: 502 });
