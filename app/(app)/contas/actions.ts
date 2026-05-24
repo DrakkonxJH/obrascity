@@ -91,6 +91,15 @@ export async function alterarPlanoAction(empresaId: string, formData: FormData) 
 export async function removerPerfilAction(profileId: string) {
   await assertControlTotal();
   const admin = createAdminClient();
+  const { data: targetProfile, error: loadError } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", profileId)
+    .maybeSingle();
+  if (loadError) throw new Error(`Erro ao carregar perfil: ${loadError.message}`);
+  if (String(targetProfile?.role ?? "").toLowerCase() === "master") {
+    throw new Error("Perfil master não pode ser removido");
+  }
   const { error } = await admin.auth.admin.deleteUser(profileId);
   if (error) throw new Error(`Erro ao remover usuário: ${error.message}`);
   await logMasterAudit({
@@ -259,6 +268,15 @@ export async function resetarSenhaUsuarioAction(profileId: string, formData: For
     throw new Error("Senha deve ter no mínimo 8 caracteres");
   }
   const admin = createAdminClient();
+  const { data: targetProfile, error: loadError } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", profileId)
+    .maybeSingle();
+  if (loadError) throw new Error(`Erro ao carregar perfil: ${loadError.message}`);
+  if (String(targetProfile?.role ?? "").toLowerCase() === "master") {
+    throw new Error("Perfil master não pode ter a senha resetada por esta tela");
+  }
   const { error } = await admin.auth.admin.updateUserById(profileId, { password });
   if (error) throw new Error(`Erro ao resetar senha: ${error.message}`);
   await logMasterAudit({

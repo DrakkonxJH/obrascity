@@ -116,6 +116,7 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
 
   const profileCountMap = new Map<string, number>();
   for (const p of profilesRes.data ?? []) {
+    if (String((p as { role?: string }).role ?? "").toLowerCase() === "master") continue;
     profileCountMap.set(p.empresa_id, (profileCountMap.get(p.empresa_id) ?? 0) + 1);
   }
 
@@ -141,6 +142,7 @@ export async function listAllProfiles(): Promise<AdminProfile[]> {
     admin
       .from("profiles")
       .select("id, nome, email, role, cargo, empresa_id, created_at")
+      .neq("role", "master")
       .order("created_at", { ascending: false }),
     admin.from("empresas").select("id, nome"),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
@@ -159,17 +161,16 @@ export async function listAllProfiles(): Promise<AdminProfile[]> {
   }
 
   return (profilesRes.data ?? []).map((p) => {
-    const isMaster = String(p.role ?? "").toLowerCase() === "master";
     return {
-    id: p.id,
-    nome: p.nome,
-    email: p.email,
-    role: p.role,
-    cargo: p.cargo ?? null,
-    empresa_id: p.empresa_id,
-    empresa_nome: isMaster ? "Plataforma ObrasFlow" : empresaMap.get(p.empresa_id) ?? "—",
-    created_at: p.created_at,
-    last_sign_in_at: authMap.get(p.id) ?? null,
+      id: p.id,
+      nome: p.nome,
+      email: p.email,
+      role: p.role,
+      cargo: p.cargo ?? null,
+      empresa_id: p.empresa_id,
+      empresa_nome: empresaMap.get(p.empresa_id) ?? "—",
+      created_at: p.created_at,
+      last_sign_in_at: authMap.get(p.id) ?? null,
     };
   });
 }
