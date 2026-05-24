@@ -37,6 +37,19 @@ const PLANO_MRR: Record<string, number> = {
   pro: 229,
   enterprise: 799,
 };
+const MASTER_TABS = [
+  { key: "empresas", label: "Empresas" },
+  { key: "usuarios", label: "Usuários" },
+  { key: "faturamento", label: "Faturamento" },
+  { key: "operacao", label: "IA de operações" },
+  { key: "seguranca", label: "Segurança" },
+  { key: "suporte", label: "Suporte" },
+  { key: "auditoria", label: "Auditoria" },
+  { key: "runbooks", label: "Runbooks" },
+  { key: "terminal", label: "Terminal" },
+  { key: "integracoes", label: "Integrações" },
+  { key: "deploy", label: "Deploy" },
+];
 
 function fmtDate(d: string | null | undefined) {
   if (!d) return "—";
@@ -219,6 +232,22 @@ export default async function ContasPage({
             Todas as empresas, usuários e acessos da plataforma em tempo real.
           </p>
         </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {MASTER_TABS.map((item) => {
+          const href = item.key === "auditoria" && params.q ? `/contas?tab=${item.key}&q=${encodeURIComponent(params.q)}` : `/contas?tab=${item.key}`;
+          return (
+            <Link
+              key={item.key}
+              href={href}
+              className={tab === item.key ? "of-btn-primary" : "of-btn-ghost"}
+              style={{ minHeight: 36, alignContent: "center" }}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </div>
 
       {/* KPIs */}
