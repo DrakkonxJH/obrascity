@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { OpsAiAssistant } from "@/components/master/ops-ai-assistant";
 import { OpsTerminal } from "@/components/master/ops-terminal";
 import { ASSIGNABLE_PROFILE_ROLE_OPTIONS, PROFILE_ROLE_LABEL } from "@/lib/auth/roles";
 import {
@@ -544,6 +545,9 @@ export default async function ContasPage({
               <p className="of-metric-change">incidentes e solicitações ativos</p>
             </article>
           </div>
+
+          <OpsAiAssistant />
+
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 10 }}>Operação e SLO</div>
             <p className="of-page-description" style={{ marginBottom: 12 }}>
