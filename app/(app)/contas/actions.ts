@@ -7,6 +7,7 @@ import { isAssignableProfileRole, type ProfileRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const SECURITY_ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
+const VALID_PLANS = new Set(["trial", "starter", "pro", "enterprise"]);
 
 async function assertControlTotal() {
   const profile = await getCurrentProfile();
@@ -72,20 +73,45 @@ export async function ativarEmpresaAction(empresaId: string) {
 
 export async function alterarPlanoAction(empresaId: string, formData: FormData) {
   await assertControlTotal();
-  const plano = String(formData.get("plano") ?? "").trim();
-  if (!plano) throw new Error("Plano inválido");
+  const plano = String(formData.get("plano") ?? "").trim().toLowerCase();
+  if (!VALID_PLANS.has(plano)) throw new Error("Plano inválido");
+
+  const now = new Date();
+  const assinaturaPatch: {
+    plano: string;
+    status: string;
+    periodo_fim: string | null;
+  } = {
+    plano,
+    status: plano === "trial" ? "trialing" : "active",
+    periodo_fim: null,
+  };
+
+  if (plano === "trial") {
+    const endsAt = new Date(now);
+    endsAt.setDate(endsAt.getDate() + 14);
+    assinaturaPatch.periodo_fim = endsAt.toISOString();
+  }
+
   const admin = createAdminClient();
   const { error } = await admin
     .from("assinaturas")
-    .update({ plano })
+    .update(assinaturaPatch)
     .eq("empresa_id", empresaId);
   if (error) throw new Error(`Erro ao alterar plano: ${error.message}`);
+
+  const { error: empresaError } = await admin
+    .from("empresas")
+    .update({ plano, updated_at: now.toISOString() })
+    .eq("id", empresaId);
+  if (empresaError) throw new Error(`Erro ao sincronizar plano da empresa: ${empresaError.message}`);
+
   await logMasterAudit({
     action: "plano_alterado",
     targetType: "empresa",
     targetId: empresaId,
     empresaId,
-    details: { plano },
+    details: { plano, status: assinaturaPatch.status, periodo_fim: assinaturaPatch.periodo_fim },
   });
   revalidatePath("/contas");
 }
@@ -146,23 +172,33 @@ export async function estenderPeriodoEmpresaAction(empresaId: string, formData: 
   const admin = createAdminClient();
   const { data: assinatura, error: assinaturaError } = await admin
     .from("assinaturas")
-    .select("periodo_fim")
+   .select("id, status, periodo_fim, created_at")
     .eq("empresa_id", empresaId)
-    .maybeSingle();
+   .order("created_at", { ascending: false })
+   .limit(1)
+   .maybeSingle();
   if (assinaturaError) {
-    throw new Error(`Erro ao carregar assinatura: ${assinaturaError.message}`);
+   throw new Error(`Erro ao carregar assinatura: ${assinaturaError.message}`);
   }
-  const base = assinatura?.periodo_fim ? new Date(assinatura.periodo_fim) : new Date();
+  if (!assinatura?.id) {
+   throw new Error("Nenhuma assinatura encontrada para esta empresa");
+  }
+
+  const base = assinatura.periodo_fim ? new Date(assinatura.periodo_fim) : new Date();
   base.setDate(base.getDate() + days);
   const { error } = await admin
-    .from("assinaturas")
-    .update({ periodo_fim: base.toISOString() })
-    .eq("empresa_id", empresaId);
+   .from("assinaturas")
+   .update({
+     periodo_fim: base.toISOString(),
+     status: String(assinatura.status).toLowerCase() === "trialing" ? "trialing" : "active",
+     updated_at: new Date().toISOString(),
+   })
+   .eq("id", assinatura.id);
   if (error) throw new Error(`Erro ao estender período: ${error.message}`);
   await logMasterAudit({
-    action: "assinatura_estendida",
-    targetType: "empresa",
-    targetId: empresaId,
+   action: "assinatura_estendida",
+   targetType: "empresa",
+   targetId: empresaId,
     empresaId,
     details: { days, novo_periodo_fim: base.toISOString() },
   });
