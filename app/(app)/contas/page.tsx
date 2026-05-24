@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
@@ -233,14 +234,19 @@ export default async function ContasPage({
           <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>{perfis.length}</p>
           <p className="of-metric-change">em {empresas.length} empresas</p>
         </article>
-        <article className="of-metric-card yellow">
+        <Link
+          href="/contas?tab=seguranca"
+          className="of-metric-card yellow"
+          style={{ textDecoration: "none", color: "inherit", display: "block", cursor: "pointer" }}
+          aria-label="Ver alertas de segurança"
+        >
           <p className="of-kpi-icon">🔔</p>
           <p className="of-kpi-label">Alertas de segurança</p>
           <p className="of-kpi-value" style={{ color: alertasHigh > 0 ? "var(--of-red)" : "var(--of-yellow)" }}>
             {alertas.length}
           </p>
           <p className="of-metric-change">{alertasHigh} críticos (high)</p>
-        </article>
+        </Link>
         <article className="of-metric-card purple">
           <p className="of-kpi-icon">📋</p>
           <p className="of-kpi-label">Tentativas de cadastro</p>
