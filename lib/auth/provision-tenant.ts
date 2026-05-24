@@ -20,7 +20,7 @@ export async function provisionTrialTenant(input: {
 
   const { error: roleError } = await admin
     .from("profiles")
-    .update({ role: "visualizador" })
+    .update({ role: "administrador" })
     .eq("id", input.userId);
 
   if (roleError) {
