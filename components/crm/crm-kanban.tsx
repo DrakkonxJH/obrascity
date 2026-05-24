@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
+import { createCrmDealAction } from "@/app/(app)/crm/actions";
 
 type Deal = {
   id: string;
@@ -20,6 +21,7 @@ type Deal = {
 
 type CrmKanbanProps = {
   deals: Deal[];
+  obras: { id: string; nome: string }[];
 };
 
 const STAGES = [
@@ -49,9 +51,10 @@ function priorityStyle(priority: Deal["priority"]) {
   return { color: "var(--of-blue)", border: "1px solid #52a3ff66", bg: "#52a3ff1a" };
 }
 
-export function CrmKanban({ deals }: CrmKanbanProps) {
+export function CrmKanban({ deals, obras }: CrmKanbanProps) {
   const [selectedDealId, setSelectedDealId] = useState<string | null>(deals[0]?.id ?? null);
   const [movingDealId, setMovingDealId] = useState<string | null>(null);
+  const [openStage, setOpenStage] = useState<(typeof STAGES)[number]["key"] | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -115,9 +118,16 @@ export function CrmKanban({ deals }: CrmKanbanProps) {
                   marginBottom: 10,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <p style={{ margin: 0, fontWeight: 700, color: stage.color }}>{stage.label}</p>
-                  <span className="of-badge of-badge-blue">{stageDeals.length}</span>
+                  <button
+                    type="button"
+                    className="of-btn-ghost"
+                    style={{ minHeight: 28, padding: "4px 8px" }}
+                    onClick={() => setOpenStage((current) => (current === stage.key ? null : stage.key))}
+                  >
+                    +
+                  </button>
                 </div>
                 <p style={{ margin: "6px 0 0", fontSize: "1.05rem", fontWeight: 700 }}>{money.format(stageTotal)}</p>
               </header>
@@ -125,7 +135,7 @@ export function CrmKanban({ deals }: CrmKanbanProps) {
               <div style={{ display: "grid", gap: 8 }}>
                 {stageDeals.length === 0 ? (
                   <p className="of-empty-text" style={{ padding: "8px 6px" }}>
-                    Arraste um negocio para esta etapa.
+                    Nenhum card aqui ainda. Use o + para adicionar um.
                   </p>
                 ) : null}
                 {stageDeals.map((deal) => {
@@ -177,6 +187,60 @@ export function CrmKanban({ deals }: CrmKanbanProps) {
                     </article>
                   );
                 })}
+                {Array.from({ length: Math.max(1, 2 - stageDeals.length) }).map((_, index) => (
+                  <button
+                    key={`${stage.key}-ghost-${index}`}
+                    type="button"
+                    onClick={() => setOpenStage(stage.key)}
+                    style={{
+                      border: "1px dashed var(--of-border)",
+                      borderRadius: 10,
+                      minHeight: 88,
+                      background: "rgba(255,255,255,0.02)",
+                      color: "var(--of-text-2)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    + Novo card
+                  </button>
+                ))}
+                {openStage === stage.key ? (
+                  <form
+                    action={createCrmDealAction}
+                    style={{
+                      display: "grid",
+                      gap: 8,
+                      padding: 10,
+                      borderRadius: 10,
+                      border: "1px solid var(--of-border)",
+                      background: "rgba(8, 16, 34, 0.9)",
+                    }}
+                  >
+                    <input name="nome" className="of-input" placeholder="Nome do card" required />
+                    <input name="valor" className="of-input" type="number" min="0" step="0.01" placeholder="Valor" required />
+                    <select name="obra_id" className="of-input" defaultValue="">
+                      <option value="">Vincular a obra (opcional)</option>
+                      {obras.map((obra) => (
+                        <option key={obra.id} value={obra.id}>
+                          {obra.nome}
+                        </option>
+                      ))}
+                    </select>
+                    <input type="hidden" name="stage" value={stage.key} />
+                    <select name="priority" className="of-input" defaultValue="media">
+                      <option value="baixa">Prioridade baixa</option>
+                      <option value="media">Prioridade média</option>
+                      <option value="alta">Prioridade alta</option>
+                    </select>
+                    <input name="tags" className="of-input" placeholder="Tags separadas por vírgula" />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button type="submit" className="of-btn-primary">Salvar</button>
+                      <button type="button" className="of-btn-ghost" onClick={() => setOpenStage(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
               </div>
             </section>
           );

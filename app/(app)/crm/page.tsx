@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CrmKanban } from "@/components/crm/crm-kanban";
 import { CRM_STAGES, listCrmActivities, listCrmCompanies, listCrmContacts, listCrmDeals } from "@/lib/db/crm";
 import { listObras } from "@/lib/db/obras";
-import { createCrmActivityAction, createCrmDealAction } from "./actions";
+import { createCrmActivityAction } from "./actions";
 
 const TABS = [
   { key: "negocios", label: "Negócios" },
@@ -236,39 +236,7 @@ export default async function CrmPage({
 
       {tab === "negocios" ? (
         <>
-          <article className="of-card" style={{ marginBottom: 16 }}>
-            <div className="of-card-title">Novo negócio</div>
-            <form action={createCrmDealAction} className="of-form-grid md:grid-cols-6">
-              <input name="nome" className="of-input" placeholder="Nome do negócio" required />
-              <input name="valor" className="of-input" type="number" min="0" step="0.01" placeholder="Valor estimado" required />
-              <select name="obra_id" className="of-input" defaultValue="">
-                <option value="">Vincular a obra (opcional)</option>
-                {obras.map((obra) => (
-                  <option key={obra.id} value={obra.id}>
-                    {obra.nome}
-                  </option>
-                ))}
-              </select>
-              <select name="stage" className="of-input" defaultValue="novos">
-                {CRM_STAGES.map((stage) => (
-                  <option key={stage} value={stage}>
-                    {STAGE_LABEL[stage]}
-                  </option>
-                ))}
-              </select>
-              <select name="priority" className="of-input" defaultValue="media">
-                <option value="baixa">Prioridade baixa</option>
-                <option value="media">Prioridade média</option>
-                <option value="alta">Prioridade alta</option>
-              </select>
-              <input name="tags" className="of-input" placeholder="Tags separadas por vírgula" />
-              <button type="submit" className="of-btn-primary" style={{ minHeight: 44 }}>
-                + Criar negócio
-              </button>
-            </form>
-          </article>
-
-          {view === "kanban" ? <CrmKanban deals={filteredDeals} /> : null}
+          {view === "kanban" ? <CrmKanban deals={filteredDeals} obras={obras} /> : null}
 
           {view === "lista" ? (
             <article className="of-card">
