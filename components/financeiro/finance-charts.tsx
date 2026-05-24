@@ -33,6 +33,8 @@ export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChar
     value,
     percent: Math.round((value / totalSlice) * 100),
   }));
+  const chartReference = Math.max(totalOrcado, totalRealizado, 1);
+  const chartTicks = [0.75, 0.5, 0.25].map((factor) => compactMoney.format(chartReference * factor));
 
   const circles = slices.reduce<{ nodes: ReactNode[]; offset: number }>(
     (acc, [label, value], index) => {
@@ -60,8 +62,18 @@ export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChar
   return (
     <div className="of-fin-chart-wrap">
       <article className="of-card">
-        <div className="of-card-title">Evolução de Gastos — {new Date().getFullYear()}</div>
-        <svg viewBox="0 0 520 160" width="100%" style={{ display: "block", marginTop: 4 }}>
+        <div className="of-fin-chart-head">
+          <div className="of-card-title">Evolução de Gastos — {new Date().getFullYear()}</div>
+          <div className="of-fin-line-legend" aria-label="Legenda do gráfico">
+            <span className="of-fin-line-legend-item">
+              <i className="of-fin-line-solid" aria-hidden /> Realizado
+            </span>
+            <span className="of-fin-line-legend-item">
+              <i className="of-fin-line-dashed" aria-hidden /> Referência orçada
+            </span>
+          </div>
+        </div>
+        <svg viewBox="0 0 520 176" width="100%" style={{ display: "block", marginTop: 4 }}>
           <defs>
             <linearGradient id="finGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#FF6B1A" stopOpacity="0.25" />
@@ -70,6 +82,18 @@ export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChar
           </defs>
           {[40, 80, 120].map((y) => (
             <line key={y} x1="0" y1={y} x2="520" y2={y} stroke="rgba(255,255,255,.05)" strokeWidth="1" />
+          ))}
+          {chartTicks.map((tick, index) => (
+            <text
+              key={tick}
+              x="4"
+              y={43 + index * 40}
+              fill="#4A5A7A"
+              fontSize="9"
+              fontFamily="DM Mono"
+            >
+              {tick}
+            </text>
           ))}
           <polygon
             points="30,120 90,108 150,96 210,80 270,68 330,52 390,44 450,36 510,28 510,140 30,140"
@@ -94,11 +118,14 @@ export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChar
             strokeLinecap="round"
           />
           {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set"].map((m, i) => (
-            <text key={m} x={30 + i * 60} y="155" fill="#4A5A7A" fontSize="9" textAnchor="middle" fontFamily="DM Mono">
+            <text key={m} x={30 + i * 60} y="167" fill="#4A5A7A" fontSize="9" textAnchor="middle" fontFamily="DM Mono">
               {m}
             </text>
           ))}
         </svg>
+        <p className="of-empty-text" style={{ marginTop: 8 }}>
+          Linha sólida: gasto realizado acumulado no período.
+        </p>
       </article>
 
       <article className="of-card">

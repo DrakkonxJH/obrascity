@@ -172,20 +172,38 @@ export default async function FinanceiroPage() {
         </form>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <article className="of-card">
-          <p className="of-fin-label">PV</p>
-          <p className="of-fin-value">{money.format(evm.pv)}</p>
+      <div className="of-fin-evm-grid">
+        <article className="of-card of-fin-evm-card">
+          <p className="of-fin-label">PV · Planned Value</p>
+          <p className="of-fin-mini-value">{money.format(evm.pv)}</p>
+          <p className="of-fin-sub">Valor planejado acumulado da obra.</p>
         </article>
-        <article className="of-card">
-          <p className="of-fin-label">EV / AC</p>
-          <p className="of-fin-value">{money.format(evm.ev)} / {money.format(evm.ac)}</p>
+        <article className="of-card of-fin-evm-card">
+          <p className="of-fin-label">EV · AC</p>
+          <div className="of-fin-evm-split">
+            <div className="of-fin-evm-row">
+              <p className="of-fin-evm-row-label">EV (valor agregado)</p>
+              <p className="of-fin-evm-row-value">{money.format(evm.ev)}</p>
+            </div>
+            <div className="of-fin-evm-row">
+              <p className="of-fin-evm-row-label">AC (custo real)</p>
+              <p className="of-fin-evm-row-value">{money.format(evm.ac)}</p>
+            </div>
+          </div>
         </article>
-        <article className="of-card">
+        <article className="of-card of-fin-evm-card">
           <p className="of-fin-label">CPI · SPI · EAC</p>
-          <p className="of-fin-sub">
-            {evm.cpi.toFixed(3)} · {evm.spi.toFixed(3)} · {money.format(evm.eac)}
-          </p>
+          <div className="of-fin-evm-kpis">
+            <div className="of-fin-evm-kpi">
+              <p className="of-fin-evm-kpi-label">CPI</p>
+              <p className="of-fin-evm-kpi-value">{evm.cpi.toFixed(3)}</p>
+            </div>
+            <div className="of-fin-evm-kpi">
+              <p className="of-fin-evm-kpi-label">SPI</p>
+              <p className="of-fin-evm-kpi-value">{evm.spi.toFixed(3)}</p>
+            </div>
+          </div>
+          <p className="of-fin-sub">EAC estimado: {money.format(evm.eac)}</p>
         </article>
       </div>
       </section>
