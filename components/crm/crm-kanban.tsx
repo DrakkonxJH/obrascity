@@ -22,6 +22,7 @@ type Deal = {
 type CrmKanbanProps = {
   deals: Deal[];
   obras: { id: string; nome: string }[];
+  boardSlug: string;
 };
 
 const STAGES = [
@@ -51,7 +52,7 @@ function priorityStyle(priority: Deal["priority"]) {
   return { color: "var(--of-blue)", border: "1px solid #52a3ff66", bg: "#52a3ff1a" };
 }
 
-export function CrmKanban({ deals, obras }: CrmKanbanProps) {
+export function CrmKanban({ deals, obras, boardSlug }: CrmKanbanProps) {
   const [selectedDealId, setSelectedDealId] = useState<string | null>(deals[0]?.id ?? null);
   const [movingDealId, setMovingDealId] = useState<string | null>(null);
   const [openStage, setOpenStage] = useState<(typeof STAGES)[number]["key"] | null>(null);
@@ -233,6 +234,7 @@ export function CrmKanban({ deals, obras }: CrmKanbanProps) {
                       <option value="alta">Prioridade alta</option>
                     </select>
                     <input name="tags" className="of-input" placeholder="Tags separadas por vírgula" />
+                    <input type="hidden" name="board_tag" value={`board:${boardSlug}`} />
                     <div style={{ display: "flex", gap: 8 }}>
                       <button type="submit" className="of-btn-primary">Salvar</button>
                       <button type="button" className="of-btn-ghost" onClick={() => setOpenStage(null)}>

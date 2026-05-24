@@ -17,12 +17,15 @@ export async function createCrmDealAction(formData: FormData) {
   const valor = Number(formData.get("valor") ?? 0);
   const stage = String(formData.get("stage") ?? "novos").trim().toLowerCase();
   const obraIdRaw = String(formData.get("obra_id") ?? "").trim();
+  const boardTagRaw = String(formData.get("board_tag") ?? "").trim().toLowerCase();
   const priority = parsePriority(String(formData.get("priority") ?? "media").trim().toLowerCase());
   const tagsRaw = String(formData.get("tags") ?? "").trim();
   const tags = tagsRaw
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
+  const boardTag = boardTagRaw.startsWith("board:") ? boardTagRaw : null;
+  const normalizedTags = boardTag && !tags.includes(boardTag) ? [boardTag, ...tags] : tags;
 
   if (!nome) {
     throw new Error("Nome do negocio obrigatorio");
@@ -41,7 +44,7 @@ export async function createCrmDealAction(formData: FormData) {
     priority,
     owner_profile_id: profile.id,
     obra_id: obraIdRaw || null,
-    tags,
+    tags: normalizedTags,
   });
   revalidatePath("/crm");
 }
