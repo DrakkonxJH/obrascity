@@ -44,5 +44,14 @@ export function getAppOrigin() {
 
 export function getCrmMode() {
   const env = getEnv();
-  return env.CRM_MODE ?? "wekan_proxy";
+  const mode = env.CRM_MODE ?? "wekan_proxy";
+  if (mode === "wekan_proxy" && !env.CRM_INTERNAL_URL) {
+    return "native";
+  }
+  return mode;
+}
+
+export function isCrmProxyConfigured() {
+  const env = getEnv();
+  return Boolean(env.CRM_INTERNAL_URL);
 }

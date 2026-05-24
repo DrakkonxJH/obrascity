@@ -3,7 +3,7 @@ import { CrmKanban } from "@/components/crm/crm-kanban";
 import { listCrmBoards, listCrmDeals } from "@/lib/db/crm";
 import { listObras } from "@/lib/db/obras";
 import { requireClientProfileForPage } from "@/lib/auth/require-client-account";
-import { getCrmMode } from "@/lib/validations/env";
+import { getCrmMode, isCrmProxyConfigured } from "@/lib/validations/env";
 
 export default async function CrmPage({
   searchParams,
@@ -11,6 +11,7 @@ export default async function CrmPage({
   searchParams: Promise<{ board?: string }>;
 }) {
   await requireClientProfileForPage();
+  const proxyConfigured = isCrmProxyConfigured();
   const crmMode = getCrmMode();
   const params = await searchParams;
   const board = String(params.board ?? "geral").trim().toLowerCase() || "geral";
@@ -93,6 +94,15 @@ export default async function CrmPage({
           </p>
         </div>
       </div>
+
+      {!proxyConfigured ? (
+        <article className="of-card" style={{ borderColor: "var(--of-blue)", marginBottom: 16 }}>
+          <p className="of-card-title">Modo temporário</p>
+          <p className="of-empty-text">
+            O CRM nativo está ativo temporariamente enquanto o endpoint interno do novo CRM é concluído.
+          </p>
+        </article>
+      ) : null}
 
       {missingTablesMessage ? (
         <article className="of-card" style={{ borderColor: "var(--of-yellow)", marginBottom: 16 }}>
