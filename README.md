@@ -66,6 +66,7 @@ Preencha as variáveis obrigatórias no `.env.local`:
 Variáveis opcionais (para depois):
 - `STRIPE_*` (pagamentos)
 - `RESEND_API_KEY` (email)
+- `CRM_MODE`, `CRM_INTERNAL_URL`, `CRM_PROXY_SHARED_SECRET` (gateway WeKan interno)
 
 ### 4. Rodar em desenvolvimento
 
@@ -129,6 +130,9 @@ types/             # TypeScript types
 - `RESEND_API_KEY` para e-mails
 - `RESEND_FROM_EMAIL` para o remetente das confirmações
 - `SIGNUP_EDGE_SHARED_SECRET` para o fluxo antigo de cadastro
+- `CRM_MODE=wekan_proxy` para ativar o CRM via proxy interno
+- `CRM_INTERNAL_URL` com URL interna do WeKan (não pública)
+- `CRM_PROXY_SHARED_SECRET` para assinar o header `x-obrasflow-auth`
 
 **Importante:** Use chaves de produção do Stripe (`sk_live_*`) para produção.
 

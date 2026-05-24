@@ -15,6 +15,9 @@ const envSchema = z.object({
   DATA_ENCRYPTION_KEY: z.string().min(1).optional(),
   CONTROLE_TOTAL_OWNER_EMAIL: z.string().email().optional(),
   CONTROLE_TOTAL_OWNER_PROFILE_ID: z.string().min(1).optional(),
+  CRM_MODE: z.enum(["native", "wekan_proxy"]).optional(),
+  CRM_INTERNAL_URL: z.string().url().optional(),
+  CRM_PROXY_SHARED_SECRET: z.string().min(16).optional(),
 });
 
 export function getEnv() {
@@ -37,4 +40,9 @@ export function getEnv() {
 export function getAppOrigin() {
   const env = getEnv();
   return env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+}
+
+export function getCrmMode() {
+  const env = getEnv();
+  return env.CRM_MODE ?? "native";
 }

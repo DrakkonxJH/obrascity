@@ -3,6 +3,7 @@ import { CrmKanban } from "@/components/crm/crm-kanban";
 import { listCrmBoards, listCrmDeals } from "@/lib/db/crm";
 import { listObras } from "@/lib/db/obras";
 import { requireClientProfileForPage } from "@/lib/auth/require-client-account";
+import { getCrmMode } from "@/lib/validations/env";
 
 export default async function CrmPage({
   searchParams,
@@ -10,8 +11,33 @@ export default async function CrmPage({
   searchParams: Promise<{ board?: string }>;
 }) {
   await requireClientProfileForPage();
+  const crmMode = getCrmMode();
   const params = await searchParams;
   const board = String(params.board ?? "geral").trim().toLowerCase() || "geral";
+
+  if (crmMode === "wekan_proxy") {
+    return (
+      <section className="of-page" style={{ display: "grid", gap: 12 }}>
+        <div className="of-inline-header" style={{ marginBottom: 4, alignItems: "center" }}>
+          <div>
+            <h1 className="of-page-title" style={{ marginBottom: 6 }}>
+              ObrasFlow CRM
+            </h1>
+            <p className="of-empty-text">
+              Ambiente CRM integrado via gateway seguro interno.
+            </p>
+          </div>
+        </div>
+        <article className="of-card" style={{ padding: 0, overflow: "hidden" }}>
+          <iframe
+            src="/api/crm/proxy"
+            title="ObrasFlow CRM"
+            style={{ width: "100%", height: "calc(100vh - 190px)", border: 0, display: "block" }}
+          />
+        </article>
+      </section>
+    );
+  }
 
   const [dealsResult, obrasResult, boardsResult] = await Promise.all([
     listCrmDeals()
