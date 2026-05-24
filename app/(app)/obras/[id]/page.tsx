@@ -8,6 +8,11 @@ import { listPedidosCompra } from "@/lib/db/materiais";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { listNotificacoes } from "@/lib/db/notificacoes";
 import { ObraLifecycleActions } from "@/components/obras/obra-lifecycle-actions";
+import {
+  addObraFinanceiroItemAction,
+  updateObraDetalhesAction,
+  updateObraFinanceiroItemAction,
+} from "./actions";
 
 type ObraDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -97,6 +102,8 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
     diariosObra.length > 0
       ? Math.round(diariosObra.reduce((sum, item) => sum + item.efetivo, 0) / diariosObra.length)
       : 0;
+  const updateObraAction = updateObraDetalhesAction.bind(null, obra.id);
+  const addFinanceiroAction = addObraFinanceiroItemAction.bind(null, obra.id);
 
   return (
     <section className="of-page">
@@ -131,6 +138,40 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
       <div style={{ marginBottom: 18 }}>
         <ObraLifecycleActions obra={obra} afterActionHref="/obras" />
       </div>
+
+      <article className="of-card" style={{ marginBottom: 18 }}>
+        <div className="of-card-title" style={{ marginBottom: 12 }}>
+          Editar dados da obra
+        </div>
+        <form action={updateObraAction} className="of-form-grid" style={{ gridTemplateColumns: "2fr 1.6fr 1fr 1fr" }}>
+          <input name="nome" defaultValue={obra.nome} required className="of-input" placeholder="Nome da obra" />
+          <input
+            name="cliente"
+            defaultValue={obra.cliente}
+            required
+            className="of-input"
+            placeholder="Cliente da obra"
+          />
+          <select name="status" defaultValue={obra.status} className="of-input">
+            <option value="planejamento">Planejamento</option>
+            <option value="andamento">Em andamento</option>
+            <option value="atencao">Atenção</option>
+            <option value="concluida">Concluída</option>
+          </select>
+          <input
+            name="progresso"
+            type="number"
+            min={0}
+            max={100}
+            defaultValue={obra.progresso}
+            className="of-input"
+            placeholder="Progresso (%)"
+          />
+          <button type="submit" className="of-btn-primary" style={{ gridColumn: "1 / -1", justifySelf: "start" }}>
+            Salvar dados da obra
+          </button>
+        </form>
+      </article>
 
       <div
         className="of-dashboard-grid"
@@ -185,6 +226,18 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
       <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 18 }}>
         <article className="of-card">
           <div className="of-card-title">Financeiro por categoria</div>
+          <form
+            action={addFinanceiroAction}
+            className="of-form-grid"
+            style={{ gridTemplateColumns: "1.5fr 1fr 1fr auto", marginBottom: 12 }}
+          >
+            <input name="categoria" required placeholder="Nova categoria" className="of-input" />
+            <input name="orcado" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
+            <input name="realizado" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
+            <button type="submit" className="of-btn-primary">
+              Adicionar
+            </button>
+          </form>
           {financeiroObra.length === 0 ? (
             <p className="of-empty-text">Sem lançamentos financeiros para esta obra.</p>
           ) : (
@@ -195,16 +248,53 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
                     <th>Categoria</th>
                     <th>Orçado</th>
                     <th>Realizado</th>
+                    <th>Ajustes</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {financeiroObra.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.categoria}</td>
-                      <td>{money.format(item.orcado)}</td>
-                      <td>{money.format(item.realizado)}</td>
-                    </tr>
-                  ))}
+                  {financeiroObra.map((item) => {
+                    const updateFinanceiroAction = updateObraFinanceiroItemAction.bind(null, obra.id, item.id);
+                    return (
+                      <tr key={item.id}>
+                        <td>{item.categoria}</td>
+                        <td>{money.format(item.orcado)}</td>
+                        <td>{money.format(item.realizado)}</td>
+                        <td>
+                          <form
+                            action={updateFinanceiroAction}
+                            style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px auto", gap: 6 }}
+                          >
+                            <input
+                              name="categoria"
+                              defaultValue={item.categoria}
+                              required
+                              className="of-input"
+                              style={{ minWidth: 140 }}
+                            />
+                            <input
+                              name="orcado"
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              defaultValue={item.orcado}
+                              className="of-input"
+                            />
+                            <input
+                              name="realizado"
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              defaultValue={item.realizado}
+                              className="of-input"
+                            />
+                            <button type="submit" className="of-btn-ghost">
+                              Salvar
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

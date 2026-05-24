@@ -59,3 +59,31 @@ export async function createFinanceiroItem(input: {
     throw new Error(`Erro ao criar lancamento financeiro: ${error.message}`);
   }
 }
+
+export async function updateFinanceiroItem(input: {
+  id: string;
+  obra_id: string;
+  categoria: string;
+  orcado: number;
+  realizado: number;
+}) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  await ensureObraAtiva(input.obra_id);
+
+  const { error, data } = await supabase
+    .from("obras_financeiro")
+    .update({
+      categoria: input.categoria,
+      orcado: input.orcado,
+      realizado: input.realizado,
+    })
+    .eq("empresa_id", empresaId)
+    .eq("obra_id", input.obra_id)
+    .eq("id", input.id)
+    .select("id");
+
+  if (error || !data?.length) {
+    throw new Error(`Erro ao atualizar lancamento financeiro: ${error?.message ?? "lancamento não encontrado"}`);
+  }
+}

@@ -177,6 +177,40 @@ export async function createObra(input: {
   }
 }
 
+export async function updateObra(
+  obraId: string,
+  input: {
+    nome: string;
+    cliente: string;
+    status: Obra["status"];
+    progresso: number;
+  },
+) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const trashEnabled = await supportsObraTrash();
+
+  let query = supabase
+    .from("obras")
+    .update({
+      nome: input.nome,
+      cliente: input.cliente,
+      status: input.status,
+      progresso: input.progresso,
+    })
+    .eq("empresa_id", empresaId)
+    .eq("id", obraId);
+
+  if (trashEnabled) {
+    query = query.is("deleted_at", null);
+  }
+
+  const { error, data } = await query.select("id");
+  if (error || !data?.length) {
+    throw new Error(`Erro ao atualizar obra: ${error?.message ?? "obra não encontrada"}`);
+  }
+}
+
 export async function getDashboardResumo() {
   const obras = await listObras();
   const atencao = obras.filter((obra) => obra.status === "atencao").length;
