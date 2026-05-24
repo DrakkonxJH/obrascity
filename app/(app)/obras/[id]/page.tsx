@@ -8,11 +8,6 @@ import { listPedidosCompra } from "@/lib/db/materiais";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { listNotificacoes } from "@/lib/db/notificacoes";
 import { ObraLifecycleActions } from "@/components/obras/obra-lifecycle-actions";
-import {
-  addObraFinanceiroItemAction,
-  updateObraDetalhesAction,
-  updateObraFinanceiroItemAction,
-} from "./actions";
 
 type ObraDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -62,6 +57,21 @@ function taskLabel(status: string) {
   return "Planejada";
 }
 
+function resolveTaskMaterials(taskName: string, pedidos: { material_nome: string; quantidade: number; valor: number }[]) {
+  const taskWords = normalize(taskName)
+    .split(/\s+/)
+    .filter((word) => word.length > 3);
+  const matches = pedidos.filter((pedido) =>
+    taskWords.some((word) => normalize(pedido.material_nome).includes(word)),
+  );
+  const source = matches.length > 0 ? matches : pedidos;
+  return source.slice(0, 2).map((pedido) => ({
+    nome: pedido.material_nome,
+    quantidade: pedido.quantidade,
+    valor: pedido.valor,
+  }));
+}
+
 export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
   const { id } = await params;
   const [obras, financeiro, diarios, cronograma, pedidos, relatórios, notificacoes] = await Promise.all([
@@ -102,8 +112,19 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
     diariosObra.length > 0
       ? Math.round(diariosObra.reduce((sum, item) => sum + item.efetivo, 0) / diariosObra.length)
       : 0;
-  const updateObraAction = updateObraDetalhesAction.bind(null, obra.id);
-  const addFinanceiroAction = addObraFinanceiroItemAction.bind(null, obra.id);
+  const atividadesExecutar = cronogramaObra.map((tarefa, index) => {
+    const categoria = financeiroObra[index % Math.max(1, financeiroObra.length)];
+    const materiaisRelacionados = resolveTaskMaterials(tarefa.nome, pedidosObra);
+    return {
+      id: tarefa.id,
+      atividade: tarefa.nome,
+      parteObra: categoria?.categoria ?? "Frente geral da obra",
+      custoPrevisto: categoria?.orcado ?? 0,
+      materiais: materiaisRelacionados,
+      executor: "Equipe técnica da obra",
+      status: taskLabel(tarefa.status),
+    };
+  });
 
   return (
     <section className="of-page">
@@ -138,40 +159,6 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
       <div style={{ marginBottom: 18 }}>
         <ObraLifecycleActions obra={obra} afterActionHref="/obras" />
       </div>
-
-      <article className="of-card" style={{ marginBottom: 18 }}>
-        <div className="of-card-title" style={{ marginBottom: 12 }}>
-          Editar dados da obra
-        </div>
-        <form action={updateObraAction} className="of-form-grid" style={{ gridTemplateColumns: "2fr 1.6fr 1fr 1fr" }}>
-          <input name="nome" defaultValue={obra.nome} required className="of-input" placeholder="Nome da obra" />
-          <input
-            name="cliente"
-            defaultValue={obra.cliente}
-            required
-            className="of-input"
-            placeholder="Cliente da obra"
-          />
-          <select name="status" defaultValue={obra.status} className="of-input">
-            <option value="planejamento">Planejamento</option>
-            <option value="andamento">Em andamento</option>
-            <option value="atencao">Atenção</option>
-            <option value="concluida">Concluída</option>
-          </select>
-          <input
-            name="progresso"
-            type="number"
-            min={0}
-            max={100}
-            defaultValue={obra.progresso}
-            className="of-input"
-            placeholder="Progresso (%)"
-          />
-          <button type="submit" className="of-btn-primary" style={{ gridColumn: "1 / -1", justifySelf: "start" }}>
-            Salvar dados da obra
-          </button>
-        </form>
-      </article>
 
       <div
         className="of-dashboard-grid"
@@ -223,107 +210,48 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
         </article>
       </div>
 
-      <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 18 }}>
+      <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr", marginBottom: 18 }}>
         <article className="of-card">
-          <div className="of-card-title">Financeiro por categoria</div>
-          <form
-            action={addFinanceiroAction}
-            className="of-form-grid"
-            style={{ gridTemplateColumns: "1.5fr 1fr 1fr auto", marginBottom: 12 }}
-          >
-            <input name="categoria" required placeholder="Nova categoria" className="of-input" />
-            <input name="orcado" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
-            <input name="realizado" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
-            <button type="submit" className="of-btn-primary">
-              Adicionar
-            </button>
-          </form>
-          {financeiroObra.length === 0 ? (
-            <p className="of-empty-text">Sem lançamentos financeiros para esta obra.</p>
+          <div className="of-card-title">Atividades a executar</div>
+          {atividadesExecutar.length === 0 ? (
+            <p className="of-empty-text">Sem tarefas cadastradas para montar o plano executivo da obra.</p>
           ) : (
-            <div className="of-table-wrap" style={{ border: 0 }}>
+            <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
               <table className="of-table">
                 <thead>
                   <tr>
-                    <th>Categoria</th>
-                    <th>Orçado</th>
-                    <th>Realizado</th>
-                    <th>Ajustes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {financeiroObra.map((item) => {
-                    const updateFinanceiroAction = updateObraFinanceiroItemAction.bind(null, obra.id, item.id);
-                    return (
-                      <tr key={item.id}>
-                        <td>{item.categoria}</td>
-                        <td>{money.format(item.orcado)}</td>
-                        <td>{money.format(item.realizado)}</td>
-                        <td>
-                          <form
-                            action={updateFinanceiroAction}
-                            style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px auto", gap: 6 }}
-                          >
-                            <input
-                              name="categoria"
-                              defaultValue={item.categoria}
-                              required
-                              className="of-input"
-                              style={{ minWidth: 140 }}
-                            />
-                            <input
-                              name="orcado"
-                              type="number"
-                              step="0.01"
-                              min={0}
-                              defaultValue={item.orcado}
-                              className="of-input"
-                            />
-                            <input
-                              name="realizado"
-                              type="number"
-                              step="0.01"
-                              min={0}
-                              defaultValue={item.realizado}
-                              className="of-input"
-                            />
-                            <button type="submit" className="of-btn-ghost">
-                              Salvar
-                            </button>
-                          </form>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </article>
-
-        <article className="of-card">
-          <div className="of-card-title">Cronograma da obra</div>
-          {cronogramaObra.length === 0 ? (
-            <p className="of-empty-text">Sem tarefas cadastradas para esta obra.</p>
-          ) : (
-            <div className="of-table-wrap" style={{ border: 0 }}>
-              <table className="of-table">
-                <thead>
-                  <tr>
-                    <th>Tarefa</th>
-                    <th>Início</th>
-                    <th>Fim</th>
+                    <th>Atividade</th>
+                    <th>Parte da obra</th>
+                    <th>Custo previsto</th>
+                    <th>Materiais e quantidade</th>
+                    <th>Executor</th>
+                    <th>Orçamento disponível</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {cronogramaObra.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.nome}</td>
-                      <td>{new Date(item.inicio).toLocaleDateString("pt-BR")}</td>
-                      <td>{new Date(item.fim).toLocaleDateString("pt-BR")}</td>
+                  {atividadesExecutar.map((atividade) => (
+                    <tr key={atividade.id}>
+                      <td>{atividade.atividade}</td>
+                      <td>{atividade.parteObra}</td>
+                      <td>{money.format(atividade.custoPrevisto)}</td>
                       <td>
-                        <span className={taskBadge(item.status)}>{taskLabel(item.status)}</span>
+                        {atividade.materiais.length > 0 ? (
+                          <ul style={{ margin: 0, paddingLeft: 16 }}>
+                            {atividade.materiais.map((material) => (
+                              <li key={`${atividade.id}-${material.nome}`} style={{ marginBottom: 3 }}>
+                                {material.nome} · {material.quantidade} un · {money.format(material.valor)}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          "Definir lista de materiais"
+                        )}
+                      </td>
+                      <td>{atividade.executor}</td>
+                      <td>{money.format(Math.max(0, saldo))}</td>
+                      <td>
+                        <span className={taskBadge(atividade.status)}>{atividade.status}</span>
                       </td>
                     </tr>
                   ))}
@@ -333,6 +261,38 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
           )}
         </article>
       </div>
+
+      <article className="of-card" style={{ marginBottom: 18 }}>
+        <div className="of-card-title">Cronograma da obra</div>
+        {cronogramaObra.length === 0 ? (
+          <p className="of-empty-text">Sem tarefas cadastradas para esta obra.</p>
+        ) : (
+          <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Tarefa</th>
+                  <th>Início</th>
+                  <th>Fim</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cronogramaObra.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.nome}</td>
+                    <td>{new Date(item.inicio).toLocaleDateString("pt-BR")}</td>
+                    <td>{new Date(item.fim).toLocaleDateString("pt-BR")}</td>
+                    <td>
+                      <span className={taskBadge(item.status)}>{taskLabel(item.status)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
 
       <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 18 }}>
         <article className="of-card">
