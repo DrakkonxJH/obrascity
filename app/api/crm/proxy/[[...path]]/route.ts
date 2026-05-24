@@ -39,6 +39,7 @@ function buildForwardHeaders(request: NextRequest) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
+  headers.set("accept-encoding", "identity");
   return headers;
 }
 
@@ -57,6 +58,7 @@ function buildResponseHeaders(upstream: Headers, internalOrigin: string, appOrig
     if (
       lower === "set-cookie" ||
       lower === "content-length" ||
+      lower === "content-encoding" ||
       lower === "transfer-encoding" ||
       lower === "connection"
     ) {
