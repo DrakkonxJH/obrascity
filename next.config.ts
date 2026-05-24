@@ -36,9 +36,26 @@ const nextConfig: NextConfig = {
       );
     }
 
+    const crmProxyHeaders = headers.filter((header) => header.key !== "X-Frame-Options");
+    if (process.env.NODE_ENV === "production") {
+      for (let index = crmProxyHeaders.length - 1; index >= 0; index -= 1) {
+        if (crmProxyHeaders[index]?.key === "Content-Security-Policy") {
+          crmProxyHeaders.splice(index, 1);
+        }
+      }
+      crmProxyHeaders.push({
+        key: "Content-Security-Policy",
+        value: "frame-ancestors 'self';",
+      });
+    }
+
     return [
       {
-        source: "/(.*)",
+        source: "/api/crm/proxy/:path*",
+        headers: crmProxyHeaders,
+      },
+      {
+        source: "/((?!api/crm/proxy).*)",
         headers,
       },
     ];
