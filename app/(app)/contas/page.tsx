@@ -16,6 +16,7 @@ import {
   ativarEmpresaAction,
   alterarPlanoAction,
   atualizarPerfilUsuarioAction,
+  atualizarSecurityAlertAction,
   atualizarTicketSuporteAction,
   criarTicketSuporteAction,
   estenderPeriodoEmpresaAction,
@@ -101,6 +102,33 @@ function SeverityBadge({ severity }: { severity: string }) {
       background: `${color}22`, color, border: `1px solid ${color}44`,
     }}>
       {severity}
+    </span>
+  );
+}
+
+function AlertStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; color: string }> = {
+    open: { label: "Aberto", color: "var(--of-red)" },
+    in_progress: { label: "Em análise", color: "var(--of-yellow)" },
+    resolved: { label: "Resolvido", color: "var(--of-green)" },
+    ignored: { label: "Ignorado", color: "var(--of-text-3)" },
+  };
+  const item = map[status] ?? { label: status, color: "var(--of-text-2)" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "2px 7px",
+        borderRadius: 4,
+        fontSize: "0.7rem",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        background: `${item.color}22`,
+        color: item.color,
+        border: `1px solid ${item.color}44`,
+      }}
+    >
+      {item.label}
     </span>
   );
 }
@@ -813,10 +841,12 @@ export default async function ContasPage({
                   <tr>
                     <th style={TH_STYLE}>Categoria</th>
                     <th style={TH_STYLE}>Severidade</th>
+                    <th style={TH_STYLE}>Status</th>
                     <th style={TH_STYLE}>Razão</th>
                     <th style={TH_STYLE}>E-mail</th>
                     <th style={TH_STYLE}>IP (hash)</th>
                     <th style={TH_STYLE}>Data</th>
+                    <th style={TH_STYLE}>Reparo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -828,16 +858,41 @@ export default async function ContasPage({
                         </span>
                       </td>
                       <td style={TD_STYLE}><SeverityBadge severity={a.severity} /></td>
+                      <td style={TD_STYLE}><AlertStatusBadge status={a.status} /></td>
                       <td style={{ ...TD_STYLE, maxWidth: 260, fontSize: "0.8rem" }}>{a.reason}</td>
                       <td style={{ ...TD_STYLE, fontSize: "0.78rem", color: "var(--of-text-2)" }}>{a.email ?? "—"}</td>
                       <td style={{ ...TD_STYLE, fontFamily: "monospace", fontSize: "0.75rem", color: "var(--of-text-3)" }}>
                         {hashShort(a.ip_hash)}
                       </td>
-                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDatetime(a.created_at)}</td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>
+                        {fmtDatetime(a.created_at)}
+                        {a.resolved_at ? (
+                          <span style={{ display: "block", color: "var(--of-text-3)", fontSize: "0.72rem", marginTop: 2 }}>
+                            Resolvido: {fmtDatetime(a.resolved_at)}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td style={TD_STYLE}>
+                        <form action={atualizarSecurityAlertAction.bind(null, a.id)} style={{ display: "grid", gap: 4 }}>
+                          <select name="status" defaultValue={a.status} className="of-input">
+                            <option value="open">Aberto</option>
+                            <option value="in_progress">Em análise</option>
+                            <option value="resolved">Resolvido</option>
+                            <option value="ignored">Ignorado</option>
+                          </select>
+                          <input
+                            name="note"
+                            defaultValue={a.resolution_note ?? ""}
+                            className="of-input"
+                            placeholder="Nota técnica do reparo"
+                          />
+                          <button type="submit" style={BTN_SM}>Salvar</button>
+                        </form>
+                      </td>
                     </tr>
                   ))}
                   {alertas.length === 0 && (
-                    <tr><td colSpan={6} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum alerta registrado.</td></tr>
+                    <tr><td colSpan={8} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum alerta registrado.</td></tr>
                   )}
                 </tbody>
               </table>

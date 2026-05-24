@@ -27,9 +27,13 @@ export type AdminSecurityAlert = {
   id: string;
   category: string;
   severity: string;
+  status: "open" | "in_progress" | "resolved" | "ignored";
   reason: string;
   email: string | null;
   ip_hash: string | null;
+  resolved_at: string | null;
+  resolved_by_profile_id: string | null;
+  resolution_note: string | null;
   created_at: string;
   metadata: Record<string, unknown>;
 };
@@ -179,7 +183,9 @@ export async function listRecentSecurityAlerts(limit = 50): Promise<AdminSecurit
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("security_alerts")
-    .select("id, category, severity, reason, email, ip_hash, created_at, metadata")
+    .select(
+      "id, category, severity, status, reason, email, ip_hash, resolved_at, resolved_by_profile_id, resolution_note, created_at, metadata",
+    )
     .order("created_at", { ascending: false })
     .limit(limit);
 

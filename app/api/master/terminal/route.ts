@@ -33,6 +33,8 @@ function pickCurrentSubscription(rows: SubscriptionRow[]) {
   return source[0] ?? null;
 }
 
+const OPEN_ALERT_STATUS_FILTER = "status.is.null,status.eq.open,status.eq.in_progress";
+
 async function buildQueueStatus() {
   const queues = getManagedQueues();
   const stats = await Promise.all(
@@ -84,7 +86,11 @@ async function executeCommand(rawCommand: string): Promise<CommandResult> {
 
   if (command === "status") {
     const [securityHighRes, openTicketsRes, empresaRes, queueOutput] = await Promise.all([
-      admin.from("security_alerts").select("id", { head: true, count: "exact" }).eq("severity", "high"),
+      admin
+        .from("security_alerts")
+        .select("id", { head: true, count: "exact" })
+        .eq("severity", "high")
+        .or(OPEN_ALERT_STATUS_FILTER),
       admin
         .from("support_tickets")
         .select("id", { head: true, count: "exact" })
@@ -114,8 +120,9 @@ async function executeCommand(rawCommand: string): Promise<CommandResult> {
     const limit = parseLimit(args[0], 10, 100);
     const { data, error } = await admin
       .from("security_alerts")
-      .select("id, category, severity, reason, created_at")
+      .select("id, category, severity, status, reason, created_at")
       .eq("severity", "high")
+      .or(OPEN_ALERT_STATUS_FILTER)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw new Error(error.message);
@@ -124,7 +131,7 @@ async function executeCommand(rawCommand: string): Promise<CommandResult> {
     return {
       ok: true,
       output: data
-        .map((item) => `${formatDate(item.created_at)} | ${item.category} | ${item.reason}`)
+        .map((item) => `${formatDate(item.created_at)} | ${item.category} | ${item.status} | ${item.reason}`)
         .join("\n"),
     };
   }

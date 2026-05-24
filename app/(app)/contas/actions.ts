@@ -6,6 +6,8 @@ import { isControlTotalOwner } from "@/lib/auth/control-total";
 import { isAssignableProfileRole, type ProfileRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+const SECURITY_ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
+
 async function assertControlTotal() {
   const profile = await getCurrentProfile();
   if (!isControlTotalOwner(profile)) {
@@ -258,6 +260,40 @@ export async function atualizarTicketSuporteAction(ticketId: string, formData: F
     empresaId: data.empresa_id,
     details: { status, owner_profile_id: ownerProfileId || null },
   });
+  revalidatePath("/contas");
+}
+
+export async function atualizarSecurityAlertAction(alertId: string, formData: FormData) {
+  const actor = await assertControlTotal();
+  const status = String(formData.get("status") ?? "").trim().toLowerCase();
+  const note = String(formData.get("note") ?? "").trim();
+  if (!alertId || !SECURITY_ALERT_STATUSES.has(status)) {
+    throw new Error("Alerta/status inválidos");
+  }
+
+  const resolved = status === "resolved" || status === "ignored";
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("security_alerts")
+    .update({
+      status,
+      resolved_at: resolved ? new Date().toISOString() : null,
+      resolved_by_profile_id: resolved ? actor?.id ?? null : null,
+      resolution_note: note || null,
+    })
+    .eq("id", alertId);
+
+  if (error) {
+    throw new Error(`Erro ao atualizar alerta de segurança: ${error.message}`);
+  }
+
+  await logMasterAudit({
+    action: "security_alert_atualizado",
+    targetType: "security_alert",
+    targetId: alertId,
+    details: { status, note: note || null },
+  });
+
   revalidatePath("/contas");
 }
 
