@@ -32,7 +32,8 @@ type AlertRow = {
   category: string;
   severity: string;
   reason: string;
-  status: string;
+  status: "open" | "in_progress" | "resolved" | "ignored";
+  metadata: Record<string, unknown>;
   created_at: string;
 };
 
@@ -93,7 +94,7 @@ async function loadContext() {
   const [alertsRes, ticketsRes, empresasRes, queueRes, auditRes] = await Promise.all([
     admin
       .from("security_alerts")
-      .select("id, category, severity, reason, status, created_at")
+      .select("id, category, severity, reason, metadata, created_at")
       .in("severity", ["high", "medium"])
       .order("created_at", { ascending: false })
       .limit(12),
@@ -117,7 +118,21 @@ async function loadContext() {
   if (empresasRes.error) throw new Error(empresasRes.error.message);
   if (auditRes.error) throw new Error(auditRes.error.message);
 
-  const alerts = (alertsRes.data ?? []) as AlertRow[];
+  const alerts = (alertsRes.data ?? []).map((item) => {
+    const metadata = ((item.metadata ?? {}) as Record<string, unknown>) ?? {};
+    const rawStatus = String(metadata.remediation_status ?? "open").toLowerCase();
+    const status: AlertRow["status"] =
+      rawStatus === "in_progress" || rawStatus === "resolved" || rawStatus === "ignored" ? rawStatus : "open";
+    return {
+      id: item.id,
+      category: item.category,
+      severity: item.severity,
+      reason: item.reason,
+      status,
+      metadata,
+      created_at: item.created_at,
+    };
+  }) as AlertRow[];
   const tickets = (ticketsRes.data ?? []) as TicketRow[];
   const highAlerts = alerts.filter((alert) => alert.severity === "high");
   const queueFailures = queueRes.stats.reduce((sum, item) => sum + item.failed, 0);
@@ -215,8 +230,7 @@ async function acknowledgeHighAlerts() {
   const { data, error } = await admin
     .from("security_alerts")
     .select("id, metadata")
-    .eq("severity", "high")
-    .eq("status", "open");
+    .eq("severity", "high");
 
   if (error) {
     throw new Error(error.message);
@@ -225,17 +239,31 @@ async function acknowledgeHighAlerts() {
   let updated = 0;
   for (const alert of data ?? []) {
     const metadata = (alert.metadata ?? {}) as Record<string, unknown>;
-    const { error: updateError } = await admin
+    const currentStatus = String(metadata.remediation_status ?? "open").toLowerCase();
+    if (currentStatus !== "open") continue;
+
+    const updatePayload = {
+      status: "in_progress",
+      metadata: {
+        ...metadata,
+        remediation_status: "in_progress",
+        remediation_note: "Triagem automática pelo assistente de operações",
+      },
+    };
+
+    let { error: updateError } = await admin
       .from("security_alerts")
-      .update({
-        status: "in_progress",
-        metadata: {
-          ...metadata,
-          remediation_status: "in_progress",
-          remediation_note: "Triagem automática pelo assistente de operações",
-        },
-      })
+      .update(updatePayload)
       .eq("id", alert.id);
+
+    if (updateError && updateError.message.toLowerCase().includes("status")) {
+      ({ error: updateError } = await admin
+        .from("security_alerts")
+        .update({
+          metadata: updatePayload.metadata,
+        })
+        .eq("id", alert.id));
+    }
 
     if (updateError) {
       throw new Error(updateError.message);
