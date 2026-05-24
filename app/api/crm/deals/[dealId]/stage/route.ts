@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CRM_STAGES, updateCrmDealStage } from "@/lib/db/crm";
-import { getCurrentProfile } from "@/lib/auth/require-profile";
+import {
+  MasterAccountClientAccessError,
+  requireClientProfileOrThrow,
+} from "@/lib/auth/require-client-account";
 
 type Body = {
   stage?: string;
 };
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ dealId: string }> }) {
-  const profile = await getCurrentProfile();
-  if (!profile?.id || !profile.empresa_id) {
+  try {
+    await requireClientProfileOrThrow();
+  } catch (error) {
+    if (error instanceof MasterAccountClientAccessError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     return NextResponse.json({ error: "Sessao invalida" }, { status: 401 });
   }
 

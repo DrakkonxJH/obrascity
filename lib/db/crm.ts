@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
-import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { requireClientProfileOrThrow } from "@/lib/auth/require-client-account";
 import { listObras } from "@/lib/db/obras";
 
 export const CRM_STAGES = ["novos", "qualificacao", "proposta", "negociacao", "fechado_ganho"] as const;
@@ -52,6 +52,13 @@ export type CrmActivity = {
   created_at: string;
 };
 
+export type CrmBoard = {
+  id: string;
+  slug: string;
+  label: string;
+  created_at: string;
+};
+
 function normalizePriority(value: string | null | undefined): CrmDeal["priority"] {
   if (value === "alta" || value === "media" || value === "baixa") return value;
   return "media";
@@ -62,8 +69,32 @@ function normalizeStage(value: string | null | undefined): CrmStage {
   return CRM_STAGES.includes(stage) ? stage : "novos";
 }
 
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function getCrmEmpresaId() {
+  const profile = await requireClientProfileOrThrow();
+  return profile.empresa_id;
+}
+
+function getBoardSlugFromTags(tags: string[]) {
+  for (const tag of tags) {
+    if (tag.startsWith("board:")) {
+      return tag.slice("board:".length).trim().toLowerCase();
+    }
+  }
+  return null;
+}
+
 export async function listCrmDeals(): Promise<CrmDeal[]> {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
 
   const [dealsRes, profilesRes, companiesRes, contactsRes, obras] = await Promise.all([
@@ -131,7 +162,7 @@ export async function listCrmDeals(): Promise<CrmDeal[]> {
 }
 
 export async function listCrmContacts(): Promise<CrmContact[]> {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
 
   const [contactsRes, companiesRes] = await Promise.all([
@@ -166,7 +197,7 @@ export async function listCrmContacts(): Promise<CrmContact[]> {
 }
 
 export async function listCrmCompanies(): Promise<CrmCompany[]> {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("crm_companies")
@@ -187,7 +218,7 @@ export async function listCrmCompanies(): Promise<CrmCompany[]> {
 }
 
 export async function listCrmActivities(limit = 60): Promise<CrmActivity[]> {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
 
   const [activitiesRes, dealsRes, profilesRes] = await Promise.all([
@@ -243,8 +274,40 @@ export async function createCrmDeal(input: {
   obra_id: string | null;
   tags: string[];
 }) {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
+
+  if (input.obra_id) {
+    const obraCheck = await supabase
+      .from("obras")
+      .select("id")
+      .eq("empresa_id", empresaId)
+      .eq("id", input.obra_id)
+      .maybeSingle();
+    if (obraCheck.error) {
+      throw new Error(`Erro ao validar obra do CRM: ${obraCheck.error.message}`);
+    }
+    if (!obraCheck.data?.id) {
+      throw new Error("Obra inválida para a empresa atual");
+    }
+  }
+
+  const boardSlug = getBoardSlugFromTags(input.tags);
+  if (boardSlug && boardSlug !== "geral") {
+    const boardCheck = await supabase
+      .from("crm_boards")
+      .select("id")
+      .eq("empresa_id", empresaId)
+      .eq("slug", boardSlug)
+      .maybeSingle();
+    if (boardCheck.error) {
+      throw new Error(`Erro ao validar quadro do CRM: ${boardCheck.error.message}`);
+    }
+    if (!boardCheck.data?.id) {
+      throw new Error("Quadro CRM inválido para a empresa atual");
+    }
+  }
+
   const { error } = await supabase.from("crm_deals").insert({
     empresa_id: empresaId,
     nome: input.nome,
@@ -267,8 +330,22 @@ export async function createCrmActivity(input: {
   descricao: string;
   due_at: string | null;
 }) {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
+
+  const dealCheck = await supabase
+    .from("crm_deals")
+    .select("id")
+    .eq("empresa_id", empresaId)
+    .eq("id", input.deal_id)
+    .maybeSingle();
+  if (dealCheck.error) {
+    throw new Error(`Erro ao validar negócio da atividade CRM: ${dealCheck.error.message}`);
+  }
+  if (!dealCheck.data?.id) {
+    throw new Error("Negócio inválido para a empresa atual");
+  }
+
   const { error } = await supabase.from("crm_activities").insert({
     empresa_id: empresaId,
     deal_id: input.deal_id,
@@ -283,7 +360,7 @@ export async function createCrmActivity(input: {
 }
 
 export async function updateCrmDealStage(input: { dealId: string; stage: CrmStage }) {
-  const empresaId = await getEmpresaIdFromProfile();
+  const empresaId = await getCrmEmpresaId();
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("crm_deals")
@@ -296,5 +373,68 @@ export async function updateCrmDealStage(input: { dealId: string; stage: CrmStag
 
   if (error) {
     throw new Error(`Erro ao mover negócio no CRM: ${error.message}`);
+  }
+}
+
+export async function listCrmBoards(): Promise<CrmBoard[]> {
+  const empresaId = await getCrmEmpresaId();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("crm_boards")
+    .select("id, slug, label, created_at")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new Error(`Erro ao listar quadros CRM: ${error.message}`);
+  }
+
+  const boards = (data ?? []).map((board) => ({
+    id: String(board.id),
+    slug: String(board.slug),
+    label: String(board.label),
+    created_at: String(board.created_at),
+  }));
+
+  if (!boards.some((board) => board.slug === "geral")) {
+    return [{ id: "virtual-geral", slug: "geral", label: "Geral", created_at: new Date(0).toISOString() }, ...boards];
+  }
+  return boards;
+}
+
+export async function createCrmBoard(input: { label: string }) {
+  const empresaId = await getCrmEmpresaId();
+  const supabase = await createServerClient();
+  const label = input.label.trim();
+  const slug = slugify(label);
+
+  if (!label || !slug) {
+    throw new Error("Nome do quadro inválido");
+  }
+  if (slug === "geral") {
+    throw new Error("O quadro Geral já existe");
+  }
+
+  const existing = await supabase
+    .from("crm_boards")
+    .select("id")
+    .eq("empresa_id", empresaId)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing.error) {
+    throw new Error(`Erro ao validar quadro CRM: ${existing.error.message}`);
+  }
+  if (existing.data?.id) {
+    return;
+  }
+
+  const { error } = await supabase.from("crm_boards").insert({
+    empresa_id: empresaId,
+    slug,
+    label,
+  });
+
+  if (error) {
+    throw new Error(`Erro ao criar quadro CRM: ${error.message}`);
   }
 }

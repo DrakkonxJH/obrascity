@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { CRM_STAGES, createCrmActivity, createCrmDeal } from "@/lib/db/crm";
-import { getCurrentProfile } from "@/lib/auth/require-profile";
+import { CRM_STAGES, createCrmActivity, createCrmBoard, createCrmDeal } from "@/lib/db/crm";
+import { requireClientProfileOrThrow } from "@/lib/auth/require-client-account";
 
 function parsePriority(value: string | null): "baixa" | "media" | "alta" {
   if (value === "baixa" || value === "media" || value === "alta") return value;
@@ -10,8 +10,7 @@ function parsePriority(value: string | null): "baixa" | "media" | "alta" {
 }
 
 export async function createCrmDealAction(formData: FormData) {
-  const profile = await getCurrentProfile();
-  if (!profile) throw new Error("Sessao invalida");
+  const profile = await requireClientProfileOrThrow();
 
   const nome = String(formData.get("nome") ?? "").trim();
   const valor = Number(formData.get("valor") ?? 0);
@@ -50,6 +49,7 @@ export async function createCrmDealAction(formData: FormData) {
 }
 
 export async function createCrmActivityAction(formData: FormData) {
+  await requireClientProfileOrThrow();
   const dealId = String(formData.get("deal_id") ?? "").trim();
   const tipo = String(formData.get("tipo") ?? "follow_up").trim();
   const descricao = String(formData.get("descricao") ?? "").trim();
@@ -73,5 +73,16 @@ export async function createCrmActivityAction(formData: FormData) {
     descricao,
     due_at: dueAt,
   });
+  revalidatePath("/crm");
+}
+
+export async function createCrmBoardAction(formData: FormData) {
+  await requireClientProfileOrThrow();
+  const label = String(formData.get("label") ?? "").trim();
+  if (!label) {
+    throw new Error("Nome do quadro obrigatorio");
+  }
+
+  await createCrmBoard({ label });
   revalidatePath("/crm");
 }

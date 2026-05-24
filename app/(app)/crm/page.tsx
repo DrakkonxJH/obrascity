@@ -1,17 +1,19 @@
 import { CrmBoardTabs } from "@/components/crm/crm-board-tabs";
 import { CrmKanban } from "@/components/crm/crm-kanban";
-import { listCrmDeals } from "@/lib/db/crm";
+import { listCrmBoards, listCrmDeals } from "@/lib/db/crm";
 import { listObras } from "@/lib/db/obras";
+import { requireClientProfileForPage } from "@/lib/auth/require-client-account";
 
 export default async function CrmPage({
   searchParams,
 }: {
   searchParams: Promise<{ board?: string }>;
 }) {
+  await requireClientProfileForPage();
   const params = await searchParams;
   const board = String(params.board ?? "geral").trim().toLowerCase() || "geral";
 
-  const [dealsResult, obrasResult] = await Promise.all([
+  const [dealsResult, obrasResult, boardsResult] = await Promise.all([
     listCrmDeals()
       .then((data) => ({ data, error: null as string | null }))
       .catch((error: unknown) => ({
@@ -24,10 +26,17 @@ export default async function CrmPage({
         data: [],
         error: error instanceof Error ? error.message : "Erro ao carregar obras",
       })),
+    listCrmBoards()
+      .then((data) => ({ data, error: null as string | null }))
+      .catch((error: unknown) => ({
+        data: [],
+        error: error instanceof Error ? error.message : "Erro ao carregar quadros CRM",
+      })),
   ]);
 
   const deals = dealsResult.data;
   const obras = obrasResult.data;
+  const boards = boardsResult.data;
   const boardTag = `board:${board}`;
   const dealsForBoard =
     board === "geral"
@@ -35,11 +44,11 @@ export default async function CrmPage({
       : deals.filter((deal) => deal.tags.includes(boardTag));
 
   const missingTablesMessage =
-    [dealsResult.error]
+    [dealsResult.error, boardsResult.error]
       .join(" ")
       .toLowerCase()
       .includes("does not exist") ||
-    [dealsResult.error]
+    [dealsResult.error, boardsResult.error]
       .join(" ")
       .toLowerCase()
       .includes("relation")
@@ -51,7 +60,7 @@ export default async function CrmPage({
       <div className="of-inline-header" style={{ marginBottom: 16, alignItems: "center" }}>
         <div>
           <h1 className="of-page-title" style={{ marginBottom: 6 }}>
-            CRM de Obras
+            ObrasFlow CRM
           </h1>
           <p className="of-empty-text">
             Quadro comercial dinâmico: crie suas próprias abas e organize os cards por etapa.
@@ -66,7 +75,7 @@ export default async function CrmPage({
         </article>
       ) : null}
 
-      <CrmBoardTabs selectedBoard={board} />
+      <CrmBoardTabs selectedBoard={board} boards={boards} />
 
       <CrmKanban deals={dealsForBoard} obras={obras} boardSlug={board} />
     </section>
