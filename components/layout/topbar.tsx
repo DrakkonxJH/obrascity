@@ -9,7 +9,6 @@ const pageMeta: Record<string, { title: string; icon: string }> = {
   "/obras": { title: "Obras", icon: "🏗️" },
   "/cronograma": { title: "Cronograma", icon: "📅" },
   "/financeiro": { title: "Financeiro", icon: "💰" },
-  "/crm": { title: "CRM", icon: "🤝" },
   "/equipes": { title: "Equipes", icon: "👥" },
   "/materiais": { title: "Materiais", icon: "📦" },
   "/diario": { title: "Diário de Obra", icon: "📋" },

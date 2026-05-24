@@ -196,21 +196,21 @@ export function AuthHeader() {
             </div>
           </Link>
           <div className="nav-links">
-            <a href="/landing.html" className="nav-link">
+            <Link href="/" className="nav-link">
               Solução
-            </a>
-            <a href="/landing.html" className="nav-link">
+            </Link>
+            <Link href="/" className="nav-link">
               Resultados
-            </a>
-            <a href="/landing.html" className="nav-link">
+            </Link>
+            <Link href="/" className="nav-link">
               Módulos
-            </a>
-            <a href="/landing.html" className="nav-link">
+            </Link>
+            <Link href="/" className="nav-link">
               Clientes
-            </a>
-            <a href="/landing.html" className="nav-link">
+            </Link>
+            <Link href="/" className="nav-link">
               Planos
-            </a>
+            </Link>
           </div>
           <div className="nav-cta">
             <Link href="/login" className="btn-nav-ghost">
@@ -239,21 +239,21 @@ export function AuthHeader() {
         >
           ✕
         </button>
-        <a href="/landing.html" onClick={() => setMobileMenuOpen(false)}>
+        <Link href="/" onClick={() => setMobileMenuOpen(false)}>
           Solução
-        </a>
-        <a href="/landing.html" onClick={() => setMobileMenuOpen(false)}>
+        </Link>
+        <Link href="/" onClick={() => setMobileMenuOpen(false)}>
           Resultados
-        </a>
-        <a href="/landing.html" onClick={() => setMobileMenuOpen(false)}>
+        </Link>
+        <Link href="/" onClick={() => setMobileMenuOpen(false)}>
           Módulos
-        </a>
-        <a href="/landing.html" onClick={() => setMobileMenuOpen(false)}>
+        </Link>
+        <Link href="/" onClick={() => setMobileMenuOpen(false)}>
           Clientes
-        </a>
-        <a href="/landing.html" onClick={() => setMobileMenuOpen(false)}>
+        </Link>
+        <Link href="/" onClick={() => setMobileMenuOpen(false)}>
           Planos
-        </a>
+        </Link>
         <a href="/cadastro" className="btn-nav-fire" onClick={() => setMobileMenuOpen(false)}>
           Começar grátis →
         </a>

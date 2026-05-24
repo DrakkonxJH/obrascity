@@ -100,7 +100,7 @@ export default function ComoFuncionaPage() {
           <Link href="/login" className="of-btn-ghost" style={{ display: "inline-flex" }}>
             Entrar
           </Link>
-          <Link href="/landing.html" className="of-btn-ghost" style={{ display: "inline-flex" }}>
+          <Link href="/" className="of-btn-ghost" style={{ display: "inline-flex" }}>
             Voltar para a landing
           </Link>
         </div>
