@@ -11,6 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 import { getAppOrigin } from "@/lib/validations/env";
 import { createPrivacyRequest } from "@/lib/db/privacy";
+import { assertProfileLimitAvailable } from "@/lib/billing/limits";
 
 export type PrivacyActionState = {
   ok: boolean;
@@ -134,6 +135,7 @@ export async function inviteFuncionarioAction(
     }
 
     if (!profileId) {
+      await assertProfileLimitAvailable();
       const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
         email,
         {

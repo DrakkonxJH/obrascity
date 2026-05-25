@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { getQueue, QueueNames } from "@/lib/queue/connection";
 import { createRelatórioRequest } from "@/lib/db/relatorios";
+import { assertReportRequestLimitAvailable } from "@/lib/billing/limits";
 
 export async function solicitarRelatórioAction(formData: FormData) {
+  await assertReportRequestLimitAvailable();
+
   const tipo = String(formData.get("tipo") ?? "progresso").trim();
   const formato = String(formData.get("formato") ?? "pdf").trim() || "pdf";
   const obraValue = String(formData.get("obra_id") ?? "").trim();

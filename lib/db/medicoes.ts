@@ -52,19 +52,24 @@ export async function createMedicao(input: {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
   await ensureObraAtiva(input.obra_id);
-  const { error } = await supabase.from("medicoes").insert({
-    empresa_id: empresaId,
-    obra_id: input.obra_id,
-    referencia: input.referencia,
-    valor: input.valor,
-    retencao: input.retencao,
-    aditivo: input.aditivo,
-    status: input.status ?? "rascunho",
-  });
+  const { error, data } = await supabase
+    .from("medicoes")
+    .insert({
+      empresa_id: empresaId,
+      obra_id: input.obra_id,
+      referencia: input.referencia,
+      valor: input.valor,
+      retencao: input.retencao,
+      aditivo: input.aditivo,
+      status: input.status ?? "rascunho",
+    })
+    .select("id")
+    .single();
 
-  if (error) {
-    throw new Error(`Erro ao criar medicao: ${error.message}`);
+  if (error || !data?.id) {
+    throw new Error(`Erro ao criar medicao: ${error?.message ?? "medição não retornou id"}`);
   }
+  return data.id as string;
 }
 
 export async function getEvmIndicadores() {

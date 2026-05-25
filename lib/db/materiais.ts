@@ -232,18 +232,23 @@ export async function createPurchaseOrder(input: PurchaseOrderInput) {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
   await ensureObraAtiva(input.obra_id);
-  const { error } = await supabase.from("pedidos_compra").insert({
-    empresa_id: empresaId,
-    material_id: input.material_id,
-    obra_id: input.obra_id,
-    fornecedor: input.fornecedor,
-    quantidade: input.quantidade,
-    valor: input.valor,
-    status: input.status,
-  });
-  if (error) {
-    throw new Error(`Erro ao criar pedido de compra: ${error.message}`);
+  const { error, data } = await supabase
+    .from("pedidos_compra")
+    .insert({
+      empresa_id: empresaId,
+      material_id: input.material_id,
+      obra_id: input.obra_id,
+      fornecedor: input.fornecedor,
+      quantidade: input.quantidade,
+      valor: input.valor,
+      status: input.status,
+    })
+    .select("id")
+    .single();
+  if (error || !data?.id) {
+    throw new Error(`Erro ao criar pedido de compra: ${error?.message ?? "pedido não retornou id"}`);
   }
+  return data.id as string;
 }
 function normalizeLookup(value: string) {
   return value.trim().toLowerCase();

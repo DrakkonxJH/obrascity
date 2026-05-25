@@ -15,6 +15,10 @@ import {
   validateUploadCollection,
 } from "@/lib/security/file-upload";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
+import { getCurrentProfile } from "@/lib/auth/require-profile";
+import { isProfileRole } from "@/lib/auth/roles";
+import { createApprovalRequest } from "@/lib/db/approvals";
+import { requiresApprovalForAmount, resolveRequiredRoleByAmount } from "@/lib/approvals/policy";
 
 export async function createMaterialAction(formData: FormData) {
   const nome = String(formData.get("nome") ?? "").trim();
@@ -72,19 +76,50 @@ export async function createPurchaseOrderAction(
     };
   }
 
-  await createPurchaseOrder({
+  const profile = await getCurrentProfile();
+  const roleValue = String(profile?.role ?? "");
+  if (!isProfileRole(roleValue)) {
+    return {
+      status: "error",
+      message: "Perfil inválido para registrar pedido de compra.",
+    };
+  }
+
+  const requiresApproval = requiresApprovalForAmount(roleValue, valor);
+  const requiredRole = resolveRequiredRoleByAmount(valor);
+  const createdOrderId = await createPurchaseOrder({
     material_id: materialId,
     obra_id: obraId,
     fornecedor,
     quantidade,
     valor,
-    status,
+    status: requiresApproval ? "aguardando_aprovacao" : status,
   });
+
+  if (requiresApproval) {
+    await createApprovalRequest({
+      entityType: "purchase_order",
+      entityId: createdOrderId,
+      entityRef: fornecedor,
+      amount: valor,
+      requesterRole: roleValue,
+      requiredRole,
+      notes: "Pedido acima da alçada do solicitante.",
+      metadata: {
+        obraId,
+        materialId,
+        quantidade,
+        fornecedor,
+      },
+    });
+  }
   revalidatePath("/materiais");
 
   return {
     status: "success",
-    message: "Pedido de compra criado com sucesso.",
+    message: requiresApproval
+      ? `Pedido criado em aprovação (${requiredRole}).`
+      : "Pedido de compra criado com sucesso.",
   };
 }
 
