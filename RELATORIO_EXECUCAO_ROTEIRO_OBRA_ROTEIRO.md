@@ -226,3 +226,55 @@ Nesta rodada, os blocos pendentes/parciais foram implementados e expostos no men
 | Segurança corporativa avançada (parcial) | `app/(app)/seguranca-corporativa/page.tsx`, `app/(app)/seguranca-corporativa/actions.ts`, `lib/db/seguranca-corporativa.ts`, migration `0025` | Menu **Sistema → Segurança Corporativa** (`/seguranca-corporativa`) com MFA por perfil, SSO e revogação de sessão |
 | Mobile offline/sync/conflitos (parcial) | `app/(app)/mobile-campo/page.tsx`, `app/(app)/mobile-campo/actions.ts`, `lib/db/mobile-campo.ts`, migration `0025` | Menu **Sistema → Mobile Campo** (`/mobile-campo`) com lotes de sync, conflitos e resolução |
 | Navegação para cliente final | `components/layout/sidebar.tsx` | Novos links adicionados nas seções **Gestão** e **Sistema** |
+
+---
+
+## 12) Reexecução completa do roteiro (rodada atual)
+
+> Esta seção substitui o diagnóstico anterior para status vigente do produto após as últimas implementações.
+
+### 12.1 Resultado executivo atual
+
+- **Disponível de ponta a ponta:** 10 etapas  
+- **Parcial:** 4 etapas  
+- **Não disponível:** 1 etapa
+
+### 12.2 Execução fase a fase (estado atual)
+
+| Etapa do roteiro | Situação atual no site | Status atual |
+|---|---|---|
+| 1. Comercial e contratação | `/crm` continua desativado (`return null`) | **Não disponível** |
+| 2. Viabilidade técnica/legal/econômica | Módulo dedicado em `/viabilidade` com formulário e tabela por obra | **Disponível** |
+| 3. Projetos e compatibilização | Módulo dedicado em `/projetos` com documentos por disciplina/revisão e conflitos | **Disponível** |
+| 4. Planejamento mestre | `/cronograma` com tarefas, dependências, baseline, caminho crítico e replanejamento | **Disponível** |
+| 5. Suprimentos e contratação | `/materiais` com estoque, pedidos, cotação multi-fornecedor e propostas; ainda sem adjudicação/negociação avançada completa | **Parcial** |
+| 6. Mobilização de canteiro/equipes | `/equipes` funcional para equipes/membros, porém sem camada avançada de alocação por turno/frente | **Parcial** |
+| 7. Execução física | `/obras`, `/obras/[id]`, `/diario` cobrindo acompanhamento e evidências | **Disponível** |
+| 8. Qualidade e NC | `/qualidade` com NC, planos de ação, checklist e evidências | **Disponível** |
+| 9. Medição e financeiro | `/financeiro` operacional (lançamentos/medições/EVM), faltando trilhas AP/AR corporativas completas | **Parcial** |
+| 10. Gestão de mudanças | `/mudancas` + integração com aprovações em `/governanca` | **Disponível** |
+| 11. Comunicação com cliente | `/portal` e `/portal-public/[token]` com segregação por token/escopo | **Disponível** |
+| 12. Relatórios executivos | `/relatorios` com fila, histórico e download assinado; produção depende de worker ativo | **Disponível** |
+| 13. Comissionamento e entrega | `/entrega` com checklist de comissionamento e entrega formal/aceite | **Disponível** |
+| 14. Pós-obra e garantia | `/garantia` com chamados, SLA, status e interações | **Disponível** |
+| 15. Governança/compliance contínuo | `/governanca` + `/seguranca-corporativa`; ainda parcial para SSO enterprise totalmente integrado | **Parcial** |
+
+### 12.3 Verificação de visibilidade na ótica do cliente
+
+Os módulos abaixo estão **visíveis no menu lateral** para conta cliente e com superfície operacional:
+
+- **Gestão:** `/viabilidade`, `/projetos`, `/financeiro`, `/equipes`, `/materiais`, `/mudancas`, `/diario`, `/qualidade`, `/entrega`, `/garantia`, `/relatorios`
+- **Sistema:** `/planos`, `/portal`, `/suporte`, `/governanca`, `/seguranca-corporativa`, `/mobile-campo`, `/configuracoes`
+
+### 12.4 Gaps remanescentes (prioridade atual)
+
+1. **CRM comercial** (único bloco totalmente ausente por decisão de produto atual).
+2. **Suprimentos enterprise completo** (adjudicação/rodadas avançadas de cotação e fechamento contratual).
+3. **Financeiro corporativo completo** (AP/AR avançado e trilhas ampliadas).
+4. **Equipes avançado** (alocação operacional por turno/frente com maior granularidade).
+5. **Segurança enterprise final** (integração SSO/MFA ponta a ponta com provedor corporativo externo).
+
+### 12.5 Veredito desta reexecução
+
+Para o cenário de obra tipo prédio 15 andares, o ObrasFlow agora cobre o ciclo operacional com amplitude significativamente maior que a rodada anterior.  
+O cliente já consegue executar o fluxo de obra do início técnico até pós-obra dentro do sistema, com exceção do bloco comercial/CRM e de aprofundamentos enterprise específicos.
