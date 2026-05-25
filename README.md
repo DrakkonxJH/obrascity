@@ -101,6 +101,7 @@ tests/                  # testes automatizados críticos
   - `/api/queue/metrics`
   - módulo **Governança** (auditoria + observabilidade tenant)
 - Runbook operacional: `DEPLOYMENT_SETUP.md` e `GUIA_GO_LIVE_OBRASFLOW.md`.
+- Roteiro completo de processo de obra (15 andares): `GUIA_ROTEIRO_OBRA_COMPLETA_15_ANDARES.md`.
 
 ## Segurança e isolamento
 
