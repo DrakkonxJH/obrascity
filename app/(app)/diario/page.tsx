@@ -29,7 +29,7 @@ export default async function DiarioPage() {
         <input name="equipamentos" placeholder="Equipamentos utilizados" className="of-input" />
         <input name="assinatura_url" placeholder="URL da assinatura digital" className="of-input" />
         <textarea name="ocorrencias" placeholder="Ocorrências" className="of-input md:col-span-2" />
-        <textarea name="observações_ssma" placeholder="Observações SSMA" className="of-input" />
+        <textarea name="observacoes_ssma" placeholder="Observações SSMA" className="of-input" />
         <div className="md:col-span-3">
           <button type="submit" className="of-btn-primary">
             Salvar diário

@@ -65,8 +65,8 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
   const financeiroObra = financeiro.filter((item) => item.obra_id === obra.id);
   const diariosObra = diarios.filter((item) => item.obra_id === obra.id).slice(0, 8);
   const cronogramaObra = cronograma.filter((item) => item.obra_id === obra.id);
-  const pedidosObra = pedidos.filter((item) => item.obra_nome === obra.nome).slice(0, 8);
-  const relatoriosObra = relatorios.filter((item) => item.obra_nome === obra.nome).slice(0, 8);
+  const pedidosObra = pedidos.filter((item) => item.obra_id === obra.id).slice(0, 8);
+  const relatoriosObra = relatorios.filter((item) => item.obra_id === obra.id).slice(0, 8);
 
   const orcadoTotal = financeiroObra.reduce((sum, item) => sum + item.orcado, 0);
   const realizadoTotal = financeiroObra.reduce((sum, item) => sum + item.realizado, 0);

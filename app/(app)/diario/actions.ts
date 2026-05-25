@@ -16,6 +16,9 @@ export async function createDiarioAction(formData: FormData) {
   if (!obra_id || !data_ref) {
     throw new Error("Obra e data do diario sao obrigatorias");
   }
+  if (!Number.isFinite(efetivo) || efetivo < 0) {
+    throw new Error("Efetivo do diário deve ser um número maior ou igual a zero");
+  }
 
   await createDiario({
     obra_id,

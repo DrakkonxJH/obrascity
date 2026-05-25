@@ -55,26 +55,6 @@ export function NovaObraModal() {
             </label>
             <input id="obra-cliente" name="cliente" required className="of-input" placeholder="Ex: Construtora ABC" />
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label className="of-form-label" htmlFor="obra-endereco">
-              Endereço / Localização
-            </label>
-            <input id="obra-endereco" name="endereco" className="of-input" placeholder="Rua, número, cidade" />
-          </div>
-          <div className="of-modal-grid-2">
-            <div>
-              <label className="of-form-label" htmlFor="obra-inicio">
-                Data de Início
-              </label>
-              <input id="obra-inicio" name="inicio" type="date" className="of-input" />
-            </div>
-            <div>
-              <label className="of-form-label" htmlFor="obra-entrega">
-                Previsão de Entrega
-              </label>
-              <input id="obra-entrega" name="entrega" type="date" className="of-input" />
-            </div>
-          </div>
           <div style={{ marginTop: 16, marginBottom: 16 }}>
             <label className="of-form-label" htmlFor="obra-status">
               Status
@@ -86,6 +66,9 @@ export function NovaObraModal() {
               <option value="concluida">Concluída</option>
             </select>
           </div>
+          <p className="of-empty-text" style={{ marginBottom: 12 }}>
+            Dados complementares da obra (localização, datas e contrato) são preenchidos na página completa.
+          </p>
           {error ? <p style={{ color: "var(--of-red)", fontSize: "0.85rem" }}>{error}</p> : null}
           <div className="of-modal-footer">
             <button type="button" className="of-btn-cancel" onClick={closeNovaObra}>
