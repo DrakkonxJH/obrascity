@@ -26,6 +26,14 @@ export type TenantObservabilityEventItem = {
   createdAt: string;
 };
 
+function isMissingTable(errorMessage: string, tableName: string) {
+  const message = errorMessage.toLowerCase();
+  return (
+    message.includes(tableName.toLowerCase()) &&
+    (message.includes("does not exist") || message.includes("could not find the table"))
+  );
+}
+
 export async function getTenantRetentionPolicy(): Promise<TenantRetentionPolicy | null> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -108,6 +116,9 @@ export async function listTenantObservabilityEvents(limit = 30): Promise<TenantO
     .limit(maxRows);
 
   if (error) {
+    if (isMissingTable(error.message, "tenant_observability_events")) {
+      return [];
+    }
     throw new Error(`Erro ao listar eventos de observabilidade: ${error.message}`);
   }
 
