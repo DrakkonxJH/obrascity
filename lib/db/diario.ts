@@ -15,6 +15,8 @@ export type DiarioItem = {
   ocorrencias: string | null;
   observacoes_ssma: string | null;
   assinatura_url: string | null;
+  created_by: string | null;
+  created_by_nome: string | null;
 };
 
 export async function listDiarios(): Promise<DiarioItem[]> {
@@ -23,7 +25,9 @@ export async function listDiarios(): Promise<DiarioItem[]> {
   const activeObraIds = await listActiveObraIds();
   const { data, error } = await supabase
     .from("diario_obra")
-    .select("id, obra_id, data_ref, clima, efetivo, equipamentos, ocorrencias, observacoes_ssma, assinatura_url, obras(nome)")
+    .select(
+      "id, obra_id, data_ref, clima, efetivo, equipamentos, ocorrencias, observacoes_ssma, assinatura_url, created_by, obras(nome)",
+    )
     .eq("empresa_id", empresaId)
     .order("data_ref", { ascending: false });
 
@@ -31,19 +35,46 @@ export async function listDiarios(): Promise<DiarioItem[]> {
     throw new Error(`Erro ao listar diarios: ${error.message}`);
   }
 
-  return (data ?? [])
+  const rows = (data ?? [])
     .filter((item) => activeObraIds.has(item.obra_id as string))
     .map((item) => ({
-    id: item.id as string,
-    obra_id: item.obra_id as string,
-    obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra",
-    data_ref: item.data_ref as string,
-    clima: (item.clima as string | null) ?? null,
-    efetivo: Number(item.efetivo ?? 0),
-    equipamentos: decryptField((item.equipamentos as string | null) ?? null),
-    ocorrencias: decryptField((item.ocorrencias as string | null) ?? null),
-    observacoes_ssma: decryptField((item.observacoes_ssma as string | null) ?? null),
-    assinatura_url: (item.assinatura_url as string | null) ?? null,
+      id: item.id as string,
+      obra_id: item.obra_id as string,
+      obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra",
+      data_ref: item.data_ref as string,
+      clima: (item.clima as string | null) ?? null,
+      efetivo: Number(item.efetivo ?? 0),
+      equipamentos: decryptField((item.equipamentos as string | null) ?? null),
+      ocorrencias: decryptField((item.ocorrencias as string | null) ?? null),
+      observacoes_ssma: decryptField((item.observacoes_ssma as string | null) ?? null),
+      assinatura_url: (item.assinatura_url as string | null) ?? null,
+      created_by: (item.created_by as string | null) ?? null,
+      created_by_nome: null,
+    }));
+
+  const createdByIds = Array.from(
+    new Set(rows.map((item) => item.created_by).filter((id): id is string => typeof id === "string" && id.length > 0)),
+  );
+
+  if (createdByIds.length === 0) {
+    return rows;
+  }
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, nome")
+    .eq("empresa_id", empresaId)
+    .in("id", createdByIds);
+
+  if (profilesError) {
+    throw new Error(`Erro ao listar responsáveis do diário: ${profilesError.message}`);
+  }
+
+  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id as string, profile.nome as string]));
+
+  return rows.map((item) => ({
+    ...item,
+    created_by_nome: item.created_by ? (profileMap.get(item.created_by) ?? null) : null,
   }));
 }
 

@@ -44,6 +44,10 @@ function taskLabel(status: string) {
   return "Planejada";
 }
 
+function isCompletedTask(status: string) {
+  return status.trim().toLowerCase().includes("concl");
+}
+
 export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
   const { id } = await params;
   const [obras, financeiro, diarios, cronograma, pedidos, relatorios] = await Promise.all([
@@ -67,11 +71,18 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
   const orcadoTotal = financeiroObra.reduce((sum, item) => sum + item.orcado, 0);
   const realizadoTotal = financeiroObra.reduce((sum, item) => sum + item.realizado, 0);
   const saldo = orcadoTotal - realizadoTotal;
-  const tarefasConcluidas = cronogramaObra.filter((item) =>
-    item.status.trim().toLowerCase().includes("concl"),
-  ).length;
+  const tarefasConcluidas = cronogramaObra.filter((item) => isCompletedTask(item.status)).length;
   const progressoCronograma =
     cronogramaObra.length > 0 ? Math.round((tarefasConcluidas / cronogramaObra.length) * 100) : 0;
+  const atividadesRealizadas = cronogramaObra
+    .filter((item) => isCompletedTask(item.status))
+    .sort((a, b) => new Date(b.fim).getTime() - new Date(a.fim).getTime());
+  const atividadesExecutar = cronogramaObra
+    .filter((item) => !isCompletedTask(item.status))
+    .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
+  const historicoExecucao = diariosObra.sort(
+    (a, b) => new Date(b.data_ref).getTime() - new Date(a.data_ref).getTime(),
+  );
 
   return (
     <section className="of-page">
@@ -114,6 +125,21 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
             {tarefasConcluidas}/{cronogramaObra.length} tarefas concluídas
           </p>
         </article>
+        <article className="of-card">
+          <div className="of-card-title">Atividades realizadas</div>
+          <p className="of-kpi-value">{atividadesRealizadas.length}</p>
+          <p className="of-empty-text">Concluídas no cronograma</p>
+        </article>
+        <article className="of-card">
+          <div className="of-card-title">Atividades a executar</div>
+          <p className="of-kpi-value">{atividadesExecutar.length}</p>
+          <p className="of-empty-text">Pendentes e em andamento</p>
+        </article>
+        <article className="of-card">
+          <div className="of-card-title">Histórico operacional</div>
+          <p className="of-kpi-value">{historicoExecucao.length}</p>
+          <p className="of-empty-text">Registros no diário de obra</p>
+        </article>
       </div>
 
       <article className="of-card" style={{ marginBottom: 16 }}>
@@ -150,6 +176,102 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
 
       <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 16 }}>
         <article className="of-card">
+          <div className="of-card-title">Atividades realizadas</div>
+          {atividadesRealizadas.length === 0 ? (
+            <p className="of-empty-text">Ainda não há atividades concluídas.</p>
+          ) : (
+            <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
+              <table className="of-table">
+                <thead>
+                  <tr>
+                    <th>Atividade</th>
+                    <th>Concluída em</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {atividadesRealizadas.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.nome}</td>
+                      <td>{new Date(item.fim).toLocaleDateString("pt-BR")}</td>
+                      <td>
+                        <span className={taskBadge(item.status)}>{taskLabel(item.status)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </article>
+
+        <article className="of-card">
+          <div className="of-card-title">Atividades que serão executadas</div>
+          {atividadesExecutar.length === 0 ? (
+            <p className="of-empty-text">Não há atividades pendentes no cronograma.</p>
+          ) : (
+            <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
+              <table className="of-table">
+                <thead>
+                  <tr>
+                    <th>Atividade</th>
+                    <th>Início previsto</th>
+                    <th>Término previsto</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {atividadesExecutar.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.nome}</td>
+                      <td>{new Date(item.inicio).toLocaleDateString("pt-BR")}</td>
+                      <td>{new Date(item.fim).toLocaleDateString("pt-BR")}</td>
+                      <td>
+                        <span className={taskBadge(item.status)}>{taskLabel(item.status)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </article>
+      </div>
+
+      <article className="of-card" style={{ marginBottom: 16 }}>
+        <div className="of-card-title">Histórico de execução (quem executou o quê)</div>
+        {historicoExecucao.length === 0 ? (
+          <p className="of-empty-text">Sem histórico operacional no diário da obra.</p>
+        ) : (
+          <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Atividade executada</th>
+                  <th>Responsável pelo registro</th>
+                  <th>Efetivo</th>
+                  <th>Equipamentos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historicoExecucao.map((item) => (
+                  <tr key={item.id}>
+                    <td>{new Date(item.data_ref).toLocaleDateString("pt-BR")}</td>
+                    <td>{item.ocorrencias || "Sem descrição informada"}</td>
+                    <td>{item.created_by_nome || "Não informado"}</td>
+                    <td>{item.efetivo}</td>
+                    <td>{item.equipamentos || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
+
+      <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 16 }}>
+        <article className="of-card">
           <div className="of-card-title">Diário de obra</div>
           {diariosObra.length === 0 ? (
             <p className="of-empty-text">Sem registros no diário.</p>
@@ -160,7 +282,10 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
                   <p className="of-list-title">
                     {new Date(item.data_ref).toLocaleDateString("pt-BR")} · Efetivo {item.efetivo}
                   </p>
-                  <p className="of-list-description">{item.ocorrencias || "Sem ocorrências registradas"}</p>
+                  <p className="of-list-description">
+                    {item.ocorrencias || "Sem ocorrências registradas"} · Responsável:{" "}
+                    {item.created_by_nome || "Não informado"}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -185,6 +310,36 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
           )}
         </article>
       </div>
+
+      <article className="of-card" style={{ marginBottom: 16 }}>
+        <div className="of-card-title">Histórico financeiro essencial da obra</div>
+        {financeiroObra.length === 0 ? (
+          <p className="of-empty-text">Sem lançamentos financeiros cadastrados.</p>
+        ) : (
+          <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Categoria</th>
+                  <th>Orçado</th>
+                  <th>Realizado</th>
+                  <th>Saldo da categoria</th>
+                </tr>
+              </thead>
+              <tbody>
+                {financeiroObra.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.categoria}</td>
+                    <td>{money.format(item.orcado)}</td>
+                    <td>{money.format(item.realizado)}</td>
+                    <td>{money.format(item.orcado - item.realizado)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
 
       <article className="of-card">
         <div className="of-card-title">Relatórios da obra</div>
