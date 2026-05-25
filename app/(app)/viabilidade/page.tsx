@@ -1,31 +1,22 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listObras } from "@/lib/db/obras";
-import { listViabilidade, supportsViabilidadeEstudos } from "@/lib/db/viabilidade";
+import { listViabilidade } from "@/lib/db/viabilidade";
 import { saveViabilidadeAction } from "./actions";
 
 export default async function ViabilidadePage() {
-  const [obrasResult, viabilidadeSupportResult] = await Promise.allSettled([
+  const [obrasResult, estudosResult] = await Promise.allSettled([
     listObras(),
-    supportsViabilidadeEstudos(),
+    listViabilidade(),
   ]);
   const warnings: string[] = [];
   const obras =
     obrasResult.status === "fulfilled"
       ? obrasResult.value
       : (warnings.push("Falha ao carregar obras para viabilidade."), []);
-  const viabilidadeSuportada =
-    viabilidadeSupportResult.status === "fulfilled"
-      ? viabilidadeSupportResult.value
-      : (warnings.push("Falha ao verificar a tabela de viabilidade."), false);
-  const estudosResult = viabilidadeSuportada
-    ? await Promise.allSettled([listViabilidade()])
-    : null;
   const estudos =
-    estudosResult?.[0]?.status === "fulfilled"
-      ? estudosResult[0].value
-      : viabilidadeSuportada
-        ? (warnings.push("Falha ao carregar estudos de viabilidade."), [])
-        : (warnings.push("Viabilidade indisponível até aplicar a migration da tabela."), []);
+    estudosResult.status === "fulfilled"
+      ? estudosResult.value
+      : (warnings.push("Falha ao carregar estudos de viabilidade."), []);
   const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
   const estudosComObraNome = estudos.map((item) => ({
     ...item,

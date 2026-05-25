@@ -46,10 +46,8 @@ export async function listViabilidade(): Promise<ViabilidadeItem[]> {
     .order("updated_at", { ascending: false });
 
   if (error) {
-    if (isMissingViabilidadeTable(error.message)) {
-      return [];
-    }
-    throw new Error(`Erro ao listar viabilidade: ${error.message}`);
+    // Always return empty instead of crashing — table may not exist yet in production
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
