@@ -73,6 +73,7 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
       { href: "/planos", label: "Planos", icon: "⭐" },
       { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
       { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
+      { href: "/governanca", label: "Governança", icon: "🧾" },
       { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
     ],
   });

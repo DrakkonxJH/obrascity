@@ -25,7 +25,7 @@ function labelMaterial(quantidade: number, mínimo: number) {
 function pedidoBadge(status: string) {
   if (status === "aprovado") return "of-badge of-badge-green";
   if (status === "rejeitado") return "of-badge of-badge-red";
-  if (status === "aguardando") return "of-badge of-badge-yellow";
+  if (status === "aguardando" || status === "aguardando_aprovacao") return "of-badge of-badge-yellow";
   return "of-badge of-badge-blue";
 }
 
