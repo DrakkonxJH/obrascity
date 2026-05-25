@@ -14,11 +14,37 @@ export async function FeatureGateWrapper({
   feature,
   fallbackUI,
 }: FeatureGateWrapperProps) {
-  const subscription = await getSubscriptionForCurrentTenant();
+  let subscription = null;
+  let warning: string | null = null;
+
+  try {
+    subscription = await getSubscriptionForCurrentTenant();
+  } catch (error) {
+    warning =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível carregar a assinatura do tenant.";
+  }
+
   const showTrialWarning = subscription?.plano === "trial";
 
   return (
     <>
+      {warning ? (
+        <article
+          className="of-card"
+          style={{
+            marginBottom: 16,
+            borderColor: "var(--of-yellow)",
+            background: "rgba(255, 209, 102, 0.08)",
+          }}
+        >
+          <p className="of-card-title">⚠ Dados de acesso indisponíveis</p>
+          <p className="of-empty-text">
+            {warning} A página foi aberta com acesso limitado para evitar falha de carregamento.
+          </p>
+        </article>
+      ) : null}
       {showTrialWarning ? (
         <article
           className="of-card"
