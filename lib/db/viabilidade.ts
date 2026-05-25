@@ -12,6 +12,30 @@ export type ViabilidadeItem = {
   updated_at: string;
 };
 
+function isMissingViabilidadeTable(message: string) {
+  const text = message.toLowerCase();
+  return text.includes("viabilidade_estudos") && text.includes("could not find the table");
+}
+
+export async function supportsViabilidadeEstudos() {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("viabilidade_estudos")
+    .select("id", { head: true, count: "exact" })
+    .eq("empresa_id", empresaId)
+    .limit(1);
+
+  if (error) {
+    if (isMissingViabilidadeTable(error.message)) {
+      return false;
+    }
+    throw new Error(`Erro ao verificar viabilidade: ${error.message}`);
+  }
+
+  return true;
+}
+
 export async function listViabilidade(): Promise<ViabilidadeItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -22,6 +46,9 @@ export async function listViabilidade(): Promise<ViabilidadeItem[]> {
     .order("updated_at", { ascending: false });
 
   if (error) {
+    if (isMissingViabilidadeTable(error.message)) {
+      return [];
+    }
     throw new Error(`Erro ao listar viabilidade: ${error.message}`);
   }
 
@@ -62,6 +89,9 @@ export async function upsertViabilidade(input: {
   );
 
   if (error) {
+    if (isMissingViabilidadeTable(error.message)) {
+      throw new Error("Viabilidade indisponível até aplicar a migration da tabela viabilidade_estudos");
+    }
     throw new Error(`Erro ao salvar viabilidade: ${error.message}`);
   }
 }
