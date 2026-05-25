@@ -40,19 +40,30 @@ export default async function PortalPage() {
         <p className="of-empty-text" style={{ marginBottom: 12 }}>
           Gere links públicos para clientes visualizarem obras e relatórios sem acesso ao painel interno.
         </p>
-        <form action={createPortalShareAction} className="of-form-grid md:grid-cols-3">
+        <form action={createPortalShareAction} className="of-form-grid md:grid-cols-4">
           <input name="descricao" className="of-input" placeholder="Descrição do link (ex.: Cliente Ponte Rio Verde)" />
           <input name="expires_at" type="date" className="of-input" />
+          <select name="obra_ids" className="of-input" multiple size={Math.min(Math.max(obras.length, 2), 6)}>
+            {obras.map((obra) => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome}
+              </option>
+            ))}
+          </select>
           <button type="submit" className="of-btn-primary">
             Gerar link público
           </button>
         </form>
+        <p className="of-empty-text" style={{ marginTop: 8 }}>
+          Selecione 1 ou mais obras para restringir o link. Sem seleção = acesso a todas as obras da empresa.
+        </p>
 
         <div className="of-table-wrap" style={{ marginTop: 12, border: 0 }}>
           <table className="of-table">
             <thead>
               <tr>
                 <th>Descrição</th>
+                <th>Escopo</th>
                 <th>Expira em</th>
                 <th>Link público</th>
                 <th>Ação</th>
@@ -64,6 +75,11 @@ export default async function PortalPage() {
                 return (
                   <tr key={share.id}>
                     <td>{share.descricao ?? "Link sem descrição"}</td>
+                    <td>
+                      {share.obra_ids.length > 0
+                        ? `${share.obra_ids.length} obra(s) selecionada(s)`
+                        : "Todas as obras"}
+                    </td>
                     <td>{share.expires_at ? new Date(share.expires_at).toLocaleDateString("pt-BR") : "Sem expiração"}</td>
                     <td className="of-mono">
                       <a href={href} target="_blank" rel="noreferrer" className="text-[#ff9445] hover:underline">
@@ -83,7 +99,7 @@ export default async function PortalPage() {
               })}
               {shares.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="of-empty-text">
+                  <td colSpan={5} className="of-empty-text">
                     Nenhum link público gerado.
                   </td>
                 </tr>

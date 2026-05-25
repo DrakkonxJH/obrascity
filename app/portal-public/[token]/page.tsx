@@ -17,20 +17,29 @@ export default async function PortalPublicPage({ params }: PortalPublicPageProps
   }
 
   const admin = createAdminClient();
+  const scopeObraIds = share.obra_ids;
+  const obrasQuery = admin
+    .from("obras")
+    .select("id, nome, cliente, status, progresso")
+    .eq("empresa_id", share.empresa_id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const relatoriosQuery = admin
+    .from("relatorios")
+    .select("id, obra_id, tipo, formato, status, url, storage_bucket, storage_path, obras(nome)")
+    .eq("empresa_id", share.empresa_id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (scopeObraIds.length > 0) {
+    obrasQuery.in("id", scopeObraIds);
+    relatoriosQuery.in("obra_id", scopeObraIds);
+  }
+
   const [obrasResult, relatoriosResult, empresaResult] = await Promise.all([
-    admin
-      .from("obras")
-      .select("id, nome, cliente, status, progresso")
-      .eq("empresa_id", share.empresa_id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(50),
-    admin
-      .from("relatorios")
-      .select("id, tipo, formato, status, url, obras(nome)")
-      .eq("empresa_id", share.empresa_id)
-      .order("created_at", { ascending: false })
-      .limit(50),
+    obrasQuery,
+    relatoriosQuery,
     admin.from("empresas").select("nome").eq("id", share.empresa_id).maybeSingle(),
   ]);
 
@@ -41,7 +50,27 @@ export default async function PortalPublicPage({ params }: PortalPublicPageProps
   }
 
   const obras = obrasResult.data ?? [];
-  const relatorios = relatoriosResult.data ?? [];
+  const relatoriosBase = (relatoriosResult.data ?? []).filter((row) => {
+    if (scopeObraIds.length === 0) return true;
+    return Boolean(row.obra_id) && scopeObraIds.includes(String(row.obra_id));
+  });
+  const relatorios = await Promise.all(
+    relatoriosBase.map(async (row) => {
+      const bucket = typeof row.storage_bucket === "string" ? row.storage_bucket : null;
+      const path = typeof row.storage_path === "string" ? row.storage_path : null;
+      let signedUrl = typeof row.url === "string" ? row.url : null;
+      if (bucket && path) {
+        const signed = await admin.storage.from(bucket).createSignedUrl(path, 60 * 10);
+        if (!signed.error && signed.data?.signedUrl) {
+          signedUrl = signed.data.signedUrl;
+        }
+      }
+      return {
+        ...row,
+        signedUrl,
+      };
+    }),
+  );
   const empresaNome = empresaResult.data?.nome ?? "Empresa";
 
   return (
@@ -82,8 +111,8 @@ export default async function PortalPublicPage({ params }: PortalPublicPageProps
                 <p className="of-list-description">
                   {((relatorio.obras as { nome?: string } | null)?.nome ?? "Consolidado")} · {relatorio.status}
                 </p>
-                {relatorio.url ? (
-                  <a href={relatorio.url} target="_blank" rel="noreferrer" className="text-[#ff9445] hover:underline text-sm">
+                {relatorio.signedUrl ? (
+                  <a href={relatorio.signedUrl} target="_blank" rel="noreferrer" className="text-[#ff9445] hover:underline text-sm">
                     Baixar relatório
                   </a>
                 ) : null}

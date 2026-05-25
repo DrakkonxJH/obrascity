@@ -13,7 +13,17 @@ export type RelatórioItem = {
   status: string;
   obra_nome: string | null;
   url: string | null;
+  error_message: string | null;
   created_at: string;
+};
+
+export type RelatorioExecucaoItem = {
+  id: string;
+  relatorio_id: string;
+  status: string;
+  erro: string | null;
+  started_at: string;
+  finished_at: string | null;
 };
 
 export async function listRelatorios(): Promise<RelatórioItem[]> {
@@ -23,7 +33,7 @@ export async function listRelatorios(): Promise<RelatórioItem[]> {
 
   const detailed = await supabase
     .from("relatorios")
-    .select("id, obra_id, tipo, formato, status, url, created_at, obras(nome)")
+    .select("id, obra_id, tipo, formato, status, url, error_message, created_at, obras(nome)")
     .eq("empresa_id", empresaId)
     .order("created_at", { ascending: false });
 
@@ -31,7 +41,7 @@ export async function listRelatorios(): Promise<RelatórioItem[]> {
     detailed.error
       ? await supabase
           .from("relatorios")
-          .select("id, obra_id, tipo, status, url, created_at, obras(nome)")
+        .select("id, obra_id, tipo, status, url, error_message, created_at, obras(nome)")
           .eq("empresa_id", empresaId)
           .order("created_at", { ascending: false })
       : null;
@@ -49,6 +59,7 @@ export async function listRelatorios(): Promise<RelatórioItem[]> {
       formato?: string;
       status: string;
       url: string | null;
+      error_message?: string | null;
       created_at: string;
       obras: { nome?: string } | null;
     }
@@ -63,8 +74,33 @@ export async function listRelatorios(): Promise<RelatórioItem[]> {
     formato: item.formato ?? "pdf",
     status: item.status as string,
     url: (item.url as string | null) ?? null,
+    error_message: (item.error_message as string | null) ?? null,
     created_at: item.created_at as string,
     obra_nome: item.obras?.nome ?? null,
+  }));
+}
+
+export async function listRelatorioExecucoes(limit = 50): Promise<RelatorioExecucaoItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("relatorio_execucoes")
+    .select("id, relatorio_id, status, erro, started_at, finished_at")
+    .eq("empresa_id", empresaId)
+    .order("started_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(`Erro ao listar histórico de execução de relatórios: ${error.message}`);
+  }
+
+  return (data ?? []).map((item) => ({
+    id: item.id as string,
+    relatorio_id: item.relatorio_id as string,
+    status: item.status as string,
+    erro: (item.erro as string | null) ?? null,
+    started_at: item.started_at as string,
+    finished_at: (item.finished_at as string | null) ?? null,
   }));
 }
 

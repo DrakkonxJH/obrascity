@@ -420,6 +420,25 @@ export SUPABASE_ACCESS_TOKEN="<TOKEN>"
 supabase migration list
 ```
 
+---
+
+## 8) Runbook rápido — Relatórios, Fila e Webhook por tenant
+
+1. **Sintoma: relatório em `falha`**
+   - Verificar histórico em `relatorio_execucoes` e campo `relatorios.error_message`.
+   - Confirmar bucket `reports-artifacts` e caminho `relatorios.storage_path`.
+   - Reenfileirar geração via UI de relatórios.
+
+2. **Sintoma: atraso de jobs**
+   - Consultar `/api/queue/metrics` e fila `reports-generate`.
+   - Confirmar worker ativo (`npm run worker:health`).
+   - Verificar eventos em `tenant_observability_events` com `source = queue_worker`.
+
+3. **Sintoma: webhook Stripe com erro**
+   - Consultar logs da rota `/api/webhooks/stripe`.
+   - Validar assinatura e segredo (`STRIPE_WEBHOOK_SECRET`).
+   - Ver eventos de erro em `tenant_observability_events` com `source = stripe_webhook`.
+
 Validar DNS público:
 ```bash
 dig +short NS obrasflow.com

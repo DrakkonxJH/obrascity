@@ -10,6 +10,10 @@ import {
   updateNaoConformidade,
   updatePlanoAcaoStatus,
 } from "@/lib/db/qualidade";
+import { getCurrentProfile } from "@/lib/auth/require-profile";
+import { isProfileRole } from "@/lib/auth/roles";
+import { createApprovalRequest } from "@/lib/db/approvals";
+import { canApproveForRole } from "@/lib/approvals/policy";
 
 export async function createNaoConformidadeAction(formData: FormData) {
   const obra_id = String(formData.get("obra_id") ?? "").trim();
@@ -18,20 +22,43 @@ export async function createNaoConformidadeAction(formData: FormData) {
   const severidade = String(formData.get("severidade") ?? "media").trim();
   const prazo = String(formData.get("prazo") ?? "").trim();
   const responsavel_id = String(formData.get("responsavel_id") ?? "").trim();
+  const profile = await getCurrentProfile();
+  const rawRole = String(profile?.role ?? "");
+  if (!isProfileRole(rawRole)) {
+    throw new Error("Perfil inválido para criar não conformidade.");
+  }
+
+  const requiredRole = severidade === "alta" ? "gestor" : "engenheiro";
+  const requiresApproval = severidade === "alta" && !canApproveForRole(rawRole, requiredRole);
+  const status = requiresApproval ? "aguardando_aprovacao" : "aberta";
 
   if (!obra_id || !categoria || !descricao) {
     throw new Error("Campos obrigatorios da não conformidade ausentes");
   }
 
-  await createNaoConformidade({
+  const naoConformidadeId = await createNaoConformidade({
     obra_id,
     categoria,
     descricao,
     severidade,
     prazo,
     responsavel_id,
+    status,
   });
+  if (requiresApproval) {
+    await createApprovalRequest({
+      entityType: "quality_issue",
+      entityId: naoConformidadeId,
+      entityRef: categoria,
+      amount: 0,
+      requesterRole: rawRole,
+      requiredRole,
+      notes: "Não conformidade de alta severidade exige aprovação.",
+      metadata: { obraId: obra_id, severidade, categoria },
+    });
+  }
   revalidatePath("/qualidade");
+  revalidatePath("/governanca");
 }
 
 export async function updateNaoConformidadeAction(formData: FormData) {

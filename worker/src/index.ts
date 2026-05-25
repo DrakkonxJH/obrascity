@@ -9,6 +9,12 @@ import { processMediaJob } from "./processors/media";
 import { processMaintenanceJob } from "./processors/maintenance";
 import { moveToDeadLetter } from "./processors/common";
 import { logger } from "@/lib/observability/logger";
+import { logTenantEvent } from "@/lib/observability/tenant-events";
+
+function getEmpresaIdFromJob(job: Job | undefined) {
+  const raw = job?.data?.empresaId;
+  return typeof raw === "string" && raw.length > 0 ? raw : null;
+}
 
 loadEnvConfig(process.cwd());
 
@@ -26,12 +32,28 @@ function createManagedWorker(
 
   worker.on("completed", (job) => {
     logger.info({ queue: queueName, jobId: job.id }, "Job concluido");
+    void logTenantEvent({
+      empresaId: getEmpresaIdFromJob(job),
+      source: "queue_worker",
+      eventType: `${queueName}.completed`,
+      severity: "info",
+      message: "Job concluído com sucesso.",
+      metadata: { queue: queueName, jobId: job.id ?? null },
+    }).catch(() => undefined);
   });
 
   worker.on("failed", async (job, error) => {
     if (!job) return;
     const reason = error?.message ?? "Falha desconhecida";
     logger.error({ queue: queueName, jobId: job.id, reason }, "Job falhou");
+    await logTenantEvent({
+      empresaId: getEmpresaIdFromJob(job),
+      source: "queue_worker",
+      eventType: `${queueName}.failed`,
+      severity: "error",
+      message: "Job falhou no worker.",
+      metadata: { queue: queueName, jobId: job.id ?? null, reason },
+    }).catch(() => undefined);
 
     const attemptsMade = job.attemptsMade ?? 0;
     const maxAttempts = job.opts.attempts ?? 1;

@@ -20,6 +20,7 @@ function entityLabel(entityType: string) {
   if (entityType === "purchase_order") return "Pedido de compra";
   if (entityType === "medicao") return "Medição";
   if (entityType === "cronograma_change") return "Mudança de cronograma";
+  if (entityType === "quality_issue") return "Não conformidade";
   return entityType;
 }
 

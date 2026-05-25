@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
-import { listRelatorios } from "@/lib/db/relatorios";
+import { listRelatorioExecucoes, listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "./actions";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
@@ -69,11 +69,12 @@ const reportCards = [
 
 export default async function RelatóriosPage() {
   let relatórios: Awaited<ReturnType<typeof listRelatorios>> = [];
+  let execuções: Awaited<ReturnType<typeof listRelatorioExecucoes>> = [];
   let obras: Awaited<ReturnType<typeof listObras>> = [];
   let loadError: string | null = null;
 
   try {
-    [relatórios, obras] = await Promise.all([listRelatorios(), listObras()]);
+    [relatórios, execuções, obras] = await Promise.all([listRelatorios(), listRelatorioExecucoes(20), listObras()]);
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Erro ao carregar relatórios.";
   }
@@ -141,7 +142,8 @@ export default async function RelatóriosPage() {
               <th>Tipo</th>
               <th>Escopo</th>
               <th>Status</th>
-              <th>URL</th>
+              <th>Arquivo</th>
+              <th>Erro</th>
             </tr>
           </thead>
           <tbody>
@@ -161,12 +163,49 @@ export default async function RelatóriosPage() {
                     "—"
                   )}
                 </td>
+                <td>{rel.error_message ?? "—"}</td>
               </tr>
             ))}
             {relatórios.length === 0 ? (
               <tr>
-                <td colSpan={4} className="of-empty-text">
+                <td colSpan={5} className="of-empty-text">
                   Nenhum relatório solicitado ainda.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="of-table-wrap" style={{ marginTop: 20 }}>
+        <table className="of-table">
+          <thead>
+            <tr>
+              <th>Relatório</th>
+              <th>Status execução</th>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Erro</th>
+            </tr>
+          </thead>
+          <tbody>
+            {execuções.map((run) => (
+              <tr key={run.id}>
+                <td className="of-mono">{run.relatorio_id}</td>
+                <td>
+                  <span className={`of-badge ${run.status === "success" ? "of-badge-green" : run.status === "failed" ? "of-badge-red" : "of-badge-yellow"}`}>
+                    {run.status}
+                  </span>
+                </td>
+                <td>{new Date(run.started_at).toLocaleString("pt-BR")}</td>
+                <td>{run.finished_at ? new Date(run.finished_at).toLocaleString("pt-BR") : "—"}</td>
+                <td>{run.erro ?? "—"}</td>
+              </tr>
+            ))}
+            {execuções.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="of-empty-text">
+                  Sem histórico de execução ainda.
                 </td>
               </tr>
             ) : null}

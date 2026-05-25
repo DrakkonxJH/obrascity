@@ -253,6 +253,7 @@ export async function createNaoConformidade(input: {
   severidade?: string;
   prazo?: string;
   responsavel_id?: string;
+  status?: string;
 }) {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -269,7 +270,7 @@ export async function createNaoConformidade(input: {
       severidade,
       prazo: input.prazo || null,
       responsavel_id: input.responsavel_id || null,
-      status: "aberta",
+      status: input.status || "aberta",
     })
     .select("id, prazo")
     .single();
@@ -286,6 +287,11 @@ export async function createNaoConformidade(input: {
   if (prazo && prazo < new Date().toISOString().slice(0, 10)) {
     await notifyEmpresaQuality(empresaId, "NC criada já vencida no prazo.");
   }
+
+  if (!data?.id) {
+    throw new Error("Não conformidade criada sem id de retorno.");
+  }
+  return data.id as string;
 }
 
 export async function updateNaoConformidade(input: {

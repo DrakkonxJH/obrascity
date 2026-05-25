@@ -20,7 +20,7 @@ export async function listNotificacoes(limit = 8): Promise<NotificacaoItem[]> {
     .limit(limit);
 
   if (error) {
-    return [];
+    throw new Error(`Erro ao carregar notificações: ${error.message}`);
   }
 
   return (data ?? []) as NotificacaoItem[];

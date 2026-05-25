@@ -4,7 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { canApproveForRole } from "@/lib/approvals/policy";
 
-export type ApprovalEntityType = "purchase_order" | "medicao" | "cronograma_change";
+export type ApprovalEntityType = "purchase_order" | "medicao" | "cronograma_change" | "quality_issue";
 
 export type ApprovalRequestItem = {
   id: string;
@@ -128,6 +128,15 @@ export async function approveRequest(input: { approvalId: string; note?: string 
     if (entityError) {
       throw new Error(`Erro ao aprovar medição vinculada: ${entityError.message}`);
     }
+  } else if (entityType === "quality_issue") {
+    const { error: entityError } = await supabase
+      .from("nao_conformidades")
+      .update({ status: "aberta" })
+      .eq("empresa_id", empresaId)
+      .eq("id", entityId);
+    if (entityError) {
+      throw new Error(`Erro ao aprovar não conformidade vinculada: ${entityError.message}`);
+    }
   }
 }
 
@@ -206,6 +215,15 @@ export async function rejectRequest(input: { approvalId: string; note?: string }
     if (entityError) {
       throw new Error(`Erro ao rejeitar medição vinculada: ${entityError.message}`);
     }
+  } else if (entityType === "quality_issue") {
+    const { error: entityError } = await supabase
+      .from("nao_conformidades")
+      .update({ status: "rejeitada" })
+      .eq("empresa_id", empresaId)
+      .eq("id", entityId);
+    if (entityError) {
+      throw new Error(`Erro ao rejeitar não conformidade vinculada: ${entityError.message}`);
+    }
   }
 }
 
@@ -240,7 +258,7 @@ export async function listApprovalRequests(input?: {
       (item) =>
         isProfileRole(String(item.requester_role ?? "")) &&
         isProfileRole(String(item.required_role ?? "")) &&
-        ["purchase_order", "medicao", "cronograma_change"].includes(String(item.entity_type ?? "")),
+        ["purchase_order", "medicao", "cronograma_change", "quality_issue"].includes(String(item.entity_type ?? "")),
     )
     .map((item) => ({
       id: String(item.id ?? ""),

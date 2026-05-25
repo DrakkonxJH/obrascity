@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -53,7 +54,7 @@ export async function GET(_: Request, context: RouteContext) {
 
   const { data: report, error: reportError } = await supabase
     .from("relatorios")
-    .select("id, empresa_id, obra_id, tipo, formato, status, created_at")
+    .select("id, empresa_id, obra_id, tipo, formato, status, storage_bucket, storage_path, created_at")
     .eq("empresa_id", empresaId)
     .eq("id", id)
     .single();
@@ -66,6 +67,20 @@ export async function GET(_: Request, context: RouteContext) {
   const formato = normalizeFormat(String(report.formato ?? "pdf"));
   const obraId = (report.obra_id as string | null) ?? null;
   const fileName = buildFileName(tipo, formato === "xlsx" ? "csv" : formato, id);
+  const storageBucket = (report.storage_bucket as string | null) ?? null;
+  const storagePath = (report.storage_path as string | null) ?? null;
+
+  if (report.status === "concluido" && storageBucket && storagePath) {
+    const admin = createAdminClient();
+    const signed = await admin.storage.from(storageBucket).createSignedUrl(storagePath, 60 * 5);
+    if (signed.error || !signed.data?.signedUrl) {
+      return NextResponse.json(
+        { error: `Falha ao gerar URL assinada: ${signed.error?.message ?? "indisponível"}` },
+        { status: 500 },
+      );
+    }
+    return NextResponse.redirect(signed.data.signedUrl, 302);
+  }
 
   if (tipo === "financeiro") {
     const { data, error } = await supabase

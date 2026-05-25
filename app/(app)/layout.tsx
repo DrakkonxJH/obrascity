@@ -12,6 +12,23 @@ import { mapDbNotifications } from "@/lib/demo/notifications-fallback";
 
 export const dynamic = "force-dynamic";
 
+async function loadTenantNotifications() {
+  try {
+    return await listNotificacoes();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro ao carregar notificações.";
+    return [
+      {
+        id: "notifications-load-error",
+        titulo: `Falha ao carregar notificações: ${message}`,
+        lida: false,
+        link: "/configuracoes",
+        created_at: new Date().toISOString(),
+      },
+    ];
+  }
+}
+
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -30,7 +47,7 @@ export default async function AppLayout({
 
   const [summary, notificacoes, masterNotifications, equipes, trashEnabled] = await Promise.all([
     getLayoutSummary(),
-    listNotificacoes(),
+    loadTenantNotifications(),
     adminManagementOnly ? getMasterNotifications() : Promise.resolve(null),
     listEquipes(),
     supportsObraTrash(),

@@ -9,6 +9,7 @@ export type PortalShareItem = {
   descricao: string | null;
   active: boolean;
   expires_at: string | null;
+  obra_ids: string[];
   created_at: string;
 };
 
@@ -19,6 +20,7 @@ export type PortalShareResolved = {
   descricao: string | null;
   expires_at: string | null;
   active: boolean;
+  obra_ids: string[];
 };
 
 export async function listPortalShares(): Promise<PortalShareItem[]> {
@@ -26,7 +28,7 @@ export async function listPortalShares(): Promise<PortalShareItem[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("portal_shares")
-    .select("id, token, descricao, active, expires_at, created_at")
+    .select("id, token, descricao, active, expires_at, obra_ids, created_at")
     .eq("empresa_id", empresaId)
     .order("created_at", { ascending: false });
 
@@ -34,10 +36,18 @@ export async function listPortalShares(): Promise<PortalShareItem[]> {
     throw new Error(`Erro ao listar compartilhamentos do portal: ${error.message}`);
   }
 
-  return (data ?? []) as PortalShareItem[];
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id ?? ""),
+    token: String(row.token ?? ""),
+    descricao: (row.descricao as string | null) ?? null,
+    active: Boolean(row.active),
+    expires_at: (row.expires_at as string | null) ?? null,
+    obra_ids: Array.isArray(row.obra_ids) ? row.obra_ids.map((id) => String(id)) : [],
+    created_at: String(row.created_at ?? ""),
+  }));
 }
 
-export async function createPortalShare(input: { descricao?: string; expires_at?: string | null }) {
+export async function createPortalShare(input: { descricao?: string; expires_at?: string | null; obra_ids?: string[] }) {
   const [empresaId, user] = await Promise.all([getEmpresaIdFromProfile(), getCurrentUser()]);
   if (!user) {
     throw new Error("Usuário não autenticado");
@@ -50,6 +60,7 @@ export async function createPortalShare(input: { descricao?: string; expires_at?
       empresa_id: empresaId,
       descricao: input.descricao?.trim() || null,
       expires_at: input.expires_at || null,
+      obra_ids: (input.obra_ids ?? []).filter((id) => typeof id === "string" && id.trim().length > 0),
       created_by: user.id,
       active: true,
     })
@@ -85,7 +96,7 @@ export async function resolvePortalShareByToken(token: string): Promise<PortalSh
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("portal_shares")
-    .select("id, empresa_id, token, descricao, expires_at, active")
+    .select("id, empresa_id, token, descricao, expires_at, active, obra_ids")
     .eq("token", token)
     .eq("active", true)
     .maybeSingle();
@@ -107,5 +118,6 @@ export async function resolvePortalShareByToken(token: string): Promise<PortalSh
     descricao: (data.descricao as string | null) ?? null,
     expires_at: expiresAt,
     active: Boolean(data.active),
+    obra_ids: Array.isArray(data.obra_ids) ? data.obra_ids.map((id) => String(id)) : [],
   };
 }

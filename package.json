@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
     "worker:dev": "tsx worker/src/index.ts",
     "worker:start": "NODE_ENV=production tsx worker/src/index.ts",
     "worker:health": "node scripts/worker-healthcheck.mjs",
@@ -21,10 +22,12 @@
     "bullmq": "^5.76.10",
     "ioredis": "^5.10.1",
     "next": "16.2.6",
+    "pdf-lib": "^1.17.1",
     "pino": "^10.3.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "stripe": "^18.5.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

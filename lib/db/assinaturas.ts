@@ -12,7 +12,16 @@ export type Assinatura = {
 };
 
 function pickCurrentAssinatura(rows: Assinatura[]): Assinatura | null {
-  const activeRows = rows.filter((row) => ["active", "trialing"].includes(String(row.status).toLowerCase()));
+  const now = Date.now();
+  const activeRows = rows.filter((row) => {
+    const status = String(row.status ?? "").toLowerCase();
+    const hasActiveStatus = ["active", "trialing", "trial", "canceled", "cancelada"].includes(status);
+    if (!hasActiveStatus) return false;
+    if (!row.periodo_fim) return status === "active" || status === "trialing" || status === "trial";
+    const endsAt = new Date(row.periodo_fim).getTime();
+    if (Number.isNaN(endsAt)) return status === "active" || status === "trialing" || status === "trial";
+    return endsAt > now;
+  });
   return (activeRows[0] ?? rows[0] ?? null) as Assinatura | null;
 }
 

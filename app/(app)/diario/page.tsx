@@ -11,7 +11,7 @@ export default async function DiarioPage() {
         Registro operacional diário com dados de campo e evidências.
       </p>
 
-      <form action={createDiarioAction} className="of-card of-form-grid md:grid-cols-3" style={{ marginBottom: 20 }}>
+      <form action={createDiarioAction} encType="multipart/form-data" className="of-card of-form-grid md:grid-cols-3" style={{ marginBottom: 20 }}>
         <div className="of-card-title md:col-span-3">Novo registro (RDO)</div>
         <select name="obra_id" required defaultValue="" className="of-input">
           <option value="" disabled>
@@ -28,6 +28,8 @@ export default async function DiarioPage() {
         <input name="efetivo" type="number" defaultValue="0" placeholder="Efetivo" className="of-input" />
         <input name="equipamentos" placeholder="Equipamentos utilizados" className="of-input" />
         <input name="assinatura_url" placeholder="URL da assinatura digital" className="of-input" />
+        <input name="evidencias" type="file" multiple className="of-input md:col-span-2" />
+        <input name="descricao_evidencias" placeholder="Descrição das evidências anexadas" className="of-input" />
         <textarea name="ocorrencias" placeholder="Ocorrências" className="of-input md:col-span-2" />
         <textarea name="observacoes_ssma" placeholder="Observações SSMA" className="of-input" />
         <div className="md:col-span-3">
@@ -45,6 +47,7 @@ export default async function DiarioPage() {
               <th>Obra</th>
               <th>Clima</th>
               <th>Efetivo</th>
+              <th>Evidências</th>
             </tr>
           </thead>
           <tbody>
@@ -54,11 +57,31 @@ export default async function DiarioPage() {
                 <td>{d.obra_nome}</td>
                 <td>{d.clima ?? "—"}</td>
                 <td>{d.efetivo}</td>
+                <td>
+                  {d.evidencias.length > 0 ? (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {d.evidencias.slice(0, 2).map((evidencia) => (
+                        <a
+                          key={evidencia.id}
+                          href={evidencia.arquivo_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#ff9445] hover:underline text-sm"
+                        >
+                          Evidência
+                        </a>
+                      ))}
+                      {d.evidencias.length > 2 ? <span className="of-empty-text">+{d.evidencias.length - 2}</span> : null}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </td>
               </tr>
             ))}
             {diarios.length === 0 ? (
               <tr>
-                <td colSpan={4} className="of-empty-text">
+                <td colSpan={5} className="of-empty-text">
                   Nenhum diário registrado.
                 </td>
               </tr>

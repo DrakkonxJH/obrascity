@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createDiario } from "@/lib/db/diario";
+import { createDiario, uploadDiarioEvidencias } from "@/lib/db/diario";
 
 export async function createDiarioAction(formData: FormData) {
   const obra_id = String(formData.get("obra_id") ?? "").trim();
@@ -12,6 +12,8 @@ export async function createDiarioAction(formData: FormData) {
   const ocorrencias = String(formData.get("ocorrencias") ?? "").trim();
   const observacoes_ssma = String(formData.get("observacoes_ssma") ?? "").trim();
   const assinatura_url = String(formData.get("assinatura_url") ?? "").trim();
+  const descricao_evidencias = String(formData.get("descricao_evidencias") ?? "").trim();
+  const evidencias = formData.getAll("evidencias").filter((item): item is File => item instanceof File && item.size > 0);
 
   if (!obra_id || !data_ref) {
     throw new Error("Obra e data do diario sao obrigatorias");
@@ -20,7 +22,7 @@ export async function createDiarioAction(formData: FormData) {
     throw new Error("Efetivo do diário deve ser um número maior ou igual a zero");
   }
 
-  await createDiario({
+  const diarioId = await createDiario({
     obra_id,
     data_ref,
     clima,
@@ -29,6 +31,12 @@ export async function createDiarioAction(formData: FormData) {
     ocorrencias,
     observacoes_ssma,
     assinatura_url,
+  });
+  await uploadDiarioEvidencias({
+    diarioId,
+    obraId: obra_id,
+    files: evidencias,
+    descricao: descricao_evidencias || null,
   });
 
   revalidatePath("/diario");
