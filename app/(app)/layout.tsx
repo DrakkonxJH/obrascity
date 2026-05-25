@@ -8,7 +8,7 @@ import { listNotificacoes } from "@/lib/db/notificacoes";
 import { getMasterNotifications } from "@/lib/db/master-notifications";
 import { listEquipes } from "@/lib/db/equipes";
 import { supportsObraTrash } from "@/lib/db/obras";
-import { mapDbNotifications } from "@/lib/demo/notifications-fallback";
+import { mapDbNotifications } from "@/lib/notifications/map";
 
 export const dynamic = "force-dynamic";
 

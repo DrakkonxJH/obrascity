@@ -1,5 +1,5 @@
 import { listApprovalRequests } from "@/lib/db/approvals";
-import { getTenantRetentionPolicy, listRecentAuditLogs } from "@/lib/db/governanca";
+import { getTenantRetentionPolicy, listRecentAuditLogs, listTenantObservabilityEvents } from "@/lib/db/governanca";
 import { approveRequestAction, rejectRequestAction, saveRetentionPolicyAction } from "./actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -25,11 +25,12 @@ function entityLabel(entityType: string) {
 }
 
 export default async function GovernancaPage() {
-  const [pendingRequests, recentRequests, retentionPolicy, auditLogs] = await Promise.all([
+  const [pendingRequests, recentRequests, retentionPolicy, auditLogs, observabilityEvents] = await Promise.all([
     listApprovalRequests({ status: "pending", limit: 30 }),
     listApprovalRequests({ limit: 30 }),
     getTenantRetentionPolicy(),
     listRecentAuditLogs(30),
+    listTenantObservabilityEvents(30),
   ]);
 
   const retention = retentionPolicy ?? {
@@ -189,6 +190,45 @@ export default async function GovernancaPage() {
                 <tr>
                   <td colSpan={6} className="of-empty-text">
                     Sem eventos de auditoria no período.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article className="of-card" style={{ marginTop: 16 }}>
+        <div className="of-card-title">Observabilidade por tenant</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Fonte</th>
+                <th>Evento</th>
+                <th>Severidade</th>
+                <th>Mensagem</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              {observabilityEvents.map((event) => (
+                <tr key={event.id}>
+                  <td>{event.source}</td>
+                  <td>{event.eventType}</td>
+                  <td>
+                    <span className={`of-badge ${event.severity === "error" ? "of-badge-red" : event.severity === "warning" ? "of-badge-yellow" : "of-badge-blue"}`}>
+                      {event.severity}
+                    </span>
+                  </td>
+                  <td>{event.message}</td>
+                  <td>{new Date(event.createdAt).toLocaleString("pt-BR")}</td>
+                </tr>
+              ))}
+              {observabilityEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="of-empty-text">
+                    Sem eventos de observabilidade recentes.
                   </td>
                 </tr>
               ) : null}
