@@ -5,8 +5,10 @@ import Link from "next/link";
 import {
   resendConfirmationAction,
   signInAction,
+  startSsoLoginAction,
   type LoginActionState,
   type ResendConfirmationState,
+  type SsoLoginState,
 } from "./actions";
 
 const initialState: LoginActionState = {
@@ -14,6 +16,10 @@ const initialState: LoginActionState = {
   message: "",
 };
 const initialResendState: ResendConfirmationState = {
+  ok: false,
+  message: "",
+};
+const initialSsoState: SsoLoginState = {
   ok: false,
   message: "",
 };
@@ -28,6 +34,7 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
     resendConfirmationAction,
     initialResendState,
   );
+  const [ssoState, ssoAction, ssoPending] = useActionState(startSsoLoginAction, initialSsoState);
 
   return (
     <>
@@ -124,6 +131,32 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
 
         <button type="submit" disabled={resendPending} className="of-login-v2-demo">
           {resendPending ? "Reenviando..." : "Reenviar confirmação"}
+        </button>
+      </form>
+
+      <form action={ssoAction} autoComplete="off" className="of-login-v2-form mt-4">
+        <div className="of-login-v2-field">
+          <label className="of-login-v2-label" htmlFor="sso-email">
+            Entrar com SSO corporativo
+          </label>
+          <input
+            id="sso-email"
+            name="email"
+            type="email"
+            autoComplete="off"
+            defaultValue=""
+            required
+            className="of-login-v2-input"
+            placeholder="email@empresa.com.br"
+          />
+        </div>
+        {ssoState.message ? (
+          <p className={ssoState.ok ? "of-login-v2-message of-login-v2-message-success" : "of-login-v2-error"}>
+            {ssoState.message}
+          </p>
+        ) : null}
+        <button type="submit" disabled={ssoPending} className="of-login-v2-demo">
+          {ssoPending ? "Iniciando..." : "Acessar com SSO"}
         </button>
       </form>
     </>

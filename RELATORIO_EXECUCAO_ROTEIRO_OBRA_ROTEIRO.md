@@ -278,3 +278,36 @@ Os módulos abaixo estão **visíveis no menu lateral** para conta cliente e com
 
 Para o cenário de obra tipo prédio 15 andares, o ObrasFlow agora cobre o ciclo operacional com amplitude significativamente maior que a rodada anterior.  
 O cliente já consegue executar o fluxo de obra do início técnico até pós-obra dentro do sistema, com exceção do bloco comercial/CRM e de aprofundamentos enterprise específicos.
+
+---
+
+## 13) Fechamento dos 4 itens parciais (rodada de implementação completa)
+
+Nesta rodada foi implementado o pacote de fechamento para os itens 5, 6, 9 e 15, com dependências conectadas.
+
+### 13.1 O que foi entregue
+
+| Item | Entrega aplicada |
+|---|---|
+| **5. Suprimentos enterprise** | Rodadas de negociação (`cotacoes_rodadas`), adjudicação de fornecedor vencedor, geração de contrato (`contratos_fornecedores`) e fechamento de cotação em status contratado. |
+| **6. Mobilização avançada** | Alocação por frente/turno/período (`equipe_alocacoes`), agenda operacional e painel de conflito de capacidade por equipe. |
+| **9. Financeiro corporativo** | AP/AR completo (`financeiro_titulos`) com centro de custo, vencimento, status, conciliação, liquidação e projeção mensal de caixa. |
+| **15. Segurança enterprise** | Enforcement de MFA por perfil no login, criação/validação de sessão corporativa por tenant, timeout ativo de sessão, revogação no logout e entrada SSO corporativa via provedor configurado. |
+
+### 13.2 Onde foi implementado
+
+- **Migration:** `supabase/migrations/0026_enterprise_completion_pack.sql`
+- **Suprimentos:** `lib/db/materiais.ts`, `app/(app)/materiais/actions.ts`, `app/(app)/materiais/page.tsx`
+- **Mobilização:** `lib/db/mobilizacao.ts`, `app/(app)/equipes/actions.ts`, `app/(app)/equipes/page.tsx`
+- **Financeiro corporativo:** `lib/db/financeiro-corporativo.ts`, `app/(app)/financeiro/actions.ts`, `app/(app)/financeiro/page.tsx`, `lib/db/approvals.ts`, `app/(app)/governanca/page.tsx`
+- **Segurança enterprise:** `lib/db/seguranca-corporativa.ts`, `app/(auth)/login/actions.ts`, `app/(auth)/login/login-form.tsx`, `app/(app)/layout.tsx`, `lib/auth/actions.ts`
+
+### 13.3 Resultado consolidado atualizado (estado final atual)
+
+- **Disponível de ponta a ponta:** 14 etapas  
+- **Parcial:** 0 etapas  
+- **Não disponível:** 1 etapa (**Comercial/CRM**, mantido desativado por decisão de produto)
+
+### 13.4 Veredito final
+
+Comercial/CRM à parte, o cliente consegue operar integralmente o ciclo de obra no sistema com as trilhas técnicas, operacionais, financeiras e de governança necessárias para execução completa ponta a ponta.

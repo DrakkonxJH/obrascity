@@ -4,7 +4,12 @@ import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { canApproveForRole } from "@/lib/approvals/policy";
 
-export type ApprovalEntityType = "purchase_order" | "medicao" | "cronograma_change" | "quality_issue";
+export type ApprovalEntityType =
+  | "purchase_order"
+  | "medicao"
+  | "cronograma_change"
+  | "quality_issue"
+  | "financial_entry";
 
 export type ApprovalRequestItem = {
   id: string;
@@ -162,6 +167,19 @@ export async function approveRequest(input: { approvalId: string; note?: string 
     if (errorMessage) {
       throw new Error(`Erro ao aprovar mudança vinculada: ${errorMessage}`);
     }
+  } else if (entityType === "financial_entry") {
+    const { error: entityError } = await supabase
+      .from("financeiro_titulos")
+      .update({
+        status: "aprovado",
+        aprovado_por: profile.id,
+        aprovado_em: new Date().toISOString(),
+      })
+      .eq("empresa_id", empresaId)
+      .eq("id", entityId);
+    if (entityError) {
+      throw new Error(`Erro ao aprovar título financeiro vinculado: ${entityError.message}`);
+    }
   }
 }
 
@@ -274,6 +292,19 @@ export async function rejectRequest(input: { approvalId: string; note?: string }
     if (errorMessage) {
       throw new Error(`Erro ao rejeitar mudança vinculada: ${errorMessage}`);
     }
+  } else if (entityType === "financial_entry") {
+    const { error: entityError } = await supabase
+      .from("financeiro_titulos")
+      .update({
+        status: "rejeitado",
+        aprovado_por: profile.id,
+        aprovado_em: new Date().toISOString(),
+      })
+      .eq("empresa_id", empresaId)
+      .eq("id", entityId);
+    if (entityError) {
+      throw new Error(`Erro ao rejeitar título financeiro vinculado: ${entityError.message}`);
+    }
   }
 }
 
@@ -308,7 +339,9 @@ export async function listApprovalRequests(input?: {
       (item) =>
         isProfileRole(String(item.requester_role ?? "")) &&
         isProfileRole(String(item.required_role ?? "")) &&
-        ["purchase_order", "medicao", "cronograma_change", "quality_issue"].includes(String(item.entity_type ?? "")),
+        ["purchase_order", "medicao", "cronograma_change", "quality_issue", "financial_entry"].includes(
+          String(item.entity_type ?? ""),
+        ),
     )
     .map((item) => ({
       id: String(item.id ?? ""),

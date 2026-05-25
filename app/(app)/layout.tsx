@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
@@ -9,6 +10,7 @@ import { getMasterNotifications } from "@/lib/db/master-notifications";
 import { listEquipes } from "@/lib/db/equipes";
 import { supportsObraTrash } from "@/lib/db/obras";
 import { mapDbNotifications } from "@/lib/notifications/map";
+import { validateAndTouchTenantSession } from "@/lib/db/seguranca-corporativa";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,22 @@ export default async function AppLayout({
   if (!profile?.empresa_id && !canAccessControlTotal) {
     redirect("/conta-pendente");
   }
+
+  if (profile?.empresa_id) {
+    const cookieStore = await cookies();
+    const tenantSessionId = cookieStore.get("of_tenant_session")?.value ?? null;
+    if (tenantSessionId) {
+      const sessionStatus = await validateAndTouchTenantSession({
+        empresaId: profile.empresa_id,
+        sessionId: tenantSessionId,
+      });
+      if (!sessionStatus.valid) {
+        cookieStore.delete("of_tenant_session");
+        redirect("/login");
+      }
+    }
+  }
+
   const adminManagementOnly = canAccessControlTotal;
 
   const [summary, notificacoes, masterNotifications, equipes, trashEnabled] = await Promise.all([

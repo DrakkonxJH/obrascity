@@ -1,10 +1,11 @@
 import { FinanceCharts } from "@/components/financeiro/finance-charts";
 import { listFinanceiro } from "@/lib/db/financeiro";
 import { listObras } from "@/lib/db/obras";
-import { createFinanceiroAction } from "./actions";
+import { createFinanceiroAction, createFinanceiroTituloAction, settleFinanceiroTituloAction } from "./actions";
 import { createMedicaoAction } from "./medicoes-actions";
 import { getEvmIndicadores, listMedicoes } from "@/lib/db/medicoes";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { listFinanceiroTitulos, listFluxoCaixaMensal } from "@/lib/db/financeiro-corporativo";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -24,15 +25,19 @@ export default async function FinanceiroPage() {
   let rows: Awaited<ReturnType<typeof listFinanceiro>> = [];
   let obras: Awaited<ReturnType<typeof listObras>> = [];
   let medicoes: Awaited<ReturnType<typeof listMedicoes>> = [];
+  let titulos: Awaited<ReturnType<typeof listFinanceiroTitulos>> = [];
+  let fluxoCaixa: Awaited<ReturnType<typeof listFluxoCaixaMensal>> = [];
   let evm: Awaited<ReturnType<typeof getEvmIndicadores>> = { pv: 0, ev: 0, ac: 0, cpi: 0, spi: 0, eac: 0 };
   let loadError: string | null = null;
 
   try {
-    [rows, obras, medicoes, evm] = await Promise.all([
+    [rows, obras, medicoes, evm, titulos, fluxoCaixa] = await Promise.all([
       listFinanceiro(),
       listObras(),
       listMedicoes(),
       getEvmIndicadores(),
+      listFinanceiroTitulos(),
+      listFluxoCaixaMensal(),
     ]);
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Erro ao carregar módulo financeiro.";
@@ -171,6 +176,129 @@ export default async function FinanceiroPage() {
           </button>
         </form>
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-2" style={{ marginTop: 20 }}>
+        <form action={createFinanceiroTituloAction} className="of-card of-form-grid md:grid-cols-3">
+          <div className="of-card-title md:col-span-3">AP / AR corporativo</div>
+          <select name="obra_id" required className="of-input" defaultValue="">
+            <option value="" disabled>
+              Obra
+            </option>
+            {obras.map((obra) => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome}
+              </option>
+            ))}
+          </select>
+          <select name="tipo" className="of-input" defaultValue="ap">
+            <option value="ap">Conta a pagar (AP)</option>
+            <option value="ar">Conta a receber (AR)</option>
+          </select>
+          <input name="centro_custo" required className="of-input" placeholder="Centro de custo" />
+          <input name="descricao" required className="of-input md:col-span-2" placeholder="Descrição do título" />
+          <input name="valor" type="number" min={0} step="0.01" className="of-input" placeholder="Valor" />
+          <input name="vencimento" type="date" className="of-input" required />
+          <button type="submit" className="of-btn-primary">Criar título</button>
+        </form>
+
+        <article className="of-card">
+          <div className="of-card-title">Projeção mensal de caixa</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Mês</th>
+                  <th>A pagar</th>
+                  <th>A receber</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fluxoCaixa.map((item) => (
+                  <tr key={item.referencia}>
+                    <td>{item.referencia}</td>
+                    <td>{money.format(item.a_pagar)}</td>
+                    <td>{money.format(item.a_receber)}</td>
+                    <td className={item.saldo >= 0 ? "of-mono" : "of-mono"}>{money.format(item.saldo)}</td>
+                  </tr>
+                ))}
+                {fluxoCaixa.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="of-empty-text">
+                      Sem títulos suficientes para projeção.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <article className="of-card" style={{ marginTop: 20 }}>
+        <div className="of-card-title">Títulos financeiros (AP/AR)</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Obra</th>
+                <th>Tipo</th>
+                <th>Centro de custo</th>
+                <th>Descrição</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+                <th>Valor</th>
+                <th>Conciliação</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {titulos.map((titulo) => (
+                <tr key={titulo.id}>
+                  <td>{titulo.obra_nome}</td>
+                  <td>{titulo.tipo.toUpperCase()}</td>
+                  <td>{titulo.centro_custo}</td>
+                  <td>{titulo.descricao}</td>
+                  <td>{new Date(titulo.vencimento).toLocaleDateString("pt-BR")}</td>
+                  <td>{titulo.status}</td>
+                  <td>{money.format(titulo.valor)}</td>
+                  <td>{titulo.conciliado ? "Conciliado" : "Pendente"}</td>
+                  <td>
+                    {titulo.status === "liquidado" || titulo.status === "rejeitado" ? null : (
+                      <form action={settleFinanceiroTituloAction} style={{ display: "flex", gap: 8 }}>
+                        <input type="hidden" name="titulo_id" value={titulo.id} />
+                        <input
+                          type="number"
+                          name="valor_liquidado"
+                          defaultValue={titulo.valor}
+                          min={0}
+                          step="0.01"
+                          className="of-input"
+                          style={{ width: 110 }}
+                        />
+                        <label className="of-empty-text" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <input name="conciliado" type="checkbox" defaultChecked={titulo.conciliado} />
+                          Conciliar
+                        </label>
+                        <button type="submit" className="of-btn-ghost">
+                          Liquidar
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {titulos.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="of-empty-text">
+                    Nenhum título financeiro registrado.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
 
       <div className="of-fin-evm-grid">
         <article className="of-card of-fin-evm-card">

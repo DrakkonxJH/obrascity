@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  adjudicarCotacao,
+  createCotacaoRodada,
   createCotacaoCompra,
   createCotacaoFornecedor,
   createMaterial,
@@ -273,5 +275,41 @@ export async function createCotacaoFornecedorAction(formData: FormData) {
     condicoes,
   });
 
+  revalidatePath("/materiais");
+}
+
+export async function createCotacaoRodadaAction(formData: FormData) {
+  const cotacaoId = String(formData.get("cotacao_id") ?? "").trim();
+  const objetivo = String(formData.get("objetivo") ?? "").trim();
+  const observacoes = String(formData.get("observacoes") ?? "").trim();
+
+  if (!cotacaoId || !objetivo) {
+    throw new Error("Rodada de negociação exige cotação e objetivo");
+  }
+
+  await createCotacaoRodada({
+    cotacaoId,
+    objetivo,
+    observacoes,
+  });
+  revalidatePath("/materiais");
+}
+
+export async function adjudicarCotacaoAction(formData: FormData) {
+  const cotacaoId = String(formData.get("cotacao_id") ?? "").trim();
+  const fornecedorId = String(formData.get("fornecedor_id") ?? "").trim();
+  const statusContrato = String(formData.get("status_contrato") ?? "rascunho").trim();
+  const condicoes = String(formData.get("condicoes") ?? "").trim();
+
+  if (!cotacaoId || !fornecedorId) {
+    throw new Error("Adjudicação exige cotação e fornecedor vencedor");
+  }
+
+  await adjudicarCotacao({
+    cotacaoId,
+    fornecedorId,
+    statusContrato,
+    condicoes,
+  });
   revalidatePath("/materiais");
 }

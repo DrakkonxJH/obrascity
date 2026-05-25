@@ -21,6 +21,7 @@ function entityLabel(entityType: string) {
   if (entityType === "medicao") return "Medição";
   if (entityType === "cronograma_change") return "Mudança de cronograma";
   if (entityType === "quality_issue") return "Não conformidade";
+  if (entityType === "financial_entry") return "Título financeiro";
   return entityType;
 }
 

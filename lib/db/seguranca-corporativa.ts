@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { createHash } from "node:crypto";
 
 export type TenantSecurityPolicy = {
   mfa_required_roles: string[];
@@ -102,3 +103,102 @@ export async function revokeTenantSession(sessionId: string) {
   }
 }
 
+export function hashIp(ip: string | null | undefined) {
+  return ip ? createHash("sha256").update(ip).digest("hex") : null;
+}
+
+export async function getTenantSecurityPolicyByEmpresa(empresaId: string): Promise<TenantSecurityPolicy> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("tenant_security_policies")
+    .select("mfa_required_roles, sso_enabled, sso_provider, sso_entrypoint, session_timeout_minutes")
+    .eq("empresa_id", empresaId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Erro ao carregar política de segurança da empresa: ${error.message}`);
+  }
+
+  return {
+    mfa_required_roles: Array.isArray(data?.mfa_required_roles)
+      ? (data?.mfa_required_roles as string[])
+      : [],
+    sso_enabled: Boolean(data?.sso_enabled),
+    sso_provider: String(data?.sso_provider ?? ""),
+    sso_entrypoint: String(data?.sso_entrypoint ?? ""),
+    session_timeout_minutes: Number(data?.session_timeout_minutes ?? 43200),
+  };
+}
+
+export async function createTenantAuthSession(input: {
+  empresaId: string;
+  profileId: string;
+  deviceLabel: string;
+  userAgent: string;
+  ip: string | null;
+}) {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("tenant_auth_sessions")
+    .insert({
+      empresa_id: input.empresaId,
+      profile_id: input.profileId,
+      device_label: input.deviceLabel,
+      user_agent: input.userAgent,
+      ip_hash: hashIp(input.ip),
+      last_seen_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    throw new Error(`Erro ao criar sessão de autenticação: ${error?.message ?? "sem id retornado"}`);
+  }
+  return String(data.id);
+}
+
+export async function validateAndTouchTenantSession(input: { empresaId: string; sessionId: string }) {
+  const supabase = await createServerClient();
+  const [policy, sessionQuery] = await Promise.all([
+    getTenantSecurityPolicyByEmpresa(input.empresaId),
+    supabase
+      .from("tenant_auth_sessions")
+      .select("id, last_seen_at, revoked_at")
+      .eq("empresa_id", input.empresaId)
+      .eq("id", input.sessionId)
+      .maybeSingle(),
+  ]);
+
+  if (sessionQuery.error) {
+    throw new Error(`Erro ao validar sessão atual: ${sessionQuery.error.message}`);
+  }
+  if (!sessionQuery.data || sessionQuery.data.revoked_at) {
+    return { valid: false };
+  }
+
+  const timeoutMs = Math.max(policy.session_timeout_minutes, 15) * 60 * 1000;
+  const lastSeenMs = new Date(String(sessionQuery.data.last_seen_at ?? "")).getTime();
+  if (!Number.isFinite(lastSeenMs) || Date.now() - lastSeenMs > timeoutMs) {
+    const expire = await supabase
+      .from("tenant_auth_sessions")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("empresa_id", input.empresaId)
+      .eq("id", input.sessionId);
+    if (expire.error) {
+      throw new Error(`Erro ao expirar sessão por timeout: ${expire.error.message}`);
+    }
+    return { valid: false };
+  }
+
+  const touch = await supabase
+    .from("tenant_auth_sessions")
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq("empresa_id", input.empresaId)
+    .eq("id", input.sessionId);
+
+  if (touch.error) {
+    throw new Error(`Erro ao atualizar atividade da sessão: ${touch.error.message}`);
+  }
+
+  return { valid: true };
+}

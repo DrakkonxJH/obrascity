@@ -1,5 +1,18 @@
-import { createCotacaoCompraAction, createCotacaoFornecedorAction, createMaterialAction } from "./actions";
-import { listCotacoesCompra, listCotacoesFornecedores, listMateriais, listPedidosCompra } from "@/lib/db/materiais";
+import {
+  adjudicarCotacaoAction,
+  createCotacaoCompraAction,
+  createCotacaoFornecedorAction,
+  createCotacaoRodadaAction,
+  createMaterialAction,
+} from "./actions";
+import {
+  listContratosFornecedores,
+  listCotacaoRodadas,
+  listCotacoesCompra,
+  listCotacoesFornecedores,
+  listMateriais,
+  listPedidosCompra,
+} from "@/lib/db/materiais";
 import { listObras } from "@/lib/db/obras";
 import { materialIcon } from "@/lib/demo/material-icons";
 import { MaterialCardEditor } from "@/components/materiais/material-card-editor";
@@ -30,12 +43,14 @@ function pedidoBadge(status: string) {
 }
 
 export default async function MateriaisPage() {
-  const [materiais, pedidos, obras, cotacoes, fornecedores] = await Promise.all([
+  const [materiais, pedidos, obras, cotacoes, fornecedores, rodadas, contratos] = await Promise.all([
     listMateriais(),
     listPedidosCompra(),
     listObras(),
     listCotacoesCompra(),
     listCotacoesFornecedores(),
+    listCotacaoRodadas(),
+    listContratosFornecedores(),
   ]);
   const suggestionsId = "material-suggestions";
   const materialSuggestions = buildMaterialSuggestions(materiais.map((material) => material.nome));
@@ -274,6 +289,98 @@ export default async function MateriaisPage() {
                 <tr>
                   <td colSpan={5} className="of-empty-text">
                     Sem cotações cadastradas.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <div className="grid gap-4 lg:grid-cols-2" style={{ marginTop: 20 }}>
+        <form action={createCotacaoRodadaAction} className="of-card of-form-grid">
+          <div className="of-card-title">Rodada de negociação</div>
+          <select name="cotacao_id" className="of-input" defaultValue="" required>
+            <option value="" disabled>
+              Cotação
+            </option>
+            {cotacoes.map((cotacao) => (
+              <option key={cotacao.id} value={cotacao.id}>
+                {cotacao.titulo}
+              </option>
+            ))}
+          </select>
+          <input name="objetivo" className="of-input" placeholder="Objetivo da rodada" required />
+          <input name="observacoes" className="of-input" placeholder="Observações" />
+          <button type="submit" className="of-btn-primary">
+            Registrar rodada
+          </button>
+          <p className="of-empty-text">
+            Rodadas registradas: <strong>{rodadas.length}</strong>
+          </p>
+        </form>
+
+        <form action={adjudicarCotacaoAction} className="of-card of-form-grid">
+          <div className="of-card-title">Adjudicar e contratar fornecedor</div>
+          <select name="cotacao_id" className="of-input" defaultValue="" required>
+            <option value="" disabled>
+              Cotação vencedora
+            </option>
+            {cotacoes.map((cotacao) => (
+              <option key={cotacao.id} value={cotacao.id}>
+                {cotacao.titulo}
+              </option>
+            ))}
+          </select>
+          <select name="fornecedor_id" className="of-input" defaultValue="" required>
+            <option value="" disabled>
+              Fornecedor vencedor
+            </option>
+            {fornecedores.map((fornecedor) => (
+              <option key={fornecedor.id} value={fornecedor.id}>
+                {fornecedor.fornecedor}
+              </option>
+            ))}
+          </select>
+          <select name="status_contrato" className="of-input" defaultValue="rascunho">
+            <option value="rascunho">Rascunho</option>
+            <option value="assinatura_pendente">Assinatura pendente</option>
+            <option value="assinado">Assinado</option>
+          </select>
+          <input name="condicoes" className="of-input" placeholder="Condições de fechamento" />
+          <button type="submit" className="of-btn-primary">
+            Adjudicar cotação
+          </button>
+        </form>
+      </div>
+
+      <article className="of-card" style={{ marginTop: 20 }}>
+        <div className="of-card-title">Contratos de fornecedores</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Obra</th>
+                <th>Status</th>
+                <th>Valor</th>
+                <th>Prazo</th>
+                <th>Condições</th>
+              </tr>
+            </thead>
+            <tbody>
+              {contratos.map((contrato) => (
+                <tr key={contrato.id}>
+                  <td>{contrato.obra_nome}</td>
+                  <td>{contrato.status}</td>
+                  <td>{money.format(contrato.valor_total)}</td>
+                  <td className="of-mono">{contrato.prazo_dias} dias</td>
+                  <td>{contrato.condicoes || "—"}</td>
+                </tr>
+              ))}
+              {contratos.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="of-empty-text">
+                    Sem contratos registrados.
                   </td>
                 </tr>
               ) : null}

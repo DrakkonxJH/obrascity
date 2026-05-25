@@ -1,15 +1,17 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Provider } from "@supabase/supabase-js";
 import { createServerClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { normalizeEmail } from "@/lib/security/signup-guard";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getAppOrigin, getEnv } from "@/lib/validations/env";
+import { resolvePublicAppOrigin } from "@/lib/validations/env";
 import { provisionTrialTenant } from "@/lib/auth/provision-tenant";
+import { createTenantAuthSession, getTenantSecurityPolicyByEmpresa } from "@/lib/db/seguranca-corporativa";
 
 export type LoginActionState = {
   ok: boolean;
@@ -20,6 +22,20 @@ export type ResendConfirmationState = {
   ok: boolean;
   message: string;
 };
+
+export type SsoLoginState = {
+  ok: boolean;
+  message: string;
+};
+
+function mapSsoProvider(provider: string): Provider | null {
+  const normalized = provider.trim().toLowerCase();
+  if (normalized === "azuread" || normalized === "azure") return "azure";
+  if (normalized === "google") return "google";
+  if (normalized === "github") return "github";
+  if (normalized === "gitlab") return "gitlab";
+  return null;
+}
 
 export async function signInAction(
   _prev: LoginActionState,
@@ -84,7 +100,7 @@ export async function signInAction(
   if (userId) {
     const { data: initialProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, email, role")
+      .select("id, empresa_id, email, role")
       .eq("id", userId)
       .maybeSingle();
     let profile = initialProfile;
@@ -107,7 +123,7 @@ export async function signInAction(
 
       const reloaded = await supabase
         .from("profiles")
-        .select("id, email, role")
+        .select("id, empresa_id, email, role")
         .eq("id", userId)
         .maybeSingle();
       if (reloaded.error) {
@@ -117,6 +133,50 @@ export async function signInAction(
     }
 
     profileRole = String(profile?.role ?? "");
+    const empresaId = String(profile?.empresa_id ?? "");
+    const userFactorsCount = data.user?.factors?.length ?? 0;
+    if (empresaId) {
+      const tenantPolicy = await getTenantSecurityPolicyByEmpresa(empresaId);
+      const requiresMfaByRole = tenantPolicy.mfa_required_roles.includes(profileRole);
+      if (requiresMfaByRole && userFactorsCount === 0) {
+        await createSecurityAlert({
+          category: "login",
+          severity: "high",
+          reason: "mfa_required_not_enrolled",
+          email,
+          ip,
+          metadata: {
+            role: profileRole,
+            empresaId,
+          },
+        });
+        await supabase.auth.signOut();
+        return {
+          ok: false,
+          message: "Seu perfil exige MFA obrigatório. Cadastre um fator de autenticação com o administrador.",
+        };
+      }
+
+      if (profile?.id) {
+        const deviceLabel = headerStore.get("sec-ch-ua-platform") ?? "Dispositivo web";
+        const userAgent = headerStore.get("user-agent") ?? "N/A";
+        const authSessionId = await createTenantAuthSession({
+          empresaId,
+          profileId: profile.id,
+          deviceLabel,
+          userAgent,
+          ip,
+        });
+        const cookieStore = await cookies();
+        cookieStore.set("of_tenant_session", authSessionId, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: true,
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30,
+        });
+      }
+    }
 
     if (profile?.role === "administrador" && (data.user?.factors?.length ?? 0) === 0) {
       await createSecurityAlert({
@@ -202,9 +262,7 @@ export async function resendConfirmationAction(
   }
 
   const supabase = await createServerClient();
-  const env = getEnv();
-  const appOrigin = requestOrigin ?? getAppOrigin();
-  const redirectBase = env.NEXT_PUBLIC_APP_URL ?? appOrigin;
+  const redirectBase = resolvePublicAppOrigin(requestOrigin);
   const redirectTo = `${redirectBase.replace(/\/$/, "")}/auth/callback`;
   const { error } = await supabase.auth.resend({
     type: "signup",
@@ -232,4 +290,49 @@ export async function resendConfirmationAction(
     ok: true,
     message: "E-mail de confirmação reenviado. Verifique sua caixa de entrada.",
   };
+}
+
+export async function startSsoLoginAction(
+  _prev: SsoLoginState,
+  formData: FormData,
+): Promise<SsoLoginState> {
+  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  if (!email) {
+    return { ok: false, message: "Informe o e-mail corporativo para SSO." };
+  }
+
+  const admin = createAdminClient();
+  const profileResult = await admin
+    .from("profiles")
+    .select("id, empresa_id")
+    .eq("email", email)
+    .maybeSingle();
+  if (profileResult.error || !profileResult.data?.empresa_id) {
+    return { ok: false, message: "Perfil sem empresa vinculada para SSO." };
+  }
+
+  const empresaId = String(profileResult.data.empresa_id);
+  const policy = await getTenantSecurityPolicyByEmpresa(empresaId);
+  if (!policy.sso_enabled) {
+    return { ok: false, message: "SSO não está habilitado para sua empresa." };
+  }
+
+  const provider = mapSsoProvider(policy.sso_provider);
+  if (!provider) {
+    return { ok: false, message: "Provedor SSO inválido ou não suportado." };
+  }
+
+  const supabase = await createServerClient();
+  const callback = resolvePublicAppOrigin(null).replace(/\/$/, "");
+  const oauth = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${callback}/auth/callback`,
+    },
+  });
+
+  if (oauth.error || !oauth.data?.url) {
+    return { ok: false, message: `Falha ao iniciar SSO: ${oauth.error?.message ?? "sem URL de redirecionamento"}` };
+  }
+  redirect(oauth.data.url);
 }

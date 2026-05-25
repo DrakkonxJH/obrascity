@@ -75,6 +75,28 @@ export type CotacaoFornecedorItem = {
   selecionado: boolean;
   aprovado: boolean;
 };
+
+export type CotacaoRodadaItem = {
+  id: string;
+  cotacao_id: string;
+  numero: number;
+  objetivo: string;
+  observacoes: string;
+  created_at: string;
+};
+
+export type ContratoFornecedorItem = {
+  id: string;
+  obra_id: string;
+  obra_nome: string;
+  cotacao_id: string;
+  fornecedor_id: string | null;
+  status: string;
+  valor_total: number;
+  prazo_dias: number;
+  condicoes: string;
+  created_at: string;
+};
 export async function listMateriais(): Promise<MaterialItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -459,4 +481,184 @@ export async function createCotacaoFornecedor(input: {
   if (error) {
     throw new Error(`Erro ao adicionar fornecedor na cotação: ${error.message}`);
   }
+}
+
+export async function listCotacaoRodadas(): Promise<CotacaoRodadaItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("cotacoes_rodadas")
+    .select("id, cotacao_id, numero, objetivo, observacoes, created_at")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: false })
+    .limit(400);
+
+  if (error) {
+    throw new Error(`Erro ao listar rodadas de cotação: ${error.message}`);
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
+    id: String(item.id ?? ""),
+    cotacao_id: String(item.cotacao_id ?? ""),
+    numero: Number(item.numero ?? 1),
+    objetivo: String(item.objetivo ?? ""),
+    observacoes: String(item.observacoes ?? ""),
+    created_at: String(item.created_at ?? ""),
+  }));
+}
+
+export async function createCotacaoRodada(input: {
+  cotacaoId: string;
+  objetivo: string;
+  observacoes: string;
+}) {
+  const [empresaId, user, supabase] = await Promise.all([
+    getEmpresaIdFromProfile(),
+    getCurrentUser(),
+    createServerClient(),
+  ]);
+  const maxRound = await supabase
+    .from("cotacoes_rodadas")
+    .select("numero")
+    .eq("empresa_id", empresaId)
+    .eq("cotacao_id", input.cotacaoId)
+    .order("numero", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (maxRound.error) {
+    throw new Error(`Erro ao buscar rodada atual: ${maxRound.error.message}`);
+  }
+  const numero = Number(maxRound.data?.numero ?? 0) + 1;
+
+  const { error } = await supabase.from("cotacoes_rodadas").insert({
+    empresa_id: empresaId,
+    cotacao_id: input.cotacaoId,
+    numero,
+    objetivo: input.objetivo,
+    observacoes: input.observacoes,
+    created_by: user?.id ?? null,
+  });
+
+  if (error) {
+    throw new Error(`Erro ao criar rodada de cotação: ${error.message}`);
+  }
+
+  const update = await supabase
+    .from("cotacoes_compra")
+    .update({ status: "negociacao" })
+    .eq("empresa_id", empresaId)
+    .eq("id", input.cotacaoId);
+
+  if (update.error) {
+    throw new Error(`Erro ao atualizar status da cotação: ${update.error.message}`);
+  }
+}
+
+export async function adjudicarCotacao(input: {
+  cotacaoId: string;
+  fornecedorId: string;
+  statusContrato: string;
+  condicoes: string;
+}) {
+  const [empresaId, user, supabase] = await Promise.all([
+    getEmpresaIdFromProfile(),
+    getCurrentUser(),
+    createServerClient(),
+  ]);
+
+  const selectedSupplier = await supabase
+    .from("cotacoes_fornecedores")
+    .select("id, cotacao_id, valor_unitario, quantidade, prazo_dias")
+    .eq("empresa_id", empresaId)
+    .eq("id", input.fornecedorId)
+    .eq("cotacao_id", input.cotacaoId)
+    .maybeSingle();
+
+  if (selectedSupplier.error || !selectedSupplier.data) {
+    throw new Error(`Erro ao validar fornecedor adjudicado: ${selectedSupplier.error?.message ?? "fornecedor não encontrado"}`);
+  }
+
+  const clearSelection = await supabase
+    .from("cotacoes_fornecedores")
+    .update({ selecionado: false, aprovado: false })
+    .eq("empresa_id", empresaId)
+    .eq("cotacao_id", input.cotacaoId);
+  if (clearSelection.error) {
+    throw new Error(`Erro ao limpar seleção de fornecedores: ${clearSelection.error.message}`);
+  }
+
+  const markWinner = await supabase
+    .from("cotacoes_fornecedores")
+    .update({ selecionado: true, aprovado: true })
+    .eq("empresa_id", empresaId)
+    .eq("id", input.fornecedorId);
+  if (markWinner.error) {
+    throw new Error(`Erro ao marcar fornecedor vencedor: ${markWinner.error.message}`);
+  }
+
+  const cotacao = await supabase
+    .from("cotacoes_compra")
+    .select("id, obra_id")
+    .eq("empresa_id", empresaId)
+    .eq("id", input.cotacaoId)
+    .maybeSingle();
+  if (cotacao.error || !cotacao.data?.obra_id) {
+    throw new Error(`Erro ao carregar cotação para contrato: ${cotacao.error?.message ?? "cotação não encontrada"}`);
+  }
+
+  const valorTotal = Number(selectedSupplier.data.valor_unitario ?? 0) * Number(selectedSupplier.data.quantidade ?? 0);
+  const contractInsert = await supabase.from("contratos_fornecedores").insert({
+    empresa_id: empresaId,
+    obra_id: cotacao.data.obra_id,
+    cotacao_id: input.cotacaoId,
+    fornecedor_id: input.fornecedorId,
+    status: input.statusContrato,
+    valor_total: valorTotal,
+    prazo_dias: Number(selectedSupplier.data.prazo_dias ?? 0),
+    condicoes: input.condicoes,
+    created_by: user?.id ?? null,
+    assinado_em: input.statusContrato === "assinado" ? new Date().toISOString() : null,
+  });
+
+  if (contractInsert.error) {
+    throw new Error(`Erro ao criar contrato do fornecedor: ${contractInsert.error.message}`);
+  }
+
+  const quoteUpdate = await supabase
+    .from("cotacoes_compra")
+    .update({ status: "contratada" })
+    .eq("empresa_id", empresaId)
+    .eq("id", input.cotacaoId);
+  if (quoteUpdate.error) {
+    throw new Error(`Erro ao finalizar cotação: ${quoteUpdate.error.message}`);
+  }
+}
+
+export async function listContratosFornecedores(): Promise<ContratoFornecedorItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("contratos_fornecedores")
+    .select("id, obra_id, cotacao_id, fornecedor_id, status, valor_total, prazo_dias, condicoes, created_at, obras(nome)")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: false })
+    .limit(300);
+
+  if (error) {
+    throw new Error(`Erro ao listar contratos de fornecedor: ${error.message}`);
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id ?? ""),
+    obra_id: String(row.obra_id ?? ""),
+    obra_nome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
+    cotacao_id: String(row.cotacao_id ?? ""),
+    fornecedor_id: row.fornecedor_id ? String(row.fornecedor_id) : null,
+    status: String(row.status ?? "rascunho"),
+    valor_total: Number(row.valor_total ?? 0),
+    prazo_dias: Number(row.prazo_dias ?? 0),
+    condicoes: String(row.condicoes ?? ""),
+    created_at: String(row.created_at ?? ""),
+  }));
 }
