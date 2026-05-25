@@ -1,5 +1,214 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { listObras } from "@/lib/db/obras";
+import { listFinanceiro } from "@/lib/db/financeiro";
+import { listDiarios } from "@/lib/db/diario";
+import { listCronograma } from "@/lib/db/cronograma";
+import { listPedidosCompra } from "@/lib/db/materiais";
+import { listRelatorios } from "@/lib/db/relatorios";
+import { ObraLifecycleActions } from "@/components/obras/obra-lifecycle-actions";
 
-export default function ObraDetailPage() {
-  redirect("/obras");
+type ObraDetailPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+function statusLabel(status: string) {
+  if (status === "concluida") return "Concluída";
+  if (status === "atencao") return "Atenção";
+  if (status === "andamento") return "Em andamento";
+  return "Planejamento";
+}
+
+function statusBadge(status: string) {
+  if (status === "concluida") return "of-badge of-badge-green";
+  if (status === "atencao") return "of-badge of-badge-yellow";
+  if (status === "andamento") return "of-badge of-badge-blue";
+  return "of-badge";
+}
+
+function taskBadge(status: string) {
+  const value = status.trim().toLowerCase();
+  if (value.includes("concl")) return "of-badge of-badge-green";
+  if (value.includes("aten") || value.includes("atras")) return "of-badge of-badge-yellow";
+  if (value.includes("andam") || value.includes("progress")) return "of-badge of-badge-blue";
+  return "of-badge";
+}
+
+function taskLabel(status: string) {
+  const value = status.trim().toLowerCase();
+  if (value.includes("concl")) return "Concluída";
+  if (value.includes("aten") || value.includes("atras")) return "Atenção";
+  if (value.includes("andam") || value.includes("progress")) return "Em andamento";
+  return "Planejada";
+}
+
+export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
+  const { id } = await params;
+  const [obras, financeiro, diarios, cronograma, pedidos, relatorios] = await Promise.all([
+    listObras(),
+    listFinanceiro(),
+    listDiarios(),
+    listCronograma(),
+    listPedidosCompra(),
+    listRelatorios(),
+  ]);
+  const obra = obras.find((item) => item.id === id);
+
+  if (!obra) notFound();
+
+  const financeiroObra = financeiro.filter((item) => item.obra_id === obra.id);
+  const diariosObra = diarios.filter((item) => item.obra_id === obra.id).slice(0, 8);
+  const cronogramaObra = cronograma.filter((item) => item.obra_id === obra.id);
+  const pedidosObra = pedidos.filter((item) => item.obra_nome === obra.nome).slice(0, 8);
+  const relatoriosObra = relatorios.filter((item) => item.obra_nome === obra.nome).slice(0, 8);
+
+  const orcadoTotal = financeiroObra.reduce((sum, item) => sum + item.orcado, 0);
+  const realizadoTotal = financeiroObra.reduce((sum, item) => sum + item.realizado, 0);
+  const saldo = orcadoTotal - realizadoTotal;
+  const tarefasConcluidas = cronogramaObra.filter((item) =>
+    item.status.trim().toLowerCase().includes("concl"),
+  ).length;
+  const progressoCronograma =
+    cronogramaObra.length > 0 ? Math.round((tarefasConcluidas / cronogramaObra.length) * 100) : 0;
+
+  return (
+    <section className="of-page">
+      <div className="of-inline-header" style={{ marginBottom: 16 }}>
+        <div>
+          <h1 className="of-page-title">{obra.nome}</h1>
+          <p className="of-empty-text">Cliente: {obra.cliente}</p>
+        </div>
+        <span className={statusBadge(obra.status)}>{statusLabel(obra.status)}</span>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <ObraLifecycleActions obra={obra} afterActionHref="/obras" />
+      </div>
+
+      <div
+        className="of-dashboard-grid"
+        style={{ gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", marginBottom: 16 }}
+      >
+        <article className="of-card">
+          <div className="of-card-title">Progresso da obra</div>
+          <p className="of-kpi-value">{obra.progresso}%</p>
+        </article>
+        <article className="of-card">
+          <div className="of-card-title">Orçado total</div>
+          <p className="of-kpi-value">{money.format(orcadoTotal)}</p>
+        </article>
+        <article className="of-card">
+          <div className="of-card-title">Realizado total</div>
+          <p className="of-kpi-value">{money.format(realizadoTotal)}</p>
+        </article>
+        <article className="of-card">
+          <div className="of-card-title">Saldo disponível</div>
+          <p className="of-kpi-value">{money.format(saldo)}</p>
+        </article>
+        <article className="of-card">
+          <div className="of-card-title">Cronograma concluído</div>
+          <p className="of-kpi-value">{progressoCronograma}%</p>
+          <p className="of-empty-text">
+            {tarefasConcluidas}/{cronogramaObra.length} tarefas concluídas
+          </p>
+        </article>
+      </div>
+
+      <article className="of-card" style={{ marginBottom: 16 }}>
+        <div className="of-card-title">Cronograma da obra</div>
+        {cronogramaObra.length === 0 ? (
+          <p className="of-empty-text">Sem tarefas cadastradas.</p>
+        ) : (
+          <div className="of-table-wrap" style={{ border: 0, overflowX: "auto" }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Tarefa</th>
+                  <th>Início</th>
+                  <th>Fim</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cronogramaObra.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.nome}</td>
+                    <td>{new Date(item.inicio).toLocaleDateString("pt-BR")}</td>
+                    <td>{new Date(item.fim).toLocaleDateString("pt-BR")}</td>
+                    <td>
+                      <span className={taskBadge(item.status)}>{taskLabel(item.status)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </article>
+
+      <div className="of-dashboard-grid" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 16 }}>
+        <article className="of-card">
+          <div className="of-card-title">Diário de obra</div>
+          {diariosObra.length === 0 ? (
+            <p className="of-empty-text">Sem registros no diário.</p>
+          ) : (
+            <ul className="of-list">
+              {diariosObra.map((item) => (
+                <li key={item.id} className="of-list-item">
+                  <p className="of-list-title">
+                    {new Date(item.data_ref).toLocaleDateString("pt-BR")} · Efetivo {item.efetivo}
+                  </p>
+                  <p className="of-list-description">{item.ocorrencias || "Sem ocorrências registradas"}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+
+        <article className="of-card">
+          <div className="of-card-title">Compras da obra</div>
+          {pedidosObra.length === 0 ? (
+            <p className="of-empty-text">Sem pedidos de compra vinculados.</p>
+          ) : (
+            <ul className="of-list">
+              {pedidosObra.map((item) => (
+                <li key={item.id} className="of-list-item">
+                  <p className="of-list-title">{item.material_nome}</p>
+                  <p className="of-list-description">
+                    {item.fornecedor || "Sem fornecedor"} · {money.format(item.valor)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+      </div>
+
+      <article className="of-card">
+        <div className="of-card-title">Relatórios da obra</div>
+        {relatoriosObra.length === 0 ? (
+          <p className="of-empty-text">Sem relatórios gerados para esta obra.</p>
+        ) : (
+          <ul className="of-list">
+            {relatoriosObra.map((item) => (
+              <li key={item.id} className="of-list-item">
+                <p className="of-list-title">
+                  {item.tipo} · {item.formato.toUpperCase()}
+                </p>
+                <p className="of-list-description">Status: {item.status}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </article>
+
+      <div style={{ marginTop: 16 }}>
+        <Link href="/obras" className="of-btn-ghost">
+          Voltar para obras
+        </Link>
+      </div>
+    </section>
+  );
 }
