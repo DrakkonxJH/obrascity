@@ -4,14 +4,35 @@ import { getTenantSecurityPolicy, listTenantAuthSessions } from "@/lib/db/segura
 import { revokeTenantSessionAction, saveTenantSecurityPolicyAction } from "./actions";
 
 export default async function SegurancaCorporativaPage() {
-  const [policy, sessions] = await Promise.all([
+  const [policyResult, sessionsResult] = await Promise.allSettled([
     getTenantSecurityPolicy(),
     listTenantAuthSessions(),
   ]);
+  const warnings: string[] = [];
+  const policy =
+    policyResult.status === "fulfilled"
+      ? policyResult.value
+      : (warnings.push("Falha ao carregar política de segurança (verifique migrations)."), {
+          mfa_required_roles: [],
+          sso_enabled: false,
+          sso_provider: "",
+          sso_entrypoint: "",
+          session_timeout_minutes: 43200,
+        });
+  const sessions =
+    sessionsResult.status === "fulfilled"
+      ? sessionsResult.value
+      : (warnings.push("Falha ao carregar sessões corporativas."), []);
 
   return (
     <FeatureGateWrapper feature="segurança_enterprise">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <form action={saveTenantSecurityPolicyAction} className="of-card of-form-grid md:grid-cols-2">
           <div className="of-card-title md:col-span-2">Segurança corporativa</div>
           <label className="of-empty-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -108,4 +129,3 @@ export default async function SegurancaCorporativaPage() {
     </FeatureGateWrapper>
   );
 }
-

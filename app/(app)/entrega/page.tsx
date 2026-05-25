@@ -4,15 +4,34 @@ import { listObras } from "@/lib/db/obras";
 import { createComissionamentoAction, saveEntregaAction } from "./actions";
 
 export default async function EntregaPage() {
-  const [obras, comissionamentos, entregas] = await Promise.all([
+  const [obrasResult, comissionamentosResult, entregasResult] = await Promise.allSettled([
     listObras(),
     listComissionamento(),
     listEntregas(),
   ]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para entrega."), []);
+  const comissionamentos =
+    comissionamentosResult.status === "fulfilled"
+      ? comissionamentosResult.value
+      : (warnings.push("Falha ao carregar checklist de comissionamento."), []);
+  const entregas =
+    entregasResult.status === "fulfilled"
+      ? entregasResult.value
+      : (warnings.push("Falha ao carregar entregas (verifique migrations)."), []);
 
   return (
     <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <div className="grid gap-4 lg:grid-cols-2">
           <form action={createComissionamentoAction} className="of-card of-form-grid">
             <div className="of-card-title">Comissionamento técnico</div>
@@ -143,4 +162,3 @@ export default async function EntregaPage() {
     </FeatureGateWrapper>
   );
 }
-

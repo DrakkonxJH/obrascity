@@ -3,10 +3,25 @@ import { listDiarios } from "@/lib/db/diario";
 import { createDiarioAction } from "./actions";
 
 export default async function DiarioPage() {
-  const [obras, diarios] = await Promise.all([listObras(), listDiarios()]);
+  const [obrasResult, diariosResult] = await Promise.allSettled([listObras(), listDiarios()]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para diário."), []);
+  const diarios =
+    diariosResult.status === "fulfilled"
+      ? diariosResult.value
+      : (warnings.push("Falha ao carregar registros do diário (verifique migrations pendentes)."), []);
 
   return (
     <section className="of-page">
+      {warnings.length > 0 ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+          <div className="of-card-title">Dados carregados parcialmente</div>
+          <p className="of-empty-text">{warnings.join(" ")}</p>
+        </article>
+      ) : null}
       <p className="of-empty-text" style={{ marginBottom: 16 }}>
         Registro operacional diário com dados de campo e evidências.
       </p>

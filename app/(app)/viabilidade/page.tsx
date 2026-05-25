@@ -4,11 +4,26 @@ import { listViabilidade } from "@/lib/db/viabilidade";
 import { saveViabilidadeAction } from "./actions";
 
 export default async function ViabilidadePage() {
-  const [obras, estudos] = await Promise.all([listObras(), listViabilidade()]);
+  const [obrasResult, estudosResult] = await Promise.allSettled([listObras(), listViabilidade()]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para viabilidade."), []);
+  const estudos =
+    estudosResult.status === "fulfilled"
+      ? estudosResult.value
+      : (warnings.push("Falha ao carregar estudos de viabilidade (verifique migrations pendentes)."), []);
 
   return (
     <FeatureGateWrapper feature="obras_basic">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <form action={saveViabilidadeAction} className="of-card of-form-grid md:grid-cols-3">
           <div className="of-card-title md:col-span-3">Viabilidade técnica, legal e econômica</div>
           <select name="obra_id" className="of-input" defaultValue="" required>
@@ -87,4 +102,3 @@ export default async function ViabilidadePage() {
     </FeatureGateWrapper>
   );
 }
-

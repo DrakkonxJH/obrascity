@@ -8,13 +8,32 @@ import {
 } from "./actions";
 
 export default async function GarantiaPage() {
-  const [obras, chamados] = await Promise.all([listObras(), listGarantiaChamados()]);
+  const [obrasResult, chamadosResult] = await Promise.allSettled([listObras(), listGarantiaChamados()]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para garantia."), []);
+  const chamados =
+    chamadosResult.status === "fulfilled"
+      ? chamadosResult.value
+      : (warnings.push("Falha ao carregar chamados de garantia (verifique migrations)."), []);
   const chamadoPrincipal = chamados[0];
-  const interacoes = chamadoPrincipal ? await listGarantiaInteracoes(chamadoPrincipal.id) : [];
+  const interacoesResult = chamadoPrincipal ? await Promise.allSettled([listGarantiaInteracoes(chamadoPrincipal.id)]) : null;
+  const interacoes =
+    interacoesResult && interacoesResult[0].status === "fulfilled"
+      ? interacoesResult[0].value
+      : (chamadoPrincipal ? warnings.push("Falha ao carregar interações de garantia.") : null, []);
 
   return (
     <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <form action={createGarantiaChamadoAction} className="of-card of-form-grid md:grid-cols-3">
           <div className="of-card-title md:col-span-3">Pós-obra e garantia</div>
           <select name="obra_id" className="of-input" defaultValue="" required>
@@ -143,4 +162,3 @@ export default async function GarantiaPage() {
     </FeatureGateWrapper>
   );
 }
-

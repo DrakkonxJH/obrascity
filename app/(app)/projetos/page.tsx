@@ -4,15 +4,34 @@ import { listProjetosConflitos, listProjetosDocumentos } from "@/lib/db/projetos
 import { createProjetoConflitoAction, createProjetoDocumentoAction } from "./actions";
 
 export default async function ProjetosPage() {
-  const [obras, documentos, conflitos] = await Promise.all([
+  const [obrasResult, documentosResult, conflitosResult] = await Promise.allSettled([
     listObras(),
     listProjetosDocumentos(),
     listProjetosConflitos(),
   ]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para projetos."), []);
+  const documentos =
+    documentosResult.status === "fulfilled"
+      ? documentosResult.value
+      : (warnings.push("Falha ao carregar documentos de projeto."), []);
+  const conflitos =
+    conflitosResult.status === "fulfilled"
+      ? conflitosResult.value
+      : (warnings.push("Falha ao carregar conflitos de projeto (verifique migrations)."), []);
 
   return (
     <FeatureGateWrapper feature="gestão_documentos">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <div className="grid gap-4 lg:grid-cols-2">
           <form action={createProjetoDocumentoAction} className="of-card of-form-grid">
             <div className="of-card-title">Compatibilização de projetos</div>
@@ -139,4 +158,3 @@ export default async function ProjetosPage() {
     </FeatureGateWrapper>
   );
 }
-

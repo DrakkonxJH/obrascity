@@ -8,15 +8,34 @@ import {
 } from "./actions";
 
 export default async function MobileCampoPage() {
-  const [obras, jobs, conflicts] = await Promise.all([
+  const [obrasResult, jobsResult, conflictsResult] = await Promise.allSettled([
     listObras(),
     listMobileSyncJobs(),
     listMobileSyncConflicts(),
   ]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para mobile campo."), []);
+  const jobs =
+    jobsResult.status === "fulfilled"
+      ? jobsResult.value
+      : (warnings.push("Falha ao carregar lotes de sincronização (verifique migrations)."), []);
+  const conflicts =
+    conflictsResult.status === "fulfilled"
+      ? conflictsResult.value
+      : (warnings.push("Falha ao carregar conflitos de sincronização."), []);
 
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <div className="grid gap-4 lg:grid-cols-2">
           <form action={createMobileSyncJobAction} className="of-card of-form-grid">
             <div className="of-card-title">Sincronização offline de campo</div>
@@ -156,4 +175,3 @@ export default async function MobileCampoPage() {
     </FeatureGateWrapper>
   );
 }
-

@@ -6,11 +6,26 @@ import { createMudancaAction } from "./actions";
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export default async function MudancasPage() {
-  const [obras, mudancas] = await Promise.all([listObras(), listMudancas()]);
+  const [obrasResult, mudancasResult] = await Promise.allSettled([listObras(), listMudancas()]);
+  const warnings: string[] = [];
+  const obras =
+    obrasResult.status === "fulfilled"
+      ? obrasResult.value
+      : (warnings.push("Falha ao carregar obras para mudanças."), []);
+  const mudancas =
+    mudancasResult.status === "fulfilled"
+      ? mudancasResult.value
+      : (warnings.push("Falha ao carregar mudanças registradas (verifique migrations)."), []);
 
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
+        {warnings.length > 0 ? (
+          <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+            <div className="of-card-title">Dados carregados parcialmente</div>
+            <p className="of-empty-text">{warnings.join(" ")}</p>
+          </article>
+        ) : null}
         <form action={createMudancaAction} className="of-card of-form-grid md:grid-cols-3">
           <div className="of-card-title md:col-span-3">Gestão de mudanças (escopo, prazo, custo e contrato)</div>
           <select name="obra_id" className="of-input" defaultValue="" required>
@@ -78,4 +93,3 @@ export default async function MudancasPage() {
     </FeatureGateWrapper>
   );
 }
-
