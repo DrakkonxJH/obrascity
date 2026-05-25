@@ -4,6 +4,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import type { LayoutSummary } from "@/lib/db/layout-summary";
 import { getLayoutSummary } from "@/lib/db/layout-summary";
 import { listNotificacoes } from "@/lib/db/notificacoes";
 import { getMasterNotifications } from "@/lib/db/master-notifications";
@@ -13,6 +14,31 @@ import { mapDbNotifications } from "@/lib/notifications/map";
 import { validateAndTouchTenantSession } from "@/lib/db/seguranca-corporativa";
 
 export const dynamic = "force-dynamic";
+
+function buildFallbackSummary(userEmail: string | null | undefined, profile: Awaited<ReturnType<typeof getCurrentProfile>>) {
+  const userName =
+    profile?.nome ??
+    userEmail?.split("@")[0] ??
+    "Administrador";
+  const userRole =
+    profile?.role ??
+    "Administrador";
+  const initials = userName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part: string) => part[0]?.toUpperCase() ?? "")
+    .join("") || "OF";
+
+  return {
+    userName,
+    userRole,
+    userInitials: initials,
+    unreadNotifications: 0,
+    materiaisCriticos: 0,
+  } satisfies LayoutSummary;
+}
 
 async function loadTenantNotifications() {
   try {
@@ -40,9 +66,17 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const profile = await getCurrentProfile();
+  let profile = null;
+  const appWarnings: string[] = [];
+
+  try {
+    profile = await getCurrentProfile();
+  } catch (error) {
+    appWarnings.push(error instanceof Error ? error.message : "Erro ao carregar perfil.");
+  }
+
   const canAccessControlTotal = isControlTotalOwner(profile);
-  if (!profile?.empresa_id && !canAccessControlTotal) {
+  if (profile && !profile.empresa_id && !canAccessControlTotal) {
     redirect("/conta-pendente");
   }
 
@@ -50,20 +84,28 @@ export default async function AppLayout({
     const cookieStore = await cookies();
     const tenantSessionId = cookieStore.get("of_tenant_session")?.value ?? null;
     if (tenantSessionId) {
-      const sessionStatus = await validateAndTouchTenantSession({
-        empresaId: profile.empresa_id,
-        sessionId: tenantSessionId,
-      });
-      if (!sessionStatus.valid) {
-        cookieStore.delete("of_tenant_session");
-        redirect("/login");
+      try {
+        const sessionStatus = await validateAndTouchTenantSession({
+          empresaId: profile.empresa_id,
+          sessionId: tenantSessionId,
+        });
+        if (!sessionStatus.valid) {
+          cookieStore.delete("of_tenant_session");
+          redirect("/login");
+        }
+      } catch (error) {
+        appWarnings.push(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível validar a sessão do tenant.",
+        );
       }
     }
   }
 
   const adminManagementOnly = canAccessControlTotal;
 
-  const [summary, notificacoes, masterNotifications, equipes, trashEnabled] = await Promise.all([
+  const [summaryResult, notificacoesResult, masterNotificationsResult, equipesResult, trashEnabledResult] = await Promise.allSettled([
     getLayoutSummary(),
     loadTenantNotifications(),
     adminManagementOnly ? getMasterNotifications() : Promise.resolve(null),
@@ -71,23 +113,65 @@ export default async function AppLayout({
     supportsObraTrash(),
   ]);
 
+  const fallbackSummary = buildFallbackSummary(user.email, profile);
+  const summary =
+    summaryResult.status === "fulfilled"
+      ? summaryResult.value
+      : (appWarnings.push(
+          summaryResult.reason instanceof Error
+            ? summaryResult.reason.message
+            : "Falha ao carregar resumo do layout.",
+        ), fallbackSummary);
+  const notificacoes =
+    notificacoesResult.status === "fulfilled"
+      ? notificacoesResult.value
+      : (appWarnings.push("Falha ao carregar notificações do tenant."), []);
+  const masterNotifications =
+    masterNotificationsResult.status === "fulfilled"
+      ? masterNotificationsResult.value
+      : (appWarnings.push("Falha ao carregar notificações da conta master."), null);
+  const equipes =
+    equipesResult.status === "fulfilled"
+      ? equipesResult.value
+      : (appWarnings.push("Falha ao carregar equipes."), []);
+  const trashEnabled =
+    trashEnabledResult.status === "fulfilled"
+      ? trashEnabledResult.value
+      : (appWarnings.push("Falha ao verificar suporte da lixeira de obras."), false);
+
   const notifications = adminManagementOnly
     ? masterNotifications?.items ?? []
     : mapDbNotifications(notificacoes);
-  const layoutSummary = adminManagementOnly && masterNotifications
-    ? { ...summary, unreadNotifications: masterNotifications.unreadCount }
-    : summary;
+  const layoutSummary =
+    adminManagementOnly && masterNotifications
+      ? { ...summary, unreadNotifications: masterNotifications.unreadCount }
+      : summary;
 
   return (
-    <AppShell
-      summary={layoutSummary}
-      notifications={notifications}
-      equipes={equipes}
-      trashEnabled={trashEnabled}
-      canAccessControlTotal={canAccessControlTotal}
-      adminManagementOnly={adminManagementOnly}
-    >
-      {children}
-    </AppShell>
+    <>
+      {appWarnings.length > 0 ? (
+        <article
+          className="of-card"
+          style={{
+            margin: "16px",
+            borderColor: "var(--of-yellow)",
+            background: "rgba(255, 209, 102, 0.08)",
+          }}
+        >
+          <div className="of-card-title">Carregamento parcial</div>
+          <p className="of-empty-text">{appWarnings.join(" ")}</p>
+        </article>
+      ) : null}
+      <AppShell
+        summary={layoutSummary}
+        notifications={notifications}
+        equipes={equipes}
+        trashEnabled={trashEnabled}
+        canAccessControlTotal={canAccessControlTotal}
+        adminManagementOnly={adminManagementOnly}
+      >
+        {children}
+      </AppShell>
+    </>
   );
 }
