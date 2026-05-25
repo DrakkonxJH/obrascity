@@ -4,7 +4,6 @@ import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 export type ViabilidadeItem = {
   id: string;
   obra_id: string;
-  obra_nome: string;
   status_tecnico: string;
   status_legal: string;
   status_economico: string;
@@ -18,7 +17,7 @@ export async function listViabilidade(): Promise<ViabilidadeItem[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("viabilidade_estudos")
-    .select("id, obra_id, status_tecnico, status_legal, status_economico, go_no_go, parecer, updated_at, obras(nome)")
+    .select("id, obra_id, status_tecnico, status_legal, status_economico, go_no_go, parecer, updated_at")
     .eq("empresa_id", empresaId)
     .order("updated_at", { ascending: false });
 
@@ -29,7 +28,6 @@ export async function listViabilidade(): Promise<ViabilidadeItem[]> {
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
     id: String(item.id ?? ""),
     obra_id: String(item.obra_id ?? ""),
-    obra_nome: ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
     status_tecnico: String(item.status_tecnico ?? "pendente"),
     status_legal: String(item.status_legal ?? "pendente"),
     status_economico: String(item.status_economico ?? "pendente"),
@@ -67,4 +65,3 @@ export async function upsertViabilidade(input: {
     throw new Error(`Erro ao salvar viabilidade: ${error.message}`);
   }
 }
-

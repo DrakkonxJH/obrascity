@@ -14,6 +14,11 @@ export default async function ViabilidadePage() {
     estudosResult.status === "fulfilled"
       ? estudosResult.value
       : (warnings.push("Falha ao carregar estudos de viabilidade (verifique migrations pendentes)."), []);
+  const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
+  const estudosComObraNome = estudos.map((item) => ({
+    ...item,
+    obra_nome: obraNomeById.get(item.obra_id) ?? "Obra",
+  }));
 
   return (
     <FeatureGateWrapper feature="obras_basic">
@@ -77,7 +82,7 @@ export default async function ViabilidadePage() {
                 </tr>
               </thead>
               <tbody>
-                {estudos.map((item) => (
+                {estudosComObraNome.map((item) => (
                   <tr key={item.id}>
                     <td>{item.obra_nome}</td>
                     <td>{item.status_tecnico}</td>
@@ -87,7 +92,7 @@ export default async function ViabilidadePage() {
                     <td>{item.parecer || "—"}</td>
                   </tr>
                 ))}
-                {estudos.length === 0 ? (
+                {estudosComObraNome.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="of-empty-text">
                       Nenhum estudo cadastrado.
