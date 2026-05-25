@@ -137,6 +137,31 @@ export async function approveRequest(input: { approvalId: string; note?: string 
     if (entityError) {
       throw new Error(`Erro ao aprovar não conformidade vinculada: ${entityError.message}`);
     }
+  } else if (entityType === "cronograma_change") {
+    const [changeResult, replanningResult] = await Promise.all([
+      supabase
+        .from("change_requests")
+        .update({
+          status: "aprovada",
+          aprovado_por: profile.id,
+          aprovado_em: new Date().toISOString(),
+        })
+        .eq("empresa_id", empresaId)
+        .eq("id", entityId),
+      supabase
+        .from("cronograma_replanejamentos")
+        .update({
+          status: "aprovado",
+          aprovado_por: profile.id,
+          aprovado_em: new Date().toISOString(),
+        })
+        .eq("empresa_id", empresaId)
+        .eq("id", entityId),
+    ]);
+    const errorMessage = changeResult.error?.message ?? replanningResult.error?.message;
+    if (errorMessage) {
+      throw new Error(`Erro ao aprovar mudança vinculada: ${errorMessage}`);
+    }
   }
 }
 
@@ -223,6 +248,31 @@ export async function rejectRequest(input: { approvalId: string; note?: string }
       .eq("id", entityId);
     if (entityError) {
       throw new Error(`Erro ao rejeitar não conformidade vinculada: ${entityError.message}`);
+    }
+  } else if (entityType === "cronograma_change") {
+    const [changeResult, replanningResult] = await Promise.all([
+      supabase
+        .from("change_requests")
+        .update({
+          status: "rejeitada",
+          aprovado_por: profile.id,
+          aprovado_em: new Date().toISOString(),
+        })
+        .eq("empresa_id", empresaId)
+        .eq("id", entityId),
+      supabase
+        .from("cronograma_replanejamentos")
+        .update({
+          status: "rejeitado",
+          aprovado_por: profile.id,
+          aprovado_em: new Date().toISOString(),
+        })
+        .eq("empresa_id", empresaId)
+        .eq("id", entityId),
+    ]);
+    const errorMessage = changeResult.error?.message ?? replanningResult.error?.message;
+    if (errorMessage) {
+      throw new Error(`Erro ao rejeitar mudança vinculada: ${errorMessage}`);
     }
   }
 }

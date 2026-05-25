@@ -1,5 +1,5 @@
-import { createMaterialAction } from "./actions";
-import { listMateriais, listPedidosCompra } from "@/lib/db/materiais";
+import { createCotacaoCompraAction, createCotacaoFornecedorAction, createMaterialAction } from "./actions";
+import { listCotacoesCompra, listCotacoesFornecedores, listMateriais, listPedidosCompra } from "@/lib/db/materiais";
 import { listObras } from "@/lib/db/obras";
 import { materialIcon } from "@/lib/demo/material-icons";
 import { MaterialCardEditor } from "@/components/materiais/material-card-editor";
@@ -30,7 +30,13 @@ function pedidoBadge(status: string) {
 }
 
 export default async function MateriaisPage() {
-  const [materiais, pedidos, obras] = await Promise.all([listMateriais(), listPedidosCompra(), listObras()]);
+  const [materiais, pedidos, obras, cotacoes, fornecedores] = await Promise.all([
+    listMateriais(),
+    listPedidosCompra(),
+    listObras(),
+    listCotacoesCompra(),
+    listCotacoesFornecedores(),
+  ]);
   const suggestionsId = "material-suggestions";
   const materialSuggestions = buildMaterialSuggestions(materiais.map((material) => material.nome));
 
@@ -180,6 +186,96 @@ export default async function MateriaisPage() {
                       Sem pedidos de compra cadastrados.
                     </td>
                   </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <div className="grid gap-4 lg:grid-cols-2" style={{ marginTop: 20 }}>
+        <form action={createCotacaoCompraAction} className="of-card of-form-grid">
+          <div className="of-card-title">Cotação multi-fornecedor</div>
+          <select name="obra_id" className="of-input" defaultValue="" required>
+            <option value="" disabled>
+              Obra da cotação
+            </option>
+            {obras.map((obra) => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome}
+              </option>
+            ))}
+          </select>
+          <select name="material_id" className="of-input" defaultValue="">
+            <option value="">Material opcional</option>
+            {materiais.map((material) => (
+              <option key={material.id} value={material.id}>
+                {material.nome}
+              </option>
+            ))}
+          </select>
+          <input name="titulo" className="of-input" placeholder="Ex.: Concreto fck 30 para torre A" required />
+          <button type="submit" className="of-btn-primary">
+            Criar cotação
+          </button>
+        </form>
+
+        <form action={createCotacaoFornecedorAction} className="of-card of-form-grid">
+          <div className="of-card-title">Adicionar proposta de fornecedor</div>
+          <select name="cotacao_id" className="of-input" defaultValue="" required>
+            <option value="" disabled>
+              Cotação
+            </option>
+            {cotacoes.map((cotacao) => (
+              <option key={cotacao.id} value={cotacao.id}>
+                {cotacao.titulo}
+              </option>
+            ))}
+          </select>
+          <input name="fornecedor" className="of-input" placeholder="Fornecedor" required />
+          <div className="of-form-grid md:grid-cols-3">
+            <input name="valor_unitario" type="number" min={0} step="0.01" className="of-input" placeholder="Valor unitário" />
+            <input name="quantidade" type="number" min={0} step="0.01" className="of-input" placeholder="Quantidade" />
+            <input name="prazo_dias" type="number" min={0} className="of-input" placeholder="Prazo (dias)" />
+          </div>
+          <input name="condicoes" className="of-input" placeholder="Condições comerciais" />
+          <button type="submit" className="of-btn-primary">
+            Salvar proposta
+          </button>
+        </form>
+      </div>
+
+      <article className="of-card" style={{ marginTop: 20 }}>
+        <div className="of-card-title">Cotações em andamento</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Obra</th>
+                <th>Material</th>
+                <th>Status</th>
+                <th>Propostas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cotacoes.map((cotacao) => {
+                const propostas = fornecedores.filter((item) => item.cotacao_id === cotacao.id);
+                return (
+                  <tr key={cotacao.id}>
+                    <td>{cotacao.titulo}</td>
+                    <td>{cotacao.obra_nome}</td>
+                    <td>{cotacao.material_nome}</td>
+                    <td>{cotacao.status}</td>
+                    <td className="of-mono">{propostas.length}</td>
+                  </tr>
+                );
+              })}
+              {cotacoes.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="of-empty-text">
+                    Sem cotações cadastradas.
+                  </td>
+                </tr>
               ) : null}
             </tbody>
           </table>

@@ -208,3 +208,21 @@ Consegue operar **a maior parte do ciclo de execução da obra**, mas para um ce
 Para a obra de referência **`roteiro`**, o ObrasFlow já entrega um núcleo operacional forte para execução real de obra, com governança e rastreabilidade consistentes.  
 O produto está em estágio **avançado de operação**, faltando principalmente os blocos de **comercial, fechamento pós-entrega e segurança corporativa avançada** para atingir cobertura total do roteiro enterprise.
 
+---
+
+## 11) Atualização de implementação (item 2 ausente + itens parciais)
+
+Nesta rodada, os blocos pendentes/parciais foram implementados e expostos no menu principal para uso direto do cliente.
+
+| Entrega implementada | Onde foi adicionada (código) | Como ficou visível no site |
+|---|---|---|
+| Viabilidade dedicada (etapa 2) | `app/(app)/viabilidade/page.tsx`, `app/(app)/viabilidade/actions.ts`, `lib/db/viabilidade.ts`, migration `0025` | Menu **Gestão → Viabilidade** (`/viabilidade`) com formulário técnico/legal/econômico + GO/NO-GO e tabela por obra |
+| Compatibilização de projetos (parcial) | `app/(app)/projetos/page.tsx`, `app/(app)/projetos/actions.ts`, `lib/db/projetos.ts`, migration `0025` | Menu **Gestão → Projetos** (`/projetos`) com documentos por disciplina/revisão e conflitos |
+| Planejamento avançado (parcial) | `lib/db/cronograma.ts`, `app/(app)/cronograma/actions.ts`, `app/(app)/cronograma/cronograma-content.tsx`, migration `0025` | Em **/cronograma**: bloco de **Caminho crítico** e formulário de **Replanejamento** |
+| Suprimentos enterprise (parcial) | `lib/db/materiais.ts`, `app/(app)/materiais/actions.ts`, `app/(app)/materiais/page.tsx`, migration `0025` | Em **/materiais**: **Cotação multi-fornecedor**, inclusão de propostas e tabela de cotações |
+| Gestão de mudanças completa (parcial) | `app/(app)/mudancas/page.tsx`, `app/(app)/mudancas/actions.ts`, `lib/db/mudancas.ts`, `lib/db/approvals.ts`, migration `0025` | Menu **Gestão → Mudanças** (`/mudancas`) com solicitação de mudança e integração com aprovações da Governança |
+| Comissionamento e entrega formal (parcial) | `app/(app)/entrega/page.tsx`, `app/(app)/entrega/actions.ts`, `lib/db/entrega.ts`, migration `0025` | Menu **Gestão → Entrega** (`/entrega`) com checklist de comissionamento + registro de entrega/aceite |
+| Pós-obra/garantia (item ausente #2) | `app/(app)/garantia/page.tsx`, `app/(app)/garantia/actions.ts`, `lib/db/garantia.ts`, migration `0025` | Menu **Gestão → Garantia** (`/garantia`) com chamados por sistema/unidade, SLA, status e interações |
+| Segurança corporativa avançada (parcial) | `app/(app)/seguranca-corporativa/page.tsx`, `app/(app)/seguranca-corporativa/actions.ts`, `lib/db/seguranca-corporativa.ts`, migration `0025` | Menu **Sistema → Segurança Corporativa** (`/seguranca-corporativa`) com MFA por perfil, SSO e revogação de sessão |
+| Mobile offline/sync/conflitos (parcial) | `app/(app)/mobile-campo/page.tsx`, `app/(app)/mobile-campo/actions.ts`, `lib/db/mobile-campo.ts`, migration `0025` | Menu **Sistema → Mobile Campo** (`/mobile-campo`) com lotes de sync, conflitos e resolução |
+| Navegação para cliente final | `components/layout/sidebar.tsx` | Novos links adicionados nas seções **Gestão** e **Sistema** |

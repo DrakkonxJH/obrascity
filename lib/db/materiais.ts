@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { ensureObraAtiva, listActiveObraIds } from "@/lib/db/obras";
+import { getCurrentUser } from "@/lib/auth/session";
 export type MaterialItem = {
   id: string;
   nome: string;
@@ -51,6 +52,28 @@ export type PurchaseOrderInput = {
   quantidade: number;
   valor: number;
   status: string;
+};
+
+export type CotacaoCompraItem = {
+  id: string;
+  obra_id: string;
+  obra_nome: string;
+  material_id: string | null;
+  material_nome: string;
+  titulo: string;
+  status: string;
+  created_at: string;
+};
+
+export type CotacaoFornecedorItem = {
+  id: string;
+  cotacao_id: string;
+  fornecedor: string;
+  valor_unitario: number;
+  quantidade: number;
+  prazo_dias: number;
+  selecionado: boolean;
+  aprovado: boolean;
 };
 export async function listMateriais(): Promise<MaterialItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
@@ -339,4 +362,101 @@ export async function importPurchaseOrders(
     skipped,
     total: rows.length,
   };
+}
+
+export async function listCotacoesCompra(): Promise<CotacaoCompraItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("cotacoes_compra")
+    .select("id, obra_id, material_id, titulo, status, created_at, obras(nome), materiais(nome)")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) {
+    throw new Error(`Erro ao listar cotações: ${error.message}`);
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
+    id: String(item.id ?? ""),
+    obra_id: String(item.obra_id ?? ""),
+    obra_nome: ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
+    material_id: item.material_id ? String(item.material_id) : null,
+    material_nome: ((item.materiais as { nome?: string } | null)?.nome ?? "Material livre") as string,
+    titulo: String(item.titulo ?? ""),
+    status: String(item.status ?? "aberta"),
+    created_at: String(item.created_at ?? ""),
+  }));
+}
+
+export async function createCotacaoCompra(input: {
+  obraId: string;
+  materialId: string | null;
+  titulo: string;
+}) {
+  const [empresaId, user] = await Promise.all([getEmpresaIdFromProfile(), getCurrentUser()]);
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("cotacoes_compra").insert({
+    empresa_id: empresaId,
+    obra_id: input.obraId,
+    material_id: input.materialId,
+    titulo: input.titulo,
+    created_by: user?.id ?? null,
+  });
+
+  if (error) {
+    throw new Error(`Erro ao criar cotação: ${error.message}`);
+  }
+}
+
+export async function listCotacoesFornecedores(): Promise<CotacaoFornecedorItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("cotacoes_fornecedores")
+    .select("id, cotacao_id, fornecedor, valor_unitario, quantidade, prazo_dias, selecionado, aprovado")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: false })
+    .limit(400);
+
+  if (error) {
+    throw new Error(`Erro ao listar fornecedores das cotações: ${error.message}`);
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
+    id: String(item.id ?? ""),
+    cotacao_id: String(item.cotacao_id ?? ""),
+    fornecedor: String(item.fornecedor ?? ""),
+    valor_unitario: Number(item.valor_unitario ?? 0),
+    quantidade: Number(item.quantidade ?? 0),
+    prazo_dias: Number(item.prazo_dias ?? 0),
+    selecionado: Boolean(item.selecionado),
+    aprovado: Boolean(item.aprovado),
+  }));
+}
+
+export async function createCotacaoFornecedor(input: {
+  cotacaoId: string;
+  fornecedor: string;
+  valorUnitario: number;
+  quantidade: number;
+  prazoDias: number;
+  condicoes: string;
+}) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("cotacoes_fornecedores").insert({
+    empresa_id: empresaId,
+    cotacao_id: input.cotacaoId,
+    fornecedor: input.fornecedor,
+    valor_unitario: input.valorUnitario,
+    quantidade: input.quantidade,
+    prazo_dias: input.prazoDias,
+    condicoes: input.condicoes,
+  });
+
+  if (error) {
+    throw new Error(`Erro ao adicionar fornecedor na cotação: ${error.message}`);
+  }
 }

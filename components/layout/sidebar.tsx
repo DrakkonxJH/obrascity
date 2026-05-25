@@ -48,11 +48,16 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
     {
       title: "Gestão",
       items: [
+        { href: "/viabilidade", label: "Viabilidade", icon: "🔎" },
+        { href: "/projetos", label: "Projetos", icon: "📐" },
         { href: "/financeiro", label: "Financeiro", icon: "💰" },
         { href: "/equipes", label: "Equipes", icon: "👥" },
         { href: "/materiais", label: "Materiais", icon: "📦" },
+        { href: "/mudancas", label: "Mudanças", icon: "🔁" },
         { href: "/diario", label: "Diário", icon: "📝" },
         { href: "/qualidade", label: "Qualidade", icon: "🛡️" },
+        { href: "/entrega", label: "Entrega", icon: "🗝️" },
+        { href: "/garantia", label: "Garantia", icon: "🛠️" },
         { href: "/relatorios", label: "Relatórios", icon: "📋" },
       ],
     },
@@ -74,6 +79,8 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
       { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
       { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
       { href: "/governanca", label: "Governança", icon: "🧾" },
+      { href: "/seguranca-corporativa", label: "Segurança Corporativa", icon: "🔒" },
+      { href: "/mobile-campo", label: "Mobile Campo", icon: "📱" },
       { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
     ],
   });

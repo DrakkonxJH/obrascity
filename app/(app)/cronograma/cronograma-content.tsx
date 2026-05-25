@@ -1,14 +1,16 @@
 import { GanttView } from "@/components/cronograma/gantt-view";
 import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/cronograma/gantt-utils";
-import { createCronogramaAction, createDependenciaAction, gerarBaselineAction } from "./actions";
-import { listCronograma, listDependenciasCronograma } from "@/lib/db/cronograma";
+import { createCronogramaAction, createDependenciaAction, createReplanejamentoAction, gerarBaselineAction } from "./actions";
+import { listCaminhoCritico, listCronograma, listDependenciasCronograma, listReplanejamentos } from "@/lib/db/cronograma";
 import { listObras } from "@/lib/db/obras";
 
 export async function CronogramaContent() {
-  const [items, obras, dependencias] = await Promise.all([
+  const [items, obras, dependencias, caminhoCritico, replanejamentos] = await Promise.all([
     listCronograma(),
     listObras(),
     listDependenciasCronograma(),
+    listCaminhoCritico(),
+    listReplanejamentos(),
   ]);
 
   const fallbackTime = new Date("2000-01-01").getTime();
@@ -88,6 +90,81 @@ export async function CronogramaContent() {
       </div>
 
       <GanttView items={ganttItems} months={months} currentMonthIndex={monthIndex} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <article className="of-card">
+          <div className="of-card-title">Caminho crítico (top duração)</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Obra</th>
+                  <th>Tarefa</th>
+                  <th>Duração</th>
+                  <th>Dependências</th>
+                </tr>
+              </thead>
+              <tbody>
+                {caminhoCritico.map((item) => (
+                  <tr key={item.tarefa_id}>
+                    <td>{item.obra_nome}</td>
+                    <td>{item.nome}</td>
+                    <td className="of-mono">{item.duracao_dias} dias</td>
+                    <td className="of-mono">{item.dependencias}</td>
+                  </tr>
+                ))}
+                {caminhoCritico.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="of-empty-text">
+                      Cadastre tarefas para calcular o caminho crítico.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <form action={createReplanejamentoAction} className="of-card of-form-grid">
+          <div className="of-card-title">Replanejamento</div>
+          <select name="obra_id" required className="of-input" defaultValue="">
+            <option value="" disabled>
+              Obra impactada
+            </option>
+            {obras.map((obra) => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome}
+              </option>
+            ))}
+          </select>
+          <input name="motivo" required className="of-input" placeholder="Motivo do replanejamento" />
+          <div className="of-form-grid md:grid-cols-2">
+            <input
+              name="impacto_prazo_dias"
+              type="number"
+              min={0}
+              defaultValue={0}
+              className="of-input"
+              placeholder="Impacto em dias"
+            />
+            <input
+              name="impacto_custo"
+              type="number"
+              min={0}
+              step="0.01"
+              defaultValue={0}
+              className="of-input"
+              placeholder="Impacto financeiro"
+            />
+          </div>
+          <button type="submit" className="of-btn-primary">
+            Registrar replanejamento
+          </button>
+          <p className="of-empty-text">
+            Registros: <strong>{replanejamentos.length}</strong>
+          </p>
+        </form>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <form action={createDependenciaAction} className="of-card of-form-grid md:grid-cols-2">

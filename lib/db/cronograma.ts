@@ -19,6 +19,28 @@ export type CronogramaDependencia = {
   tipo: string;
 };
 
+export type ReplanejamentoItem = {
+  id: string;
+  obra_id: string;
+  obra_nome: string;
+  motivo: string;
+  impacto_prazo_dias: number;
+  impacto_custo: number;
+  status: string;
+  created_at: string;
+};
+
+export type CaminhoCriticoItem = {
+  tarefa_id: string;
+  obra_id: string;
+  obra_nome: string;
+  nome: string;
+  inicio: string;
+  fim: string;
+  duracao_dias: number;
+  dependencias: number;
+};
+
 export async function listCronograma(): Promise<CronogramaItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -149,4 +171,89 @@ export async function snapshotBaseline(obraId: string) {
   if (insertError) {
     throw new Error(`Erro ao gerar baseline: ${insertError.message}`);
   }
+}
+
+export async function listReplanejamentos(): Promise<ReplanejamentoItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("cronograma_replanejamentos")
+    .select("id, obra_id, motivo, impacto_prazo_dias, impacto_custo, status, created_at, obras(nome)")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    throw new Error(`Erro ao listar replanejamentos: ${error.message}`);
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
+    id: String(item.id ?? ""),
+    obra_id: String(item.obra_id ?? ""),
+    obra_nome: ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
+    motivo: String(item.motivo ?? ""),
+    impacto_prazo_dias: Number(item.impacto_prazo_dias ?? 0),
+    impacto_custo: Number(item.impacto_custo ?? 0),
+    status: String(item.status ?? "pendente"),
+    created_at: String(item.created_at ?? ""),
+  }));
+}
+
+export async function createReplanejamento(input: {
+  obra_id: string;
+  motivo: string;
+  impacto_prazo_dias: number;
+  impacto_custo: number;
+  status?: string;
+}) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  await ensureObraAtiva(input.obra_id);
+  const { data, error } = await supabase
+    .from("cronograma_replanejamentos")
+    .insert({
+      empresa_id: empresaId,
+      obra_id: input.obra_id,
+      motivo: input.motivo,
+      impacto_prazo_dias: input.impacto_prazo_dias,
+      impacto_custo: input.impacto_custo,
+      status: input.status ?? "pendente",
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    throw new Error(`Erro ao registrar replanejamento: ${error?.message ?? "sem id retornado"}`);
+  }
+  return String(data.id);
+}
+
+export async function listCaminhoCritico(): Promise<CaminhoCriticoItem[]> {
+  const [items, dependencias] = await Promise.all([listCronograma(), listDependenciasCronograma()]);
+  const dependenciaBySucessora = new Map<string, number>();
+  for (const dep of dependencias) {
+    dependenciaBySucessora.set(
+      dep.tarefa_sucessora_id,
+      (dependenciaBySucessora.get(dep.tarefa_sucessora_id) ?? 0) + 1,
+    );
+  }
+
+  return items
+    .map((item) => {
+      const inicioTime = new Date(item.inicio).getTime();
+      const fimTime = new Date(item.fim).getTime();
+      const duracao = Math.max(1, Math.ceil((fimTime - inicioTime) / 86_400_000));
+      return {
+        tarefa_id: item.id,
+        obra_id: item.obra_id,
+        obra_nome: item.obra_nome,
+        nome: item.nome,
+        inicio: item.inicio,
+        fim: item.fim,
+        duracao_dias: duracao,
+        dependencias: dependenciaBySucessora.get(item.id) ?? 0,
+      };
+    })
+    .sort((a, b) => b.duracao_dias - a.duracao_dias || b.dependencias - a.dependencias)
+    .slice(0, 15);
 }
