@@ -25,13 +25,50 @@ function entityLabel(entityType: string) {
 }
 
 export default async function GovernancaPage() {
-  const [pendingRequests, recentRequests, retentionPolicy, auditLogs, observabilityEvents] = await Promise.all([
+  const [pendingResult, recentResult, retentionResult, auditResult, observabilityResult] = await Promise.allSettled([
     listApprovalRequests({ status: "pending", limit: 30 }),
     listApprovalRequests({ limit: 30 }),
     getTenantRetentionPolicy(),
     listRecentAuditLogs(30),
     listTenantObservabilityEvents(30),
   ]);
+
+  const loadWarnings: string[] = [];
+  const pendingRequests =
+    pendingResult.status === "fulfilled"
+      ? pendingResult.value
+      : (loadWarnings.push(
+          `Aprovações pendentes indisponíveis: ${pendingResult.reason instanceof Error ? pendingResult.reason.message : "erro desconhecido"}`,
+        ),
+        []);
+  const recentRequests =
+    recentResult.status === "fulfilled"
+      ? recentResult.value
+      : (loadWarnings.push(
+          `Histórico de aprovações indisponível: ${recentResult.reason instanceof Error ? recentResult.reason.message : "erro desconhecido"}`,
+        ),
+        []);
+  const retentionPolicy =
+    retentionResult.status === "fulfilled"
+      ? retentionResult.value
+      : (loadWarnings.push(
+          `Política de retenção indisponível: ${retentionResult.reason instanceof Error ? retentionResult.reason.message : "erro desconhecido"}`,
+        ),
+        null);
+  const auditLogs =
+    auditResult.status === "fulfilled"
+      ? auditResult.value
+      : (loadWarnings.push(
+          `Auditoria indisponível: ${auditResult.reason instanceof Error ? auditResult.reason.message : "erro desconhecido"}`,
+        ),
+        []);
+  const observabilityEvents =
+    observabilityResult.status === "fulfilled"
+      ? observabilityResult.value
+      : (loadWarnings.push(
+          `Observabilidade indisponível: ${observabilityResult.reason instanceof Error ? observabilityResult.reason.message : "erro desconhecido"}`,
+        ),
+        []);
 
   const retention = retentionPolicy ?? {
     auditRetentionDays: 365,
@@ -47,6 +84,18 @@ export default async function GovernancaPage() {
           Central operacional de aprovações por alçada, auditoria imutável com diff e política de retenção por tenant.
         </p>
       </article>
+      {loadWarnings.length > 0 ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
+          <div className="of-card-title">Parte dos dados não pôde ser carregada</div>
+          <ul className="of-list">
+            {loadWarnings.map((warning) => (
+              <li key={warning} className="of-list-item">
+                <p className="of-list-description">{warning}</p>
+              </li>
+            ))}
+          </ul>
+        </article>
+      ) : null}
 
       <article className="of-card" style={{ marginBottom: 16 }}>
         <div className="of-card-title">Aprovações pendentes</div>
