@@ -4,10 +4,17 @@ import { listObras } from "@/lib/db/obras";
 import { listFinanceiro } from "@/lib/db/financeiro";
 import { listDiarios } from "@/lib/db/diario";
 import { listCronograma } from "@/lib/db/cronograma";
-import { listPedidosCompra } from "@/lib/db/materiais";
+import { listMateriais, listPedidosCompra } from "@/lib/db/materiais";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { listNotificacoes } from "@/lib/db/notificacoes";
 import { ObraLifecycleActions } from "@/components/obras/obra-lifecycle-actions";
+import {
+  addObraCronogramaItemAction,
+  addObraDiarioItemAction,
+  addObraFinanceiroItemAction,
+  addObraPurchaseOrderAction,
+  solicitarObraRelatorioAction,
+} from "./actions";
 
 type ObraDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -74,7 +81,7 @@ function resolveTaskMaterials(taskName: string, pedidos: { material_nome: string
 
 export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
   const { id } = await params;
-  const [obras, financeiro, diarios, cronograma, pedidos, relatórios, notificacoes] = await Promise.all([
+  const [obras, financeiro, diarios, cronograma, pedidos, relatórios, notificacoes, materiais] = await Promise.all([
     listObras(),
     listFinanceiro(),
     listDiarios(),
@@ -82,6 +89,7 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
     listPedidosCompra(),
     listRelatorios(),
     listNotificacoes(20),
+    listMateriais(),
   ]);
   const obra = obras.find((item) => item.id === id);
 
@@ -112,6 +120,11 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
     diariosObra.length > 0
       ? Math.round(diariosObra.reduce((sum, item) => sum + item.efetivo, 0) / diariosObra.length)
       : 0;
+  const addCronogramaAction = addObraCronogramaItemAction.bind(null, obra.id);
+  const addFinanceiroAction = addObraFinanceiroItemAction.bind(null, obra.id);
+  const addDiarioAction = addObraDiarioItemAction.bind(null, obra.id);
+  const addPurchaseOrderAction = addObraPurchaseOrderAction.bind(null, obra.id);
+  const solicitarRelatorioAction = solicitarObraRelatorioAction.bind(null, obra.id);
   const atividadesExecutar = cronogramaObra.map((tarefa, index) => {
     const categoria = financeiroObra[index % Math.max(1, financeiroObra.length)];
     const materiaisRelacionados = resolveTaskMaterials(tarefa.nome, pedidosObra);
@@ -159,6 +172,99 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
       <div style={{ marginBottom: 18 }}>
         <ObraLifecycleActions obra={obra} afterActionHref="/obras" />
       </div>
+
+      <article className="of-card" style={{ marginBottom: 18 }}>
+        <div className="of-card-title" style={{ marginBottom: 12 }}>
+          Processos da obra
+        </div>
+        <div className="of-dashboard-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))" }}>
+          <form action={addCronogramaAction} className="of-form-grid">
+            <p className="of-list-title">Nova atividade de cronograma</p>
+            <input name="nome" required placeholder="Atividade" className="of-input" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input name="inicio" type="date" required className="of-input" />
+              <input name="fim" type="date" required className="of-input" />
+            </div>
+            <select name="status" defaultValue="planejado" className="of-input">
+              <option value="planejado">Planejado</option>
+              <option value="andamento">Em andamento</option>
+              <option value="atencao">Atenção</option>
+              <option value="concluido">Concluído</option>
+            </select>
+            <button type="submit" className="of-btn-primary">
+              Adicionar atividade
+            </button>
+          </form>
+
+          <form action={addFinanceiroAction} className="of-form-grid">
+            <p className="of-list-title">Novo lançamento financeiro</p>
+            <input name="categoria" required placeholder="Parte/categoria da obra" className="of-input" />
+            <input name="orcado" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
+            <input name="realizado" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
+            <button type="submit" className="of-btn-primary">
+              Adicionar custo
+            </button>
+          </form>
+
+          <form action={addPurchaseOrderAction} className="of-form-grid">
+            <p className="of-list-title">Nova compra / material</p>
+            <select name="material_id" required defaultValue="" className="of-input">
+              <option value="" disabled>
+                Selecionar material
+              </option>
+              {materiais.map((material) => (
+                <option key={material.id} value={material.id}>
+                  {material.nome} ({material.unidade})
+                </option>
+              ))}
+            </select>
+            <input name="fornecedor" placeholder="Fornecedor" className="of-input" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <input name="quantidade" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
+              <input name="valor" type="number" step="0.01" min={0} defaultValue={0} className="of-input" />
+            </div>
+            <select name="status" defaultValue="pendente" className="of-input">
+              <option value="pendente">Pendente</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="em_transito">Em trânsito</option>
+              <option value="entregue">Entregue</option>
+            </select>
+            <button type="submit" className="of-btn-primary">
+              Registrar compra
+            </button>
+          </form>
+
+          <form action={addDiarioAction} className="of-form-grid">
+            <p className="of-list-title">Novo diário de obra</p>
+            <input name="data_ref" type="date" required className="of-input" />
+            <input name="clima" placeholder="Clima" className="of-input" />
+            <input name="efetivo" type="number" min={0} defaultValue={0} className="of-input" />
+            <input name="equipamentos" placeholder="Equipamentos usados" className="of-input" />
+            <textarea name="ocorrencias" placeholder="Ocorrências do dia" className="of-input" rows={2} />
+            <button type="submit" className="of-btn-primary">
+              Registrar diário
+            </button>
+          </form>
+
+          <form action={solicitarRelatorioAction} className="of-form-grid">
+            <p className="of-list-title">Solicitar relatório da obra</p>
+            <select name="tipo" defaultValue="progresso" className="of-input">
+              <option value="progresso">Progresso</option>
+              <option value="financeiro">Financeiro</option>
+              <option value="qualidade">Qualidade</option>
+              <option value="diario">Diário</option>
+            </select>
+            <select name="formato" defaultValue="pdf" className="of-input">
+              <option value="pdf">PDF</option>
+              <option value="xlsx">Excel</option>
+              <option value="docx">DOCX</option>
+            </select>
+            <button type="submit" className="of-btn-primary">
+              Solicitar relatório
+            </button>
+          </form>
+        </div>
+      </article>
 
       <div
         className="of-dashboard-grid"
