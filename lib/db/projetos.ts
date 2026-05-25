@@ -36,7 +36,7 @@ export async function listProjetosDocumentos(): Promise<ProjetoDocumentoItem[]> 
     .limit(200);
 
   if (error) {
-    throw new Error(`Erro ao listar projetos: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
@@ -86,7 +86,7 @@ export async function listProjetosConflitos(): Promise<ProjetoConflitoItem[]> {
     .limit(200);
 
   if (error) {
-    throw new Error(`Erro ao listar conflitos de projeto: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({

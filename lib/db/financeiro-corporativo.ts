@@ -34,7 +34,7 @@ export async function listFinanceiroTitulos(): Promise<FinanceiroTituloItem[]> {
     .limit(500);
 
   if (error) {
-    throw new Error(`Erro ao listar títulos financeiros: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({

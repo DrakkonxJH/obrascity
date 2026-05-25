@@ -107,6 +107,7 @@ const PLAN_FEATURES: Record<PlanId, readonly PlanFeature[]> = {
 };
 
 const ACTIVE_STATUSES = new Set(["trial", "trialing", "active"]);
+const GRACE_PERIOD_STATUSES = new Set(["canceled", "cancelada"]);
 
 export type SubscriptionSnapshot = {
   plano: PlanId;
@@ -124,16 +125,29 @@ export function subscriptionAllows(
   feature: PlanFeature,
 ) {
   if (!subscription) return false;
-  if (!ACTIVE_STATUSES.has(subscription.status)) return false;
+  const normalizedStatus = String(subscription.status ?? "").trim().toLowerCase();
 
+  let isInPeriod = true;
   if (subscription.periodo_fim) {
     const endsAt = new Date(subscription.periodo_fim).getTime();
     if (!Number.isNaN(endsAt) && endsAt <= Date.now()) {
-      return false;
+      isInPeriod = false;
     }
   }
 
-  return planIncludes(subscription.plano, feature);
+  if (ACTIVE_STATUSES.has(normalizedStatus)) {
+    if (!isInPeriod) return false;
+    return planIncludes(subscription.plano, feature);
+  }
+
+  // Permite uso até o fim do ciclo quando assinatura foi cancelada.
+  if (GRACE_PERIOD_STATUSES.has(normalizedStatus)) {
+    if (!subscription.periodo_fim) return false;
+    if (!isInPeriod) return false;
+    return planIncludes(subscription.plano, feature);
+  }
+
+  return false;
 }
 
 export function assertSubscriptionFeature(

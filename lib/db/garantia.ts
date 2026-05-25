@@ -37,7 +37,7 @@ export async function listGarantiaChamados(): Promise<GarantiaChamadoItem[]> {
     .limit(400);
 
   if (error) {
-    throw new Error(`Erro ao listar chamados de garantia: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
@@ -119,7 +119,7 @@ export async function listGarantiaInteracoes(chamadoId: string): Promise<Garanti
     .limit(200);
 
   if (error) {
-    throw new Error(`Erro ao listar interações de garantia: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({

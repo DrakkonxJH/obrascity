@@ -36,7 +36,7 @@ export async function listEquipeAlocacoes(): Promise<EquipeAlocacaoItem[]> {
     .limit(300);
 
   if (error) {
-    throw new Error(`Erro ao listar alocações de equipe: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
@@ -100,10 +100,10 @@ export async function listEquipeCapacidade(): Promise<EquipeCapacidadeItem[]> {
   ]);
 
   if (equipes.error) {
-    throw new Error(`Erro ao listar equipes para capacidade: ${equipes.error.message}`);
+    return [];
   }
   if (alocacoes.error) {
-    throw new Error(`Erro ao listar alocações para capacidade: ${alocacoes.error.message}`);
+    return [];
   }
 
   const capacidade = new Map<string, { capacidade: number; alocados: number }>();

@@ -35,7 +35,7 @@ export async function listComissionamento(): Promise<ComissionamentoItem[]> {
     .limit(300);
 
   if (error) {
-    throw new Error(`Erro ao listar comissionamento: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
@@ -87,7 +87,7 @@ export async function listEntregas(): Promise<EntregaItem[]> {
     .limit(200);
 
   if (error) {
-    throw new Error(`Erro ao listar entregas: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({

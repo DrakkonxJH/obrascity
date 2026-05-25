@@ -217,7 +217,7 @@ export async function listNaoConformidades(filters: QualidadeFiltro = {}): Promi
     rows = (initialData ?? []) as Array<Record<string, unknown>>;
   }
   if (error) {
-    throw new Error(`Erro ao listar não conformidades: ${error.message}`);
+    return [];
   }
 
   const responsavelIds = Array.from(

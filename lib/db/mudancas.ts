@@ -29,7 +29,7 @@ export async function listMudancas(): Promise<MudancaItem[]> {
     .limit(200);
 
   if (error) {
-    throw new Error(`Erro ao listar mudanças: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({

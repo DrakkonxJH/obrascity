@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase/server";
 import { signupSchema } from "@/lib/auth/signup-schema";
-import { getAppOrigin, getEnv } from "@/lib/validations/env";
+import { resolvePublicAppOrigin } from "@/lib/validations/env";
 import { assertSignupRateLimits, emailAlreadyRegistered, logSignupAttempt } from "@/lib/security/signup-guard";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
 
@@ -77,9 +77,7 @@ export async function signUpAction(
     }
 
     const supabase = await createServerClient();
-    const appOrigin = requestOrigin ?? getAppOrigin();
-    const env = getEnv();
-    const redirectBase = env.NEXT_PUBLIC_APP_URL ?? appOrigin;
+    const redirectBase = resolvePublicAppOrigin(requestOrigin);
     const redirectTo = `${redirectBase.replace(/\/$/, "")}/auth/callback`;
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({

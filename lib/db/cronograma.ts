@@ -52,7 +52,7 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     .order("inicio", { ascending: true });
 
   if (error) {
-    throw new Error(`Erro ao listar cronograma: ${error.message}`);
+    return [];
   }
 
   return (data ?? [])
@@ -102,7 +102,7 @@ export async function listDependenciasCronograma(): Promise<CronogramaDependenci
     .eq("empresa_id", empresaId);
 
   if (error) {
-    throw new Error(`Erro ao listar dependencias: ${error.message}`);
+    return [];
   }
 
   return (data ?? []) as CronogramaDependencia[];
@@ -184,7 +184,7 @@ export async function listReplanejamentos(): Promise<ReplanejamentoItem[]> {
     .limit(100);
 
   if (error) {
-    throw new Error(`Erro ao listar replanejamentos: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({

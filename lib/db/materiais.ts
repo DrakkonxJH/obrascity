@@ -106,7 +106,7 @@ export async function listMateriais(): Promise<MaterialItem[]> {
     .eq("empresa_id", empresaId)
     .order("nome", { ascending: true });
   if (error) {
-    throw new Error(`Erro ao listar materiais: ${error.message}`);
+    return [];
   }
   const rows = (data ?? []) as Array<Record<string, unknown>>;
   return rows.map((item) => ({
@@ -137,7 +137,7 @@ export async function listPedidosCompra(): Promise<PedidoCompraItem[]> {
       : null;
   const resultError = detailed.error ? fallback?.error ?? null : detailed.error;
   if (resultError) {
-    throw new Error(`Erro ao listar pedidos de compra: ${resultError.message}`);
+    return [];
   }
   const rows = (detailed.error ? fallback?.data ?? [] : detailed.data ?? []) as Array<
     Record<string, unknown> & {
@@ -397,7 +397,7 @@ export async function listCotacoesCompra(): Promise<CotacaoCompraItem[]> {
     .limit(200);
 
   if (error) {
-    throw new Error(`Erro ao listar cotações: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
@@ -443,7 +443,7 @@ export async function listCotacoesFornecedores(): Promise<CotacaoFornecedorItem[
     .limit(400);
 
   if (error) {
-    throw new Error(`Erro ao listar fornecedores das cotações: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
@@ -494,7 +494,7 @@ export async function listCotacaoRodadas(): Promise<CotacaoRodadaItem[]> {
     .limit(400);
 
   if (error) {
-    throw new Error(`Erro ao listar rodadas de cotação: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
@@ -646,7 +646,7 @@ export async function listContratosFornecedores(): Promise<ContratoFornecedorIte
     .limit(300);
 
   if (error) {
-    throw new Error(`Erro ao listar contratos de fornecedor: ${error.message}`);
+    return [];
   }
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
