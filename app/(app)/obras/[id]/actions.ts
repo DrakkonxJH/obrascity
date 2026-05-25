@@ -3,11 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createFinanceiroItem, updateFinanceiroItem } from "@/lib/db/financeiro";
 import { updateObra } from "@/lib/db/obras";
-import { createCronogramaItem } from "@/lib/db/cronograma";
-import { createDiario } from "@/lib/db/diario";
-import { createPurchaseOrder } from "@/lib/db/materiais";
-import { createRelatórioRequest } from "@/lib/db/relatorios";
-import { getQueue, QueueNames } from "@/lib/queue/connection";
 import type { ObraStatus } from "@/types/domain";
 
 const VALID_STATUS = new Set<ObraStatus>(["planejamento", "andamento", "atencao", "concluida"]);
@@ -77,90 +72,5 @@ export async function updateObraFinanceiroItemAction(
     orcado: parseCurrencyField(formData, "orcado"),
     realizado: parseCurrencyField(formData, "realizado"),
   });
-  refreshObraPages(obraId);
-}
-
-export async function addObraCronogramaItemAction(obraId: string, formData: FormData) {
-  const nome = String(formData.get("nome") ?? "").trim();
-  const inicio = String(formData.get("inicio") ?? "").trim();
-  const fim = String(formData.get("fim") ?? "").trim();
-  const status = String(formData.get("status") ?? "planejado").trim();
-
-  if (!nome || !inicio || !fim) {
-    throw new Error("Preencha nome, início e fim da atividade");
-  }
-
-  await createCronogramaItem({
-    obra_id: obraId,
-    nome,
-    inicio,
-    fim,
-    status,
-  });
-  refreshObraPages(obraId);
-}
-
-export async function addObraDiarioItemAction(obraId: string, formData: FormData) {
-  const data_ref = String(formData.get("data_ref") ?? "").trim();
-  if (!data_ref) {
-    throw new Error("Data do diário é obrigatória");
-  }
-
-  await createDiario({
-    obra_id: obraId,
-    data_ref,
-    clima: String(formData.get("clima") ?? "").trim(),
-    efetivo: Number(formData.get("efetivo") ?? 0),
-    equipamentos: String(formData.get("equipamentos") ?? "").trim(),
-    ocorrencias: String(formData.get("ocorrencias") ?? "").trim(),
-    observacoes_ssma: String(formData.get("observacoes_ssma") ?? "").trim(),
-    assinatura_url: String(formData.get("assinatura_url") ?? "").trim(),
-  });
-  refreshObraPages(obraId);
-}
-
-export async function addObraPurchaseOrderAction(obraId: string, formData: FormData) {
-  const material_id = String(formData.get("material_id") ?? "").trim();
-  const fornecedor = String(formData.get("fornecedor") ?? "").trim();
-  if (!material_id) {
-    throw new Error("Selecione um material para o pedido");
-  }
-
-  await createPurchaseOrder({
-    material_id,
-    obra_id: obraId,
-    fornecedor,
-    quantidade: Number(formData.get("quantidade") ?? 0),
-    valor: Number(formData.get("valor") ?? 0),
-    status: String(formData.get("status") ?? "pendente").trim() || "pendente",
-  });
-  refreshObraPages(obraId);
-}
-
-export async function solicitarObraRelatorioAction(obraId: string, formData: FormData) {
-  const tipo = String(formData.get("tipo") ?? "progresso").trim();
-  const formato = String(formData.get("formato") ?? "pdf").trim() || "pdf";
-
-  const relatórioId = await createRelatórioRequest({
-    obra_id: obraId,
-    tipo,
-    formato,
-  });
-
-  const queue = getQueue(QueueNames.REPORTS_GENERATE);
-  await queue.add(
-    "generate-report",
-    {
-      relatórioId,
-      obraId,
-      tipo,
-      formato,
-      requestedAt: new Date().toISOString(),
-    },
-    {
-      jobId: `report:${relatórioId}`,
-    },
-  );
-
   refreshObraPages(obraId);
 }
