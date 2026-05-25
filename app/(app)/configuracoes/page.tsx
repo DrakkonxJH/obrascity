@@ -19,6 +19,11 @@ export default async function ConfiguracoesPage() {
   const supabase = await createServerClient();
   const { data: empresa } = await supabase.from("empresas").select("nome").limit(1).maybeSingle();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const healthProbe = await supabase.from("empresas").select("id", { head: true, count: "exact" }).limit(1);
+  const isConnected = Boolean(supabaseUrl) && !healthProbe.error;
+  const connectionMessage = healthProbe.error
+    ? `Falha de conexão: ${healthProbe.error.message}`
+    : "Conexão validada com consulta real";
   const rawRole = String(profile?.role ?? "");
   const userRole = isProfileRole(rawRole) ? rawRole : "visualizador";
   const canSeeSupabaseIntegration = isControlTotalOwner({
@@ -31,7 +36,8 @@ export default async function ConfiguracoesPage() {
     <ConfigView
       empresaNome={empresa?.nome ?? null}
       supabaseUrl={supabaseUrl}
-      isConnected={Boolean(supabaseUrl)}
+      isConnected={isConnected}
+      connectionMessage={connectionMessage}
       userName={profile?.nome ?? profile?.email?.split("@")[0] ?? "Usuário"}
       userEmail={profile?.email ?? ""}
       userRole={userRole}

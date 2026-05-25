@@ -1,5 +1,5 @@
 import { GanttView } from "@/components/cronograma/gantt-view";
-import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/demo/gantt-months";
+import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/cronograma/gantt-utils";
 import { createCronogramaAction, createDependenciaAction, gerarBaselineAction } from "./actions";
 import { listCronograma, listDependenciasCronograma } from "@/lib/db/cronograma";
 import { listObras } from "@/lib/db/obras";

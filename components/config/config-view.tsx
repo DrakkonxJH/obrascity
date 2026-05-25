@@ -21,6 +21,7 @@ type ConfigViewProps = {
   empresaNome: string | null;
   supabaseUrl: string;
   isConnected: boolean;
+  connectionMessage: string;
   userName: string;
   userEmail: string;
   userRole: ProfileRole;
@@ -41,6 +42,7 @@ export function ConfigView({
   empresaNome,
   supabaseUrl,
   isConnected,
+  connectionMessage,
   userName,
   userEmail,
   userRole,
@@ -74,10 +76,10 @@ export function ConfigView({
               <span className={`of-sb-dot ${isConnected ? "connected" : "disconnected"}`} />
               <div>
                 <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>
-                  {isConnected ? "Conectado (Supabase Live)" : "Desconectado (modo demo)"}
+                  {isConnected ? "Conectado (health-check OK)" : "Desconectado"}
                 </p>
                 <p style={{ fontSize: "0.75rem", color: "var(--of-text-2)" }}>
-                  {supabaseUrl || "Nenhuma URL configurada"}
+                  {connectionMessage}
                 </p>
               </div>
             </div>

@@ -1,0 +1,27 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createPortalShare, revokePortalShare } from "@/lib/db/portal-shares";
+
+export async function createPortalShareAction(formData: FormData) {
+  const descricao = String(formData.get("descricao") ?? "").trim();
+  const expiresRaw = String(formData.get("expires_at") ?? "").trim();
+  const expires_at = expiresRaw ? new Date(expiresRaw).toISOString() : null;
+
+  await createPortalShare({
+    descricao,
+    expires_at,
+  });
+
+  revalidatePath("/portal");
+}
+
+export async function revokePortalShareAction(formData: FormData) {
+  const shareId = String(formData.get("share_id") ?? "").trim();
+  if (!shareId) {
+    throw new Error("Link do portal inválido");
+  }
+
+  await revokePortalShare(shareId);
+  revalidatePath("/portal");
+}

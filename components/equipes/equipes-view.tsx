@@ -29,8 +29,9 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
   const filteredMembros = membros.filter((m, index) => {
     const q = search.toLowerCase();
     const cargo = (m.cargo ?? "").toLowerCase();
+    const nome = (m.nome ?? "").toLowerCase();
     const equipe = equipes.find((e) => e.id === m.equipe_id)?.nome.toLowerCase() ?? "";
-    return !q || cargo.includes(q) || equipe.includes(q) || `profissional #${index + 1}`.includes(q);
+    return !q || cargo.includes(q) || nome.includes(q) || equipe.includes(q) || `profissional #${index + 1}`.includes(q);
   });
 
   return (
@@ -61,7 +62,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
                   rows: [
                     { label: "Especialidade", value: equipe.especialidade ?? "—" },
                     { label: "Membros", value: String(teamMembers.length) },
-                    { label: "Obras", value: String(Math.min(5, teamMembers.length + 1)) },
+                    { label: "Obras vinculadas", value: "Não configurado" },
                   ],
                 })
               }
@@ -93,7 +94,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
               </div>
               <div className="of-team-meta">
                 <span>{teamMembers.length} membros</span>
-                <span className={`of-badge ${style.badge}`}>{Math.min(5, teamMembers.length + 1)} obras</span>
+                <span className={`of-badge ${style.badge}`}>Equipe ativa</span>
               </div>
             </article>
           );
@@ -133,7 +134,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
               <th>Cargo</th>
               <th>Equipe</th>
               <th>Status</th>
-              <th>Obras</th>
+              <th>Contato</th>
             </tr>
           </thead>
           <tbody>
@@ -148,7 +149,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
                         {initials}
                       </span>
                       <div>
-                        <p className="of-list-title">Profissional {initials}</p>
+                        <p className="of-list-title">{membro.nome ?? `Profissional ${initials}`}</p>
                         <p className="of-member-email">{membro.crea ? `CREA ${membro.crea}` : "Sem registro"}</p>
                       </div>
                     </div>
@@ -158,7 +159,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
                   <td>
                     <span className="of-badge of-badge-green">Ativo</span>
                   </td>
-                  <td>{membro.equipe_id ? 1 : 0}</td>
+                  <td>{membro.email ?? "Sem e-mail"}</td>
                 </tr>
               );
             })}

@@ -51,6 +51,7 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
         { href: "/financeiro", label: "Financeiro", icon: "💰" },
         { href: "/equipes", label: "Equipes", icon: "👥" },
         { href: "/materiais", label: "Materiais", icon: "📦" },
+        { href: "/diario", label: "Diário", icon: "📝" },
         { href: "/qualidade", label: "Qualidade", icon: "🛡️" },
         { href: "/relatorios", label: "Relatórios", icon: "📋" },
       ],

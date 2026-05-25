@@ -152,7 +152,15 @@ export default async function RelatóriosPage() {
                 <td>
                   <span className="of-badge of-badge-blue">{rel.status}</span>
                 </td>
-                <td className="of-mono">{rel.url ?? "—"}</td>
+                <td className="of-mono">
+                  {rel.url ? (
+                    <a href={rel.url} target="_blank" rel="noreferrer" className="text-[#ff9445] hover:underline">
+                      Baixar
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </td>
               </tr>
             ))}
             {relatórios.length === 0 ? (

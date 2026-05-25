@@ -10,20 +10,20 @@ export async function solicitarRelatórioAction(formData: FormData) {
   const obraValue = String(formData.get("obra_id") ?? "").trim();
   const obra_id = obraValue.length > 0 ? obraValue : null;
 
-  const relatórioId = await createRelatórioRequest({ obra_id, tipo, formato });
+  const relatorioId = await createRelatórioRequest({ obra_id, tipo, formato });
 
   const queue = getQueue(QueueNames.REPORTS_GENERATE);
   await queue.add(
     "generate-report",
       {
-        relatórioId,
+        relatorioId,
         obraId: obra_id,
         tipo,
         formato,
         requestedAt: new Date().toISOString(),
       },
     {
-      jobId: `report:${relatórioId}`,
+      jobId: `report:${relatorioId}`,
     },
   );
 

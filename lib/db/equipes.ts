@@ -9,6 +9,9 @@ export type EquipeItem = {
 
 export type MembroItem = {
   id: string;
+  profile_id: string | null;
+  nome: string | null;
+  email: string | null;
   equipe_id: string | null;
   cargo: string | null;
   crea: string | null;
@@ -35,14 +38,22 @@ export async function listMembros(): Promise<MembroItem[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("membros")
-    .select("id, equipe_id, cargo, crea")
+    .select("id, profile_id, equipe_id, cargo, crea, profiles(nome, email)")
     .eq("empresa_id", empresaId);
 
   if (error) {
     throw new Error(`Erro ao listar membros: ${error.message}`);
   }
 
-  return (data ?? []) as MembroItem[];
+  return (data ?? []).map((item) => ({
+    id: item.id as string,
+    profile_id: (item.profile_id as string | null) ?? null,
+    nome: ((item.profiles as { nome?: string } | null)?.nome as string | undefined) ?? null,
+    email: ((item.profiles as { email?: string } | null)?.email as string | undefined) ?? null,
+    equipe_id: (item.equipe_id as string | null) ?? null,
+    cargo: (item.cargo as string | null) ?? null,
+    crea: (item.crea as string | null) ?? null,
+  }));
 }
 
 export async function createMembro(input: {
