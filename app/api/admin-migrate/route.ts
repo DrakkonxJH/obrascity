@@ -5,13 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 // Uses Supabase Management API to run DDL migrations that cannot go through
 // the regular JS client (which lacks DDL privileges).
 //
-// Required env vars in Vercel (add temporarily, then remove):
-//   SUPABASE_ACCESS_TOKEN  — personal access token from
-//                            https://app.supabase.com/account/tokens
-//
-// Call:
+// Call (no env vars needed — pass your PAT directly):
 //   curl -X POST https://planobras.vercel.app/api/admin-migrate \
-//        -H "x-admin-secret: <SUPABASE_ACCESS_TOKEN>"
+//        -H "Content-Type: application/json" \
+//        -d '{"pat":"sbp_YOUR_TOKEN_HERE","secret":"migrate-obras-2025"}'
+//
+// Generate a PAT at: https://supabase.com/dashboard/account/tokens
 
 // Each statement runs individually so failures are reported per-statement.
 const STATEMENTS = [
@@ -495,29 +494,28 @@ const STATEMENTS = [
   end loop; end $$`,
 ];
 
-export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-admin-secret");
-  const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_PROJECT_REF = "dskcjkrgzwvsjdahfpgd";
+const ADMIN_SECRET = "migrate-obras-2025";
 
-  if (!accessToken || !supabaseUrl) {
+export async function POST(req: NextRequest) {
+  let body: { pat?: string; secret?: string } = {};
+  try { body = await req.json(); } catch { /* empty body */ }
+
+  const pat = body.pat ?? process.env.SUPABASE_ACCESS_TOKEN;
+  const secret = body.secret ?? req.headers.get("x-admin-secret");
+
+  if (!pat) {
     return NextResponse.json(
-      { error: "Missing SUPABASE_ACCESS_TOKEN or NEXT_PUBLIC_SUPABASE_URL env vars" },
-      { status: 500 }
+      { error: "Missing PAT. Pass {pat:'sbp_...'} in the request body. Generate at https://supabase.com/dashboard/account/tokens" },
+      { status: 400 }
     );
   }
 
-  if (!secret || secret !== accessToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (secret !== ADMIN_SECRET && secret !== process.env.SUPABASE_ACCESS_TOKEN) {
+    return NextResponse.json({ error: "Unauthorized — wrong secret" }, { status: 401 });
   }
 
-  // Extract project ref from URL: https://<ref>.supabase.co
-  const refMatch = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
-  if (!refMatch) {
-    return NextResponse.json({ error: "Could not parse project ref from SUPABASE_URL" }, { status: 500 });
-  }
-  const projectRef = refMatch[1];
-  const apiBase = `https://api.supabase.com/v1/projects/${projectRef}/database/query`;
+  const apiBase = `https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`;
 
   const errors: { stmt: string; error: string }[] = [];
   const skipped: string[] = [];
@@ -529,7 +527,7 @@ export async function POST(req: NextRequest) {
       const res = await fetch(apiBase, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${accessToken}`,
+          "Authorization": `Bearer ${pat}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ query: stmt }),
