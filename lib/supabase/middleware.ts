@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = [
   "/",
+  "/landing.html",
   "/login",
   "/cadastro",
   "/recuperar-senha",
