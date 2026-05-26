@@ -21,20 +21,20 @@ jobs:
 
       - name: Check app health
         run: |
-          curl -fsS "https://obrasflow.vercel.app/api/health" >/tmp/health.json
+          curl -fsS "https://planobras.vercel.app/api/health" >/tmp/health.json
           cat /tmp/health.json
 
       - name: Check ops health
         run: |
-          curl -fsS "https://obrasflow.vercel.app/api/health/ops" >/tmp/ops.json
+          curl -fsS "https://planobras.vercel.app/api/health/ops" >/tmp/ops.json
           cat /tmp/ops.json
 
       - name: Check queue metrics
         run: |
-          curl -fsS "https://obrasflow.vercel.app/api/queue/metrics" >/tmp/queue.json
+          curl -fsS "https://planobras.vercel.app/api/queue/metrics" >/tmp/queue.json
           cat /tmp/queue.json
 
       - name: Enforce SLO thresholds
         env:
-          NEXT_PUBLIC_APP_URL: https://obrasflow.vercel.app
+          NEXT_PUBLIC_APP_URL: https://planobras.vercel.app
         run: npm run ops:slo-check
