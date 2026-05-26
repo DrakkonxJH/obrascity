@@ -34,6 +34,7 @@ const ALLOWED_ORIGINS = new Set([
   "https://planobras.com",
   "https://www.planobras.com",
   "https://planobras.vercel.app",
+  "https://obrasflow.vercel.app",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);

@@ -59,14 +59,31 @@ function normalizeOrigin(value: string | null | undefined): string | null {
   }
 }
 
+function isVercelDomain(origin: string): boolean {
+  try {
+    return new URL(origin).hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
 export function resolvePublicAppOrigin(requestOrigin?: string | null): string {
   const env = getEnv();
 
-  const envOrigin = normalizeOrigin(env.NEXT_PUBLIC_APP_URL ?? null);
-  if (envOrigin) return envOrigin;
-
   const request = normalizeOrigin(requestOrigin);
+  const envOrigin = normalizeOrigin(env.NEXT_PUBLIC_APP_URL ?? null);
+
+  if (request && envOrigin) {
+    // If both are Vercel-hosted, prefer current request host to avoid callback redirects
+    // to a non-active alias/domain during domain migration.
+    if (isVercelDomain(request) && isVercelDomain(envOrigin)) {
+      return request;
+    }
+    return envOrigin;
+  }
+
   if (request) return request;
+  if (envOrigin) return envOrigin;
 
   return process.env.NODE_ENV === "production" ? DEFAULT_PUBLIC_APP_URL : "http://localhost:3000";
 }
