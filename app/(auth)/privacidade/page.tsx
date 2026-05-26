@@ -10,7 +10,7 @@ export default function PrivacidadePage() {
       <div className="highlight-box">
         <strong>🔒 Sua privacidade é levada muito a sério aqui.</strong><br />
         Esta Política de Privacidade explica, em linguagem clara e acessível, absolutamente tudo
-        sobre como o ObrasFlow trata seus dados pessoais: o que coletamos, por que coletamos, como
+        sobre como o PlanObras trata seus dados pessoais: o que coletamos, por que coletamos, como
         usamos, com quem compartilhamos (e com quem NÃO compartilhamos), por quanto tempo
         guardamos e quais são os seus direitos.<br /><br />
         Não usamos linguagem jurídica desnecessariamente complicada para esconder nada. Acreditamos
@@ -34,24 +34,24 @@ export default function PrivacidadePage() {
         </li>
       </ul>
       <p>
-        No contexto do ObrasFlow, os papéis funcionam assim:
+        No contexto do PlanObras, os papéis funcionam assim:
       </p>
       <ul>
         <li>
           <strong>Para os dados dos próprios usuários da plataforma</strong> (nome, e-mail,
-          informações de conta, dados de uso): o <strong>ObrasFlow é o Controlador</strong>.
+          informações de conta, dados de uso): o <strong>PlanObras é o Controlador</strong>.
           Somos nós quem decidimos como esses dados são tratados para fornecer o serviço;
         </li>
         <li>
           <strong>Para os dados de terceiros que os clientes inserem na plataforma</strong>
           (dados de funcionários, clientes finais, fornecedores): o <strong>cliente (empresa
-          usuária) é o Controlador</strong> e o <strong>ObrasFlow atua como Operador</strong>,
+          usuária) é o Controlador</strong> e o <strong>PlanObras atua como Operador</strong>,
           tratando esses dados conforme as instruções do cliente para fornecer o serviço contratado.
         </li>
       </ul>
       <div className="info-box">
         <strong>Encarregado de Dados (DPO):</strong><br />
-        O ObrasFlow designou um Encarregado pelo Tratamento de Dados Pessoais (Data Protection
+        O PlanObras designou um Encarregado pelo Tratamento de Dados Pessoais (Data Protection
         Officer — DPO), responsável por receber comunicações dos titulares de dados e das
         autoridades, e por garantir a conformidade com a LGPD.<br /><br />
         Para contato com o DPO: acesse Configurações → Segurança e LGPD → Contatar DPO, ou
@@ -93,7 +93,7 @@ export default function PrivacidadePage() {
           </tr>
           <tr>
             <td><strong>Dados de pagamento</strong></td>
-            <td>Nome no cartão, últimos 4 dígitos, bandeira (armazenados pelo Stripe, não pelo ObrasFlow), endereço de cobrança</td>
+            <td>Nome no cartão, últimos 4 dígitos, bandeira (armazenados pelo Stripe, não pelo PlanObras), endereço de cobrança</td>
             <td>Na contratação de plano pago</td>
             <td>Para processar pagamentos e emitir faturas</td>
           </tr>
@@ -251,7 +251,7 @@ export default function PrivacidadePage() {
           </tr>
           <tr>
             <td><strong>Exercício de direitos legais</strong></td>
-            <td>Usar dados como evidência em processos judiciais, administrativos ou arbitrais nos quais o ObrasFlow seja parte</td>
+            <td>Usar dados como evidência em processos judiciais, administrativos ou arbitrais nos quais o PlanObras seja parte</td>
             <td>Logs, dados da conta, comunicações</td>
             <td>Exercício regular de direitos (art. 7º, VI)</td>
           </tr>
@@ -261,7 +261,7 @@ export default function PrivacidadePage() {
         <strong>🚫 O que nunca fazemos com seus dados:</strong><br />
         Não vendemos seus dados. Não alugamos. Não cedemos para empresas de marketing. Não usamos
         para publicidade de terceiros. Não cruzamos seus dados com os de outras empresas clientes
-        do ObrasFlow. Jamais.
+        do PlanObras. Jamais.
       </div>
 
       {/* 4 */}
@@ -290,7 +290,7 @@ export default function PrivacidadePage() {
           um interesse legítimo que não se sobrepõe aos seus direitos. Exemplo: analisar logs de
           acesso para detectar tentativas de invasão (nosso interesse e o seu coincidem — ninguém
           quer ter a conta invadida). Antes de usar essa base legal, realizamos uma análise de
-          proporcionalidade para garantir que o interesse do ObrasFlow não prejudique
+          proporcionalidade para garantir que o interesse do PlanObras não prejudique
           desnecessariamente os direitos do titular.
         </li>
         <li>
@@ -306,7 +306,7 @@ export default function PrivacidadePage() {
         <li>
           <strong>Proteção da vida (art. 7º, III da LGPD):</strong> Em situações extremamente
           excepcionais envolvendo risco iminente à vida ou à segurança de pessoas — situação que
-          esperamos nunca ocorrer no contexto do ObrasFlow.
+          esperamos nunca ocorrer no contexto do PlanObras.
         </li>
       </ul>
 
@@ -319,7 +319,7 @@ export default function PrivacidadePage() {
       </p>
       <h3>5.1 Nossa Equipe Interna</h3>
       <p>
-        Funcionários e colaboradores do ObrasFlow têm acesso apenas aos dados estritamente
+        Funcionários e colaboradores do PlanObras têm acesso apenas aos dados estritamente
         necessários para desempenhar suas funções (princípio do menor privilégio). Por exemplo:
         a equipe de suporte pode acessar dados da conta para resolver um problema; a equipe técnica
         acessa logs para investigar um bug. Nenhum funcionário acessa dados de clientes por
@@ -376,7 +376,7 @@ export default function PrivacidadePage() {
         </li>
         <li>
           <strong>Para defender nossos direitos:</strong> Em processos judiciais ou administrativos
-          nos quais o ObrasFlow seja parte, podemos usar dados como meio de prova;
+          nos quais o PlanObras seja parte, podemos usar dados como meio de prova;
         </li>
         <li>
           <strong>Para proteger direitos de terceiros:</strong> Em casos de fraude comprovada ou
@@ -388,9 +388,9 @@ export default function PrivacidadePage() {
         fornecer dados a autoridades, para que ele possa buscar medidas legais caso entenda que
         o pedido é indevido.
       </p>
-      <h3>5.4 Em Caso de Venda ou Reestruturação do ObrasFlow</h3>
+      <h3>5.4 Em Caso de Venda ou Reestruturação do PlanObras</h3>
       <p>
-        Se o ObrasFlow for adquirido, se fundir com outra empresa ou vender parte de seus ativos,
+        Se o PlanObras for adquirido, se fundir com outra empresa ou vender parte de seus ativos,
         os dados dos usuários podem ser transferidos ao novo controlador. Nesse caso:
       </p>
       <ul>
@@ -449,7 +449,7 @@ export default function PrivacidadePage() {
       </table>
       <h3>6.3 O Que Não Usamos</h3>
       <p>
-        O ObrasFlow <strong>não utiliza</strong> cookies de publicidade (para mostrar anúncios),
+        O PlanObras <strong>não utiliza</strong> cookies de publicidade (para mostrar anúncios),
         cookies de rastreamento cross-site (para seguir você em outros sites), nem pixels de
         conversão de redes sociais ou plataformas de anúncios.
       </p>
@@ -567,7 +567,7 @@ export default function PrivacidadePage() {
       <h2><span className="num">8</span> Seus Direitos como Titular — Você Tem Controle</h2>
       <p>
         A LGPD garante a você, como titular de dados pessoais, um conjunto completo de direitos.
-        O ObrasFlow não apenas cumpre esses direitos por obrigação legal — acreditamos genuinamente
+        O PlanObras não apenas cumpre esses direitos por obrigação legal — acreditamos genuinamente
         que você deve ter controle sobre seus próprios dados. Abaixo, explicamos cada direito em
         linguagem simples e como exercê-los:
       </p>
@@ -691,7 +691,7 @@ export default function PrivacidadePage() {
 
       <h3>Direito 10 — Petição à ANPD (art. 18, VIII da LGPD)</h3>
       <p>
-        <strong>O que é:</strong> Se você acreditar que o ObrasFlow violou algum dos seus
+        <strong>O que é:</strong> Se você acreditar que o PlanObras violou algum dos seus
         direitos previstos na LGPD e não conseguiu resolver pela comunicação direta conosco,
         você tem o direito de encaminhar uma reclamação formal à Autoridade Nacional de Proteção
         de Dados (ANPD).
@@ -765,7 +765,7 @@ export default function PrivacidadePage() {
       {/* 11 */}
       <h2><span className="num">11</span> Menores de Idade — Proteção Especial</h2>
       <p>
-        O ObrasFlow é uma plataforma de uso profissional e corporativo. <strong>Não é
+        O PlanObras é uma plataforma de uso profissional e corporativo. <strong>Não é
         destinada, em nenhuma hipótese, a menores de 18 (dezoito) anos</strong>.
       </p>
       <p>
@@ -778,7 +778,7 @@ export default function PrivacidadePage() {
       </p>
       <p>
         Se você é pai, mãe ou responsável legal e acredita que um menor sob sua guarda forneceu
-        dados ao ObrasFlow, entre em contato com nosso suporte imediatamente pelo canal de
+        dados ao PlanObras, entre em contato com nosso suporte imediatamente pelo canal de
         atendimento disponível na plataforma.
       </p>
 
@@ -798,7 +798,7 @@ export default function PrivacidadePage() {
       </p>
       <h3>12.2 Notificação à ANPD</h3>
       <p>
-        Conforme exigido pelo art. 48 da LGPD, o ObrasFlow notificará a Autoridade Nacional de
+        Conforme exigido pelo art. 48 da LGPD, o PlanObras notificará a Autoridade Nacional de
         Proteção de Dados (ANPD) dentro de <strong>72 horas</strong> após tomar conhecimento de
         um incidente de segurança que possa acarretar risco ou dano relevante aos titulares de
         dados. A notificação incluirá: (i) descrição do incidente; (ii) natureza e categoria dos
@@ -854,12 +854,12 @@ export default function PrivacidadePage() {
       {/* 14 */}
       <h2><span className="num">14</span> Links e Integrações com Serviços Externos</h2>
       <p>
-        A plataforma ObrasFlow pode conter links para sites externos ou oferecer integrações
+        A plataforma PlanObras pode conter links para sites externos ou oferecer integrações
         com serviços de terceiros. É importante que você saiba que:
       </p>
       <ul>
         <li>
-          Ao clicar em um link para um site externo, você deixará a plataforma ObrasFlow e estará
+          Ao clicar em um link para um site externo, você deixará a plataforma PlanObras e estará
           sujeito à política de privacidade do site de destino, que é independente desta Política;
         </li>
         <li>
@@ -869,7 +869,7 @@ export default function PrivacidadePage() {
           antes de ativar cada integração;
         </li>
         <li>
-          O ObrasFlow não se responsabiliza pelo conteúdo, práticas de privacidade, políticas
+          O PlanObras não se responsabiliza pelo conteúdo, práticas de privacidade, políticas
           de segurança ou disponibilidade de sites e serviços externos;
         </li>
         <li>

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://obrasflow.vercel.app").replace(/\/+$/, "");
+const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://planobras.vercel.app").replace(/\/+$/, "");
 const endpoint = `${appUrl}/api/webhooks/stripe`;
 
 if (!webhookSecret) {

@@ -54,7 +54,7 @@ async function sendVerificationEmail(input: {
     throw new Error("RESEND_API_KEY não configurada");
   }
 
-  const from = env.RESEND_FROM_EMAIL ?? "ObrasFlow <no-reply@obrasflow.com>";
+  const from = env.RESEND_FROM_EMAIL ?? "PlanObras <no-reply@planobras.com>";
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -64,7 +64,7 @@ async function sendVerificationEmail(input: {
     body: JSON.stringify({
       from,
       to: [input.email],
-      subject: "Confirme seu e-mail para ativar sua conta ObrasFlow",
+      subject: "Confirme seu e-mail para ativar sua conta PlanObras",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
           <h2>Olá, ${input.nome}</h2>

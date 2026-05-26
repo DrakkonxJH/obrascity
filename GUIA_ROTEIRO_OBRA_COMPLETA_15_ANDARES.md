@@ -1,4 +1,4 @@
-# ObrasFlow — Roteiro Cronológico Completo (Obra de Prédio com 15 Andares)
+# PlanObras — Roteiro Cronológico Completo (Obra de Prédio com 15 Andares)
 
 Guia operacional fim a fim para a construtora executar e controlar uma obra completa: do primeiro contato comercial até a entrega das chaves e pós-obra.
 
@@ -429,7 +429,7 @@ Guia operacional fim a fim para a construtora executar e controlar uma obra comp
 
 ---
 
-## 9. Checklist final de cobertura do produto (ObrasFlow)
+## 9. Checklist final de cobertura do produto (PlanObras)
 
 ### Já coberto
 - Obras, Diário, Cronograma, Financeiro base, Materiais base.

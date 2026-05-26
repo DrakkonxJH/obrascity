@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ObrasFlow",
+  title: "PlanObras",
   description: "Plataforma SaaS de gestão e monitoramento de obras",
 };
 

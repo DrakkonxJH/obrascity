@@ -1,4 +1,4 @@
-# Relatório completo — Execução do roteiro no ObrasFlow (obra: `roteiro`)
+# Relatório completo — Execução do roteiro no PlanObras (obra: `roteiro`)
 
 ## 1) Objetivo da execução
 
@@ -205,7 +205,7 @@ Consegue operar **a maior parte do ciclo de execução da obra**, mas para um ce
 
 ## 10) Conclusão final da execução do roteiro
 
-Para a obra de referência **`roteiro`**, o ObrasFlow já entrega um núcleo operacional forte para execução real de obra, com governança e rastreabilidade consistentes.  
+Para a obra de referência **`roteiro`**, o PlanObras já entrega um núcleo operacional forte para execução real de obra, com governança e rastreabilidade consistentes.  
 O produto está em estágio **avançado de operação**, faltando principalmente os blocos de **comercial, fechamento pós-entrega e segurança corporativa avançada** para atingir cobertura total do roteiro enterprise.
 
 ---
@@ -276,7 +276,7 @@ Os módulos abaixo estão **visíveis no menu lateral** para conta cliente e com
 
 ### 12.5 Veredito desta reexecução
 
-Para o cenário de obra tipo prédio 15 andares, o ObrasFlow agora cobre o ciclo operacional com amplitude significativamente maior que a rodada anterior.  
+Para o cenário de obra tipo prédio 15 andares, o PlanObras agora cobre o ciclo operacional com amplitude significativamente maior que a rodada anterior.  
 O cliente já consegue executar o fluxo de obra do início técnico até pós-obra dentro do sistema, com exceção do bloco comercial/CRM e de aprofundamentos enterprise específicos.
 
 ---

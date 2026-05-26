@@ -1,4 +1,4 @@
-# Guia Completo de Go-Live - ObrasFlow SaaS
+# Guia Completo de Go-Live - PlanObras SaaS
 
 Data de consolidação: 23/05/2026  
 Escopo: colocar o SaaS online em produção com operação estável, segura e auditável.
@@ -17,8 +17,8 @@ Concluído no projeto:
 - [x] Chave `RESEND_API_KEY` configurada no `.env.local`.
 
 Pendente para go-live real:
-- [ ] Domínio de e-mail no Resend `obrasflow.com` ainda não verificado (status pendente).
-- [ ] DNS público do domínio `obrasflow.com` não resolvendo (`NS/A` vazios no teste atual).
+- [ ] Domínio de e-mail no Resend `planobras.com` ainda não verificado (status pendente).
+- [ ] DNS público do domínio `planobras.com` não resolvendo (`NS/A` vazios no teste atual).
 - [x] Confirmar e validar todas variáveis no ambiente **Production** da Vercel.
 - [ ] Validar fluxo Stripe ponta a ponta com webhook.
 - [ ] Garantir worker em execução contínua em ambiente produtivo.
@@ -76,7 +76,7 @@ Sem essa trilha completa, o restante não deve avançar para go-live.
 
 Comandos:
 ```bash
-cd "/home/julio-sousa/Documentos/obrasflow/obras-saas"
+cd "/home/julio-sousa/Documentos/planobras/obras-saas"
 npm run lint
 npm run typecheck
 npm run build
@@ -98,7 +98,7 @@ npm run build
 
 Comandos de auditoria:
 ```bash
-cd "/home/julio-sousa/Documentos/obrasflow/obras-saas"
+cd "/home/julio-sousa/Documentos/planobras/obras-saas"
 export SUPABASE_ACCESS_TOKEN="<TOKEN>"
 supabase migration list
 ```
@@ -128,7 +128,7 @@ Status atual local:
 - [x] `SUPABASE_SERVICE_KEY` configurada.
 - [x] `REDIS_URL` configurada.
 - [x] `DATA_ENCRYPTION_KEY` configurada.
-- [x] `NEXT_PUBLIC_APP_URL=https://obrasflow.vercel.app` no `.env.local`.
+- [x] `NEXT_PUBLIC_APP_URL=https://planobras.vercel.app` no `.env.local`.
 - [x] `RESEND_API_KEY` configurada no `.env.local`.
 - [x] `RESEND_FROM_EMAIL` configurada no `.env.local`.
 - [x] `SIGNUP_EDGE_SHARED_SECRET` configurada no `.env.local`.
@@ -143,13 +143,13 @@ Status atual local:
 ## Fase D - Domínio e DNS
 
 Objetivo:
-- Aplicação pública respondendo no domínio final (`obrasflow.vercel.app` até domínio próprio).
+- Aplicação pública respondendo no domínio final (`planobras.vercel.app` até domínio próprio).
 - E-mail de transação autenticado (SPF/DKIM/MX).
 
 Pendências críticas detectadas:
-- [ ] `obrasflow.com` ainda não encontrado no DNS público.
-- [ ] Resend em `Status: Pendente` para `obrasflow.com`.
-- [ ] `whois obrasflow.com` retornou "No match for domain" (domínio não registrado no momento da checagem).
+- [ ] `planobras.com` ainda não encontrado no DNS público.
+- [ ] Resend em `Status: Pendente` para `planobras.com`.
+- [ ] `whois planobras.com` retornou "No match for domain" (domínio não registrado no momento da checagem).
 
 Checklist de DNS:
 - [ ] Nameservers corretos no registrador do domínio.
@@ -164,11 +164,11 @@ Checklist de DNS:
 
 Validação por terminal:
 ```bash
-dig +short NS obrasflow.com
-dig +short A obrasflow.com
-dig +short TXT resend._domainkey.obrasflow.com
-dig +short MX send.obrasflow.com
-dig +short TXT send.obrasflow.com
+dig +short NS planobras.com
+dig +short A planobras.com
+dig +short TXT resend._domainkey.planobras.com
+dig +short MX send.planobras.com
+dig +short TXT send.planobras.com
 ```
 
 ## Fase E - Cadastro, autenticação e onboarding
@@ -311,20 +311,20 @@ Smoke test mínimo:
 - Erro atual de cadastro mapeado para Resend/DNS (não mais erro de migration).
 - `npm run lint`, `npm run typecheck` e `npm run build` executados sem erro.
 - Smoke local com `npm run start`: `/api/health` = 200, `/` = 307, `/login` = 200, `/cadastro` = 200.
-- Checagem DNS (`dig NS/A/TXT/MX` para `obrasflow.com` e `send.obrasflow.com`) ainda sem resposta pública.
-- `whois obrasflow.com` retornou "No match for domain".
+- Checagem DNS (`dig NS/A/TXT/MX` para `planobras.com` e `send.planobras.com`) ainda sem resposta pública.
+- `whois planobras.com` retornou "No match for domain".
 - Worker local inicializou com `npm run worker:dev`, porém com alerta recorrente de política Redis (`volatile-lru` em vez de `noeviction`).
 - Tentativa de ajuste Redis via `CONFIG SET` falhou com `ERR Unsupported CONFIG parameter: maxmemory-policy` (provedor gerenciado limita esse comando).
 - Vercel Production validado via CLI (`vercel env ls production`) com `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`, `DATA_ENCRYPTION_KEY`, `SIGNUP_EDGE_SHARED_SECRET`, `NEXT_PUBLIC_APP_URL`.
 - Vercel Preview validado via CLI (`vercel env ls preview`) sem variáveis cadastradas.
-- Deploy de produção realizado com alias `https://obrasflow.vercel.app` (build concluído e publicado).
-- Decisão operacional atual: manter `https://obrasflow.vercel.app` como domínio público da aplicação até registrar/validar domínio próprio.
+- Deploy de produção realizado com alias `https://planobras.vercel.app` (build concluído e publicado).
+- Decisão operacional atual: manter `https://planobras.vercel.app` como domínio público da aplicação até registrar/validar domínio próprio.
 - Correção aplicada no `proxy.ts`: manutenção agora depende de `MAINTENANCE_MODE=true` (não bloqueia produção por padrão).
 - Smoke pós-deploy em produção: `/` = 307, `/login` = 200, `/cadastro` = 200, `/api/health` = 200, `/api/health/ops` = 200, `/api/queue/metrics` = 200.
 - Resend API key local é restrita a envio (`restricted_api_key`), sem permissão para listar/verificar domínios por API.
 - Stripe em modo teste configurado: produtos/preços de Starter/Pro/Enterprise criados com IDs válidos.
 - Variáveis Stripe/Resend aplicadas em **Production** na Vercel: `STRIPE_SECRET_KEY`, `STRIPE_PRICE_*_IDS`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`.
-- Endpoint Stripe criado: `https://obrasflow.vercel.app/api/webhooks/stripe` (`we_1TaAMEFJTwlYxOjq89yT3jG2`) e secret registrado na Vercel.
+- Endpoint Stripe criado: `https://planobras.vercel.app/api/webhooks/stripe` (`we_1TaAMEFJTwlYxOjq89yT3jG2`) e secret registrado na Vercel.
 - Re-deploy de produção executado após configuração de variáveis de billing.
 - Endpoint de webhook responde em produção (400 esperado sem assinatura `stripe-signature`).
 - Resend API key fornecida agora aceita listagem da conta (retorno sem domínios cadastrados no momento).
@@ -345,7 +345,7 @@ Smoke test mínimo:
 
 ## 5) Plano curto para fechar go-live (ordem recomendada)
 
-1. **Resolver DNS do domínio `obrasflow.com`**
+1. **Resolver DNS do domínio `planobras.com`**
    - corrigir delegação NS + zona DNS.
 2. **Verificar domínio no Resend**
    - status final `Verified`.
@@ -363,9 +363,9 @@ Smoke test mínimo:
 ## 5.1) Plano operacional "Agora" (execução guiada)
 
 ### Bloco 1 - Hoje (bloqueadores)
-- [x] Confirmar provedor DNS autoritativo do `obrasflow.com` (resultado: domínio ainda não registrado em WHOIS).
+- [x] Confirmar provedor DNS autoritativo do `planobras.com` (resultado: domínio ainda não registrado em WHOIS).
 - [ ] Publicar registros Resend no provedor correto.
-- [x] Validar `dig` atual (sem registros públicos para `obrasflow.com` e `send.obrasflow.com`).
+- [x] Validar `dig` atual (sem registros públicos para `planobras.com` e `send.planobras.com`).
 - [ ] Obter `Verified` no Resend.
 - [ ] Retestar cadastro com e-mail novo.
 
@@ -403,19 +403,19 @@ Considerar go-live completo apenas quando todos os itens abaixo estiverem verdad
 
 Subir app local:
 ```bash
-cd "/home/julio-sousa/Documentos/obrasflow/obras-saas"
+cd "/home/julio-sousa/Documentos/planobras/obras-saas"
 npm run dev
 ```
 
 Subir worker local:
 ```bash
-cd "/home/julio-sousa/Documentos/obrasflow/obras-saas"
+cd "/home/julio-sousa/Documentos/planobras/obras-saas"
 npm run worker:dev
 ```
 
 Auditar migrations:
 ```bash
-cd "/home/julio-sousa/Documentos/obrasflow/obras-saas"
+cd "/home/julio-sousa/Documentos/planobras/obras-saas"
 export SUPABASE_ACCESS_TOKEN="<TOKEN>"
 supabase migration list
 ```
@@ -441,6 +441,6 @@ supabase migration list
 
 Validar DNS público:
 ```bash
-dig +short NS obrasflow.com
-dig +short TXT resend._domainkey.obrasflow.com
+dig +short NS planobras.com
+dig +short TXT resend._domainkey.planobras.com
 ```

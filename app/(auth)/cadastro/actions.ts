@@ -88,7 +88,7 @@ export async function signUpAction(
         data: {
           nome,
           empresa_nome: empresaNome,
-          signup_source: "obrasflow_web",
+          signup_source: "planobras_web",
         },
       },
     });
