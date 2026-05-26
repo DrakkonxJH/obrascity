@@ -27,7 +27,7 @@ export default async function RedefinirSenhaPage() {
         <div className="of-login-v2-brand">
           <span className="of-login-v2-brand-icon">🏗</span>
           <span className="of-login-v2-brand-text">
-            OBRAS<span>FLOW</span>
+            PLAN<span>OBRAS</span>
           </span>
         </div>
         <h2 className="of-login-v2-card-title">Redefinir senha</h2>
