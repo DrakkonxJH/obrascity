@@ -19,6 +19,23 @@ export type TenantSessionItem = {
   revoked_at: string | null;
 };
 
+const DEFAULT_TENANT_SECURITY_POLICY: TenantSecurityPolicy = {
+  mfa_required_roles: [],
+  sso_enabled: false,
+  sso_provider: "",
+  sso_entrypoint: "",
+  session_timeout_minutes: 43200,
+};
+
+function isMissingTable(errorMessage: string, tableName: string) {
+  const message = errorMessage.toLowerCase();
+  return (
+    message.includes(tableName.toLowerCase()) &&
+    (message.includes("does not exist") ||
+      (message.includes("could not find the table") && message.includes("schema cache")))
+  );
+}
+
 export async function getTenantSecurityPolicy(): Promise<TenantSecurityPolicy> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -29,17 +46,22 @@ export async function getTenantSecurityPolicy(): Promise<TenantSecurityPolicy> {
     .maybeSingle();
 
   if (error) {
+    if (isMissingTable(error.message, "tenant_security_policies")) {
+      return DEFAULT_TENANT_SECURITY_POLICY;
+    }
     throw new Error(`Erro ao carregar política de segurança: ${error.message}`);
   }
 
   return {
     mfa_required_roles: Array.isArray(data?.mfa_required_roles)
       ? (data?.mfa_required_roles as string[])
-      : [],
-    sso_enabled: Boolean(data?.sso_enabled),
-    sso_provider: String(data?.sso_provider ?? ""),
-    sso_entrypoint: String(data?.sso_entrypoint ?? ""),
-    session_timeout_minutes: Number(data?.session_timeout_minutes ?? 43200),
+      : DEFAULT_TENANT_SECURITY_POLICY.mfa_required_roles,
+    sso_enabled: Boolean(data?.sso_enabled ?? DEFAULT_TENANT_SECURITY_POLICY.sso_enabled),
+    sso_provider: String(data?.sso_provider ?? DEFAULT_TENANT_SECURITY_POLICY.sso_provider),
+    sso_entrypoint: String(data?.sso_entrypoint ?? DEFAULT_TENANT_SECURITY_POLICY.sso_entrypoint),
+    session_timeout_minutes: Number(
+      data?.session_timeout_minutes ?? DEFAULT_TENANT_SECURITY_POLICY.session_timeout_minutes,
+    ),
   };
 }
 
@@ -75,6 +97,9 @@ export async function listTenantAuthSessions(): Promise<TenantSessionItem[]> {
     .limit(200);
 
   if (error) {
+    if (isMissingTable(error.message, "tenant_auth_sessions")) {
+      return [];
+    }
     throw new Error(`Erro ao listar sessões: ${error.message}`);
   }
 
@@ -99,6 +124,9 @@ export async function revokeTenantSession(sessionId: string) {
     .is("revoked_at", null);
 
   if (error) {
+    if (isMissingTable(error.message, "tenant_auth_sessions")) {
+      return;
+    }
     throw new Error(`Erro ao revogar sessão: ${error.message}`);
   }
 }
@@ -116,17 +144,22 @@ export async function getTenantSecurityPolicyByEmpresa(empresaId: string): Promi
     .maybeSingle();
 
   if (error) {
+    if (isMissingTable(error.message, "tenant_security_policies")) {
+      return DEFAULT_TENANT_SECURITY_POLICY;
+    }
     throw new Error(`Erro ao carregar política de segurança da empresa: ${error.message}`);
   }
 
   return {
     mfa_required_roles: Array.isArray(data?.mfa_required_roles)
       ? (data?.mfa_required_roles as string[])
-      : [],
-    sso_enabled: Boolean(data?.sso_enabled),
-    sso_provider: String(data?.sso_provider ?? ""),
-    sso_entrypoint: String(data?.sso_entrypoint ?? ""),
-    session_timeout_minutes: Number(data?.session_timeout_minutes ?? 43200),
+      : DEFAULT_TENANT_SECURITY_POLICY.mfa_required_roles,
+    sso_enabled: Boolean(data?.sso_enabled ?? DEFAULT_TENANT_SECURITY_POLICY.sso_enabled),
+    sso_provider: String(data?.sso_provider ?? DEFAULT_TENANT_SECURITY_POLICY.sso_provider),
+    sso_entrypoint: String(data?.sso_entrypoint ?? DEFAULT_TENANT_SECURITY_POLICY.sso_entrypoint),
+    session_timeout_minutes: Number(
+      data?.session_timeout_minutes ?? DEFAULT_TENANT_SECURITY_POLICY.session_timeout_minutes,
+    ),
   };
 }
 
@@ -151,8 +184,14 @@ export async function createTenantAuthSession(input: {
     .select("id")
     .single();
 
-  if (error || !data?.id) {
-    throw new Error(`Erro ao criar sessão de autenticação: ${error?.message ?? "sem id retornado"}`);
+  if (error) {
+    if (isMissingTable(error.message, "tenant_auth_sessions")) {
+      return null;
+    }
+    throw new Error(`Erro ao criar sessão de autenticação: ${error.message}`);
+  }
+  if (!data?.id) {
+    throw new Error("Erro ao criar sessão de autenticação: sem id retornado");
   }
   return String(data.id);
 }
@@ -170,6 +209,9 @@ export async function validateAndTouchTenantSession(input: { empresaId: string; 
   ]);
 
   if (sessionQuery.error) {
+    if (isMissingTable(sessionQuery.error.message, "tenant_auth_sessions")) {
+      return { valid: true };
+    }
     throw new Error(`Erro ao validar sessão atual: ${sessionQuery.error.message}`);
   }
   if (!sessionQuery.data || sessionQuery.data.revoked_at) {
@@ -185,6 +227,9 @@ export async function validateAndTouchTenantSession(input: { empresaId: string; 
       .eq("empresa_id", input.empresaId)
       .eq("id", input.sessionId);
     if (expire.error) {
+      if (isMissingTable(expire.error.message, "tenant_auth_sessions")) {
+        return { valid: true };
+      }
       throw new Error(`Erro ao expirar sessão por timeout: ${expire.error.message}`);
     }
     return { valid: false };
@@ -197,6 +242,9 @@ export async function validateAndTouchTenantSession(input: { empresaId: string; 
     .eq("id", input.sessionId);
 
   if (touch.error) {
+    if (isMissingTable(touch.error.message, "tenant_auth_sessions")) {
+      return { valid: true };
+    }
     throw new Error(`Erro ao atualizar atividade da sessão: ${touch.error.message}`);
   }
 

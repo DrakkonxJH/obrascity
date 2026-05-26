@@ -23,6 +23,15 @@ export type PortalShareResolved = {
   obra_ids: string[];
 };
 
+function isMissingTable(errorMessage: string, tableName: string) {
+  const message = errorMessage.toLowerCase();
+  return (
+    message.includes(tableName.toLowerCase()) &&
+    (message.includes("does not exist") ||
+      (message.includes("could not find the table") && message.includes("schema cache")))
+  );
+}
+
 export async function listPortalShares(): Promise<PortalShareItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -33,6 +42,9 @@ export async function listPortalShares(): Promise<PortalShareItem[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
+    if (isMissingTable(error.message, "portal_shares")) {
+      return [];
+    }
     throw new Error(`Erro ao listar compartilhamentos do portal: ${error.message}`);
   }
 
@@ -67,8 +79,14 @@ export async function createPortalShare(input: { descricao?: string; expires_at?
     .select("id, token")
     .single();
 
-  if (error || !data?.token) {
-    throw new Error(`Erro ao criar link público do portal: ${error?.message ?? "token não gerado"}`);
+  if (error) {
+    if (isMissingTable(error.message, "portal_shares")) {
+      throw new Error("Compartilhamento do portal ainda não está disponível neste ambiente.");
+    }
+    throw new Error(`Erro ao criar link público do portal: ${error.message}`);
+  }
+  if (!data?.token) {
+    throw new Error("Erro ao criar link público do portal: token não gerado");
   }
 
   return {
@@ -87,8 +105,14 @@ export async function revokePortalShare(shareId: string) {
     .eq("id", shareId)
     .select("id");
 
-  if (error || !data?.length) {
-    throw new Error(`Erro ao revogar link do portal: ${error?.message ?? "link não encontrado"}`);
+  if (error) {
+    if (isMissingTable(error.message, "portal_shares")) {
+      throw new Error("Compartilhamento do portal ainda não está disponível neste ambiente.");
+    }
+    throw new Error(`Erro ao revogar link do portal: ${error.message}`);
+  }
+  if (!data?.length) {
+    throw new Error("Erro ao revogar link do portal: link não encontrado");
   }
 }
 
@@ -102,6 +126,9 @@ export async function resolvePortalShareByToken(token: string): Promise<PortalSh
     .maybeSingle();
 
   if (error) {
+    if (isMissingTable(error.message, "portal_shares")) {
+      return null;
+    }
     throw new Error(`Erro ao validar token do portal: ${error.message}`);
   }
   if (!data) return null;

@@ -167,14 +167,16 @@ export async function signInAction(
           userAgent,
           ip,
         });
-        const cookieStore = await cookies();
-        cookieStore.set("of_tenant_session", authSessionId, {
-          httpOnly: true,
-          sameSite: "lax",
-          secure: true,
-          path: "/",
-          maxAge: 60 * 60 * 24 * 30,
-        });
+        if (authSessionId) {
+          const cookieStore = await cookies();
+          cookieStore.set("of_tenant_session", authSessionId, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: true,
+            path: "/",
+            maxAge: 60 * 60 * 24 * 30,
+          });
+        }
       }
     }
 

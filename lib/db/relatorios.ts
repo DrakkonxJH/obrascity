@@ -31,27 +31,44 @@ export async function listRelatorios(): Promise<RelatórioItem[]> {
   const supabase = await createServerClient();
   const activeObraIds = await listActiveObraIds();
 
+  const primarySelect = "id, obra_id, tipo, formato, status, url, error_message, created_at, obras(nome)";
+  const secondarySelect = "id, obra_id, tipo, status, url, error_message, created_at, obras(nome)";
+  const compatibilitySelect = "id, obra_id, tipo, status, url, created_at, obras(nome)";
+
   const detailed = await supabase
     .from("relatorios")
-    .select("id, obra_id, tipo, formato, status, url, error_message, created_at, obras(nome)")
+    .select(primarySelect)
     .eq("empresa_id", empresaId)
     .order("created_at", { ascending: false });
 
-  const fallback =
-    detailed.error
-      ? await supabase
-          .from("relatorios")
-        .select("id, obra_id, tipo, status, url, error_message, created_at, obras(nome)")
-          .eq("empresa_id", empresaId)
-          .order("created_at", { ascending: false })
-      : null;
+  let rowsSource: Array<Record<string, unknown>> = (detailed.data ?? []) as Array<Record<string, unknown>>;
+  let queryError = detailed.error;
 
-  const resultError = detailed.error ? fallback?.error ?? null : detailed.error;
-  if (resultError) {
-    throw new Error(`Erro ao listar relatórios: ${resultError.message}`);
+  if (queryError) {
+    const fallback = await supabase
+      .from("relatorios")
+      .select(secondarySelect)
+      .eq("empresa_id", empresaId)
+      .order("created_at", { ascending: false });
+    rowsSource = (fallback.data ?? []) as Array<Record<string, unknown>>;
+    queryError = fallback.error;
   }
 
-  const rows = (detailed.error ? fallback?.data ?? [] : detailed.data ?? []) as Array<
+  if (queryError && queryError.message.toLowerCase().includes("error_message")) {
+    const compatibility = await supabase
+      .from("relatorios")
+      .select(compatibilitySelect)
+      .eq("empresa_id", empresaId)
+      .order("created_at", { ascending: false });
+    rowsSource = (compatibility.data ?? []) as Array<Record<string, unknown>>;
+    queryError = compatibility.error;
+  }
+
+  if (queryError) {
+    throw new Error(`Erro ao listar relatórios: ${queryError.message}`);
+  }
+
+  const rows = rowsSource as Array<
     Record<string, unknown> & {
       id: string;
       obra_id: string | null;

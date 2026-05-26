@@ -18,6 +18,15 @@ export async function signOut() {
       .eq("id", sessionId)
       .is("revoked_at", null);
     if (revoke.error) {
+      const message = revoke.error.message.toLowerCase();
+      if (
+        message.includes("tenant_auth_sessions") &&
+        (message.includes("does not exist") || message.includes("could not find the table"))
+      ) {
+        cookieStore.delete("of_tenant_session");
+        await supabase.auth.signOut();
+        redirect("/login");
+      }
       throw new Error(`Erro ao revogar sessão corrente: ${revoke.error.message}`);
     }
   }
