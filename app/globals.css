@@ -197,6 +197,51 @@ a {
   caret-color: #e5ebf8;
 }
 
+.of-login-v2-password-wrap {
+  position: relative;
+}
+
+.of-login-v2-password-wrap .of-login-v2-input {
+  padding-right: 46px;
+}
+
+.of-login-v2-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #90a3c8;
+  cursor: pointer;
+  padding: 0;
+}
+
+.of-login-v2-password-toggle:hover {
+  color: #ff9b57;
+}
+
+.of-login-v2-password-toggle:focus-visible {
+  outline: 2px solid rgba(255, 123, 33, 0.75);
+  outline-offset: 2px;
+}
+
+.of-login-v2-password-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .of-login-v2-row {
   margin-top: 4px;
   margin-bottom: 16px;

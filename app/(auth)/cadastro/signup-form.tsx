@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUpAction, type SignupActionState } from "./actions";
@@ -13,6 +13,8 @@ const initialState: SignupActionState = {
 export function SignupForm() {
   const [state, formAction, pending] = useActionState(signUpAction, initialState);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (state.ok && !state.needsLogin) {
@@ -72,34 +74,78 @@ export function SignupForm() {
           <label className="of-login-v2-label" htmlFor="password">
             Senha
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={10}
-            className="of-login-v2-input"
-            placeholder="Mínimo 10 caracteres"
-            autoComplete="off"
-            defaultValue=""
-          />
+          <div className="of-login-v2-password-wrap">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={10}
+              className="of-login-v2-input"
+              placeholder="Mínimo 10 caracteres"
+              autoComplete="off"
+              defaultValue=""
+            />
+            <button
+              type="button"
+              className="of-login-v2-password-toggle"
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((value) => !value)}
+            >
+              {showPassword ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" />
+                  <circle cx="12" cy="12" r="3.5" />
+                  <path d="M3 3l18 18" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" />
+                  <circle cx="12" cy="12" r="3.5" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="of-login-v2-field">
           <label className="of-login-v2-label" htmlFor="confirmPassword">
             Confirmar senha
           </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            required
-            minLength={10}
-            className="of-login-v2-input"
-            placeholder="Repita a senha"
-            autoComplete="off"
-            defaultValue=""
-          />
+          <div className="of-login-v2-password-wrap">
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              required
+              minLength={10}
+              className="of-login-v2-input"
+              placeholder="Repita a senha"
+              autoComplete="off"
+              defaultValue=""
+            />
+            <button
+              type="button"
+              className="of-login-v2-password-toggle"
+              aria-label={showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
+              aria-pressed={showConfirmPassword}
+              onClick={() => setShowConfirmPassword((value) => !value)}
+            >
+              {showConfirmPassword ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" />
+                  <circle cx="12" cy="12" r="3.5" />
+                  <path d="M3 3l18 18" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" />
+                  <circle cx="12" cy="12" r="3.5" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <label className="of-login-v2-check of-login-v2-check-start">
