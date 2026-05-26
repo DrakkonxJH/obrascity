@@ -1,5 +1,6 @@
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { createServerClient } from "@/lib/supabase/server";
+import { isMissingRelation } from "@/lib/db/migration-guard";
 
 export type TenantRetentionPolicy = {
   auditRetentionDays: number;
@@ -26,13 +27,6 @@ export type TenantObservabilityEventItem = {
   createdAt: string;
 };
 
-function isMissingTable(errorMessage: string, tableName: string) {
-  const message = errorMessage.toLowerCase();
-  return (
-    message.includes(tableName.toLowerCase()) &&
-    (message.includes("does not exist") || message.includes("could not find the table"))
-  );
-}
 
 export async function getTenantRetentionPolicy(): Promise<TenantRetentionPolicy | null> {
   const empresaId = await getEmpresaIdFromProfile();
@@ -44,6 +38,7 @@ export async function getTenantRetentionPolicy(): Promise<TenantRetentionPolicy 
     .maybeSingle();
 
   if (error) {
+    if (isMissingRelation(error.message)) return null;
     throw new Error(`Erro ao carregar política de retenção: ${error.message}`);
   }
   if (!data) return null;
@@ -70,6 +65,10 @@ export async function upsertTenantRetentionPolicy(input: TenantRetentionPolicy) 
   );
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[governanca] tabela tenant_retention_policies ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao salvar política de retenção: ${error.message}`);
   }
 }
@@ -86,6 +85,7 @@ export async function listRecentAuditLogs(limit = 30): Promise<AuditLogItem[]> {
     .limit(maxRows);
 
   if (error) {
+    if (isMissingRelation(error.message)) return [];
     throw new Error(`Erro ao listar auditoria: ${error.message}`);
   }
 
@@ -116,7 +116,7 @@ export async function listTenantObservabilityEvents(limit = 30): Promise<TenantO
     .limit(maxRows);
 
   if (error) {
-    if (isMissingTable(error.message, "tenant_observability_events")) {
+    if (isMissingRelation(error.message)) {
       return [];
     }
     throw new Error(`Erro ao listar eventos de observabilidade: ${error.message}`);

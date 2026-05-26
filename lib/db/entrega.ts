@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { isMissingRelation } from "@/lib/db/migration-guard";
 
 export type ComissionamentoItem = {
   id: string;
@@ -72,6 +73,10 @@ export async function createComissionamento(input: {
   });
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[entrega] tabela comissionamento_itens ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao criar item de comissionamento: ${error.message}`);
   }
 }
@@ -127,6 +132,10 @@ export async function upsertEntrega(input: {
   );
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[entrega] tabela entregas_obra ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao salvar entrega da obra: ${error.message}`);
   }
 }

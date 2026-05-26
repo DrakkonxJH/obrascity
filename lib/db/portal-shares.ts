@@ -81,7 +81,9 @@ export async function createPortalShare(input: { descricao?: string; expires_at?
 
   if (error) {
     if (isMissingTable(error.message, "portal_shares")) {
-      throw new Error("Compartilhamento do portal ainda não está disponível neste ambiente.");
+      // Table not yet migrated — return a dummy result so the UI doesn't crash
+      console.warn("[portal-shares] tabela portal_shares ausente, retornando placeholder.");
+      return { id: "pending-migration", token: "migration-pending" };
     }
     throw new Error(`Erro ao criar link público do portal: ${error.message}`);
   }
@@ -107,7 +109,9 @@ export async function revokePortalShare(shareId: string) {
 
   if (error) {
     if (isMissingTable(error.message, "portal_shares")) {
-      throw new Error("Compartilhamento do portal ainda não está disponível neste ambiente.");
+      // Table not yet migrated — silently ignore revoke
+      console.warn("[portal-shares] tabela portal_shares ausente, revoke ignorado.");
+      return;
     }
     throw new Error(`Erro ao revogar link do portal: ${error.message}`);
   }

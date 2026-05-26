@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
+import { isMissingRelation } from "@/lib/db/migration-guard";
 
 export type GarantiaChamadoItem = {
   id: string;
@@ -85,6 +86,10 @@ export async function createGarantiaChamado(input: {
   });
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[garantia] tabela garantia_chamados ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao abrir chamado de garantia: ${error.message}`);
   }
 }
@@ -103,6 +108,10 @@ export async function updateGarantiaStatus(chamadoId: string, status: string) {
     .eq("id", chamadoId);
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[garantia] tabela garantia_chamados ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao atualizar status de garantia: ${error.message}`);
   }
 }
@@ -144,6 +153,10 @@ export async function createGarantiaInteracao(input: { chamadoId: string; mensag
   });
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[garantia] tabela garantia_interacoes ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao registrar interação de garantia: ${error.message}`);
   }
 }

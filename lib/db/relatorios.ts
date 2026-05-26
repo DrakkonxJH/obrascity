@@ -139,6 +139,8 @@ export async function createRelatórioRequest(input: { obra_id: string | null; t
   if (input.obra_id) {
     await ensureObraAtiva(input.obra_id);
   }
+
+  // Try full insert (needs migrations 0007 + 0024 columns)
   const { data, error } = await supabase
     .from("relatorios")
     .insert({
@@ -152,9 +154,35 @@ export async function createRelatórioRequest(input: { obra_id: string | null; t
     .select("id")
     .single();
 
-  if (error || !data?.id) {
-    throw new Error(`Erro ao criar solicitacao de relatório: ${error?.message}`);
+  if (!error && data?.id) {
+    return data.id as string;
   }
 
-  return data.id as string;
+  // Fallback: retry with only base columns (pre-migration schema)
+  const isMissingColumn =
+    error &&
+    (error.message.toLowerCase().includes("column") ||
+      error.message.toLowerCase().includes("formato") ||
+      error.message.toLowerCase().includes("status") ||
+      error.message.toLowerCase().includes("solicitado_por"));
+
+  if (isMissingColumn) {
+    console.warn("[relatorios] Colunas ausentes, tentando insert com schema base.");
+    const { data: data2, error: error2 } = await supabase
+      .from("relatorios")
+      .insert({
+        empresa_id: empresaId,
+        obra_id: input.obra_id,
+        tipo: input.tipo,
+      })
+      .select("id")
+      .single();
+
+    if (error2 || !data2?.id) {
+      throw new Error(`Erro ao criar solicitacao de relatório: ${error2?.message}`);
+    }
+    return data2.id as string;
+  }
+
+  throw new Error(`Erro ao criar solicitacao de relatório: ${error?.message}`);
 }

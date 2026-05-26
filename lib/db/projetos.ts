@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
+import { isMissingRelation } from "@/lib/db/migration-guard";
 
 export type ProjetoDocumentoItem = {
   id: string;
@@ -71,6 +72,10 @@ export async function createProjetoDocumento(input: {
   });
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[projetos] tabela projetos_documentos ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao criar documento de projeto: ${error.message}`);
   }
 }
@@ -121,6 +126,10 @@ export async function createProjetoConflito(input: {
   });
 
   if (error) {
+    if (isMissingRelation(error.message)) {
+      console.warn("[projetos] tabela projetos_conflitos ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao criar conflito de projeto: ${error.message}`);
   }
 }

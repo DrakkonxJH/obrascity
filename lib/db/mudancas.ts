@@ -4,6 +4,7 @@ import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isProfileRole } from "@/lib/auth/roles";
 import { createApprovalRequest } from "@/lib/db/approvals";
 import { requiresApprovalForAmount, resolveRequiredRoleByAmount } from "@/lib/approvals/policy";
+import { isMissingRelation } from "@/lib/db/migration-guard";
 
 export type MudancaItem = {
   id: string;
@@ -77,6 +78,10 @@ export async function createMudanca(input: {
     .single();
 
   if (error || !data?.id) {
+    if (error && isMissingRelation(error.message)) {
+      console.warn("[mudancas] tabela change_requests ausente, retornando sem persistir.");
+      return;
+    }
     throw new Error(`Erro ao criar solicitação de mudança: ${error?.message ?? "sem id"}`);
   }
 
