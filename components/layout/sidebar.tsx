@@ -121,7 +121,7 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
             <div className="of-sidebar-brand">
               <div className="of-sidebar-brand-icon">🏗</div>
               <div className="of-sidebar-brand-text of-sidebar-logo-text">
-                Obras<span>Flow</span>
+                Plan<span>Obras</span>
               </div>
             </div>
             <button
