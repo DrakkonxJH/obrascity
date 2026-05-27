@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://obrascity.com.br"),
   title: "ObrasCitY",
   description: "Plataforma SaaS de gestão e monitoramento de obras",
 };
