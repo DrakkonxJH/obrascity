@@ -1,5 +1,3 @@
-import { getEnv } from "@/lib/validations/env";
-
 export type SignupEdgePayload = {
   nome: string;
   empresaNome: string;
@@ -21,32 +19,10 @@ export type SignupEdgeResult = {
 };
 
 export async function invokeSignupEdgeFunction(payload: SignupEdgePayload): Promise<SignupEdgeResult> {
-  const env = getEnv();
-  
-  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    throw new Error("Supabase environment variables not configured");
-  }
-
-  const url = `${env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/signup-orchestrator`;
-  const apiKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const isJwtLikeKey = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(apiKey);
-
-  const response = await fetch(url, {
+  // Use the server-side proxy to avoid browser CORS restrictions.
+  const response = await fetch("/api/signup", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(isJwtLikeKey
-        ? {
-            Authorization: `Bearer ${apiKey}`,
-          }
-        : {}),
-      apikey: apiKey,
-      ...(env.SIGNUP_EDGE_SHARED_SECRET
-        ? {
-            "x-signup-edge-secret": env.SIGNUP_EDGE_SHARED_SECRET,
-          }
-        : {}),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
