@@ -23,6 +23,10 @@ export default async function EntregaPage() {
       ? entregasResult.value
       : (warnings.push("Falha ao carregar entregas (verifique migrations)."), []);
 
+  const itensTestados = comissionamentos.filter((item) => item.status === "testado").length;
+  const entregasConcluidas = entregas.filter((item) => item.status === "entregue").length;
+  const chavesEntregues = entregas.filter((item) => item.chaves_entregues).length;
+
   return (
     <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
@@ -32,6 +36,26 @@ export default async function EntregaPage() {
             <p className="of-empty-text">{warnings.join(" ")}</p>
           </article>
         ) : null}
+
+        <div className="of-stats-grid" style={{ marginBottom: 20 }}>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{comissionamentos.length}</div>
+            <div className="of-stat-label">Itens de comissionamento</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{itensTestados}</div>
+            <div className="of-stat-label">Itens testados</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{entregasConcluidas}</div>
+            <div className="of-stat-label">Entregas concluídas</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{chavesEntregues}</div>
+            <div className="of-stat-label">Chaves entregues</div>
+          </article>
+        </div>
+
         <div className="grid gap-4 lg:grid-cols-2">
           <form action={createComissionamentoAction} className="of-card of-form-grid">
             <div className="of-card-title">Comissionamento técnico</div>

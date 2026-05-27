@@ -24,6 +24,14 @@ export default async function SegurancaCorporativaPage() {
       ? sessionsResult.value
       : (warnings.push("Falha ao carregar sessões corporativas."), []);
 
+  const mfaResumo = policy.mfa_required_roles.length > 0
+    ? `${policy.mfa_required_roles.length} perfil(is) exigindo MFA`
+    : "Não configurado";
+  const ssoResumo = policy.sso_enabled
+    ? `Ativo${policy.sso_provider ? ` · ${policy.sso_provider}` : ""}`
+    : "Desativado";
+  const timeoutResumo = `${policy.session_timeout_minutes} min`;
+
   return (
     <FeatureGateWrapper feature="segurança_enterprise">
       <section className="of-page">
@@ -121,6 +129,52 @@ export default async function SegurancaCorporativaPage() {
                     </td>
                   </tr>
                 ) : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Resumo de segurança</div>
+          <div className="of-stats-grid">
+            <article className="of-stat-card">
+              <div className="of-stat-value">{mfaResumo}</div>
+              <div className="of-stat-label">MFA</div>
+            </article>
+            <article className="of-stat-card">
+              <div className="of-stat-value">{ssoResumo}</div>
+              <div className="of-stat-label">SSO</div>
+            </article>
+            <article className="of-stat-card">
+              <div className="of-stat-value">{timeoutResumo}</div>
+              <div className="of-stat-label">Session timeout configurado</div>
+            </article>
+          </div>
+        </article>
+
+        <article className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Alertas de segurança</div>
+          <p className="of-empty-text">Nenhum alerta ativo</p>
+        </article>
+
+        <article className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Registro de auditoria</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Evento</th>
+                  <th>Alvo</th>
+                  <th>Data</th>
+                  <th>Responsável</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={4} className="of-empty-text">
+                    Logs de auditoria centralizados em configuração — em breve.
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>

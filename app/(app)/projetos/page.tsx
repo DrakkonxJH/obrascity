@@ -23,6 +23,10 @@ export default async function ProjetosPage() {
       ? conflitosResult.value
       : (warnings.push("Falha ao carregar conflitos de projeto (verifique migrations)."), []);
 
+  const documentosCompatibilizados = documentos.filter((item) => item.status === "compatibilizado").length;
+  const conflitosAbertos = conflitos.filter((item) => item.status === "aberto").length;
+  const conflitosCriticos = conflitos.filter((item) => item.severidade === "critica").length;
+
   return (
     <FeatureGateWrapper feature="gestão_documentos">
       <section className="of-page">
@@ -32,6 +36,26 @@ export default async function ProjetosPage() {
             <p className="of-empty-text">{warnings.join(" ")}</p>
           </article>
         ) : null}
+
+        <div className="of-stats-grid" style={{ marginBottom: 20 }}>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{documentos.length}</div>
+            <div className="of-stat-label">Total de documentos</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{documentosCompatibilizados}</div>
+            <div className="of-stat-label">Compatibilizados</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{conflitosAbertos}</div>
+            <div className="of-stat-label">Conflitos abertos</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{conflitosCriticos}</div>
+            <div className="of-stat-label">Conflitos críticos</div>
+          </article>
+        </div>
+
         <div className="grid gap-4 lg:grid-cols-2">
           <form action={createProjetoDocumentoAction} className="of-card of-form-grid">
             <div className="of-card-title">Compatibilização de projetos</div>

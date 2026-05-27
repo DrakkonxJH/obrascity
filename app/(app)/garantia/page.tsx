@@ -25,6 +25,12 @@ export default async function GarantiaPage() {
       ? interacoesResult[0].value
       : (chamadoPrincipal ? warnings.push("Falha ao carregar interações de garantia.") : null, []);
 
+  const emAtendimento = chamados.filter((item) => item.status === "em_atendimento").length;
+  const resolvidos = chamados.filter((item) => item.status === "resolvido").length;
+  const slaMedio = chamados.length > 0
+    ? (chamados.reduce((acc, item) => acc + item.sla_horas, 0) / chamados.length).toFixed(1)
+    : "0";
+
   return (
     <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
@@ -34,6 +40,26 @@ export default async function GarantiaPage() {
             <p className="of-empty-text">{warnings.join(" ")}</p>
           </article>
         ) : null}
+
+        <div className="of-stats-grid" style={{ marginBottom: 20 }}>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{chamados.length}</div>
+            <div className="of-stat-label">Total de chamados</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{emAtendimento}</div>
+            <div className="of-stat-label">Em atendimento</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{resolvidos}</div>
+            <div className="of-stat-label">Resolvidos</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{slaMedio}h</div>
+            <div className="of-stat-label">SLA médio</div>
+          </article>
+        </div>
+
         <form action={createGarantiaChamadoAction} className="of-card of-form-grid md:grid-cols-3">
           <div className="of-card-title md:col-span-3">Pós-obra e garantia</div>
           <select name="obra_id" className="of-input" defaultValue="" required>

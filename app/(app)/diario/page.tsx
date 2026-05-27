@@ -2,6 +2,11 @@ import { listObras } from "@/lib/db/obras";
 import { listDiarios } from "@/lib/db/diario";
 import { createDiarioAction } from "./actions";
 
+function formatDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isFinite(date.getTime()) ? date.toLocaleDateString("pt-BR") : value || "—";
+}
+
 export default async function DiarioPage() {
   const [obrasResult, diariosResult] = await Promise.allSettled([listObras(), listDiarios()]);
   const warnings: string[] = [];
@@ -14,6 +19,22 @@ export default async function DiarioPage() {
       ? diariosResult.value
       : (warnings.push("Falha ao carregar registros do diário (verifique migrations pendentes)."), []);
 
+  const agora = new Date();
+  const totalRegistros = diarios.length;
+  const registrosEsteMes = diarios.filter((item) => {
+    const data = new Date(`${item.data_ref}T00:00:00`);
+    return (
+      Number.isFinite(data.getTime()) &&
+      data.getMonth() === agora.getMonth() &&
+      data.getFullYear() === agora.getFullYear()
+    );
+  }).length;
+  const totalEvidencias = diarios.reduce((acc, item) => acc + item.evidencias.length, 0);
+  const efetivoMedio = diarios.length > 0
+    ? (diarios.reduce((acc, item) => acc + item.efetivo, 0) / diarios.length).toFixed(1)
+    : "0";
+  const ultimasOcorrencias = diarios.filter((item) => item.ocorrencias && item.ocorrencias.trim().length > 0).slice(0, 3);
+
   return (
     <section className="of-page">
       {warnings.length > 0 ? (
@@ -25,6 +46,25 @@ export default async function DiarioPage() {
       <p className="of-empty-text" style={{ marginBottom: 16 }}>
         Registro operacional diário com dados de campo e evidências.
       </p>
+
+      <div className="of-stats-grid" style={{ marginBottom: 20 }}>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{totalRegistros}</div>
+          <div className="of-stat-label">Total de registros</div>
+        </article>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{registrosEsteMes}</div>
+          <div className="of-stat-label">Registros este mês</div>
+        </article>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{totalEvidencias}</div>
+          <div className="of-stat-label">Total de evidências</div>
+        </article>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{efetivoMedio}</div>
+          <div className="of-stat-label">Efetivo médio</div>
+        </article>
+      </div>
 
       <form action={createDiarioAction} encType="multipart/form-data" className="of-card of-form-grid md:grid-cols-3" style={{ marginBottom: 20 }}>
         <div className="of-card-title md:col-span-3">Novo registro (RDO)</div>
@@ -104,6 +144,24 @@ export default async function DiarioPage() {
           </tbody>
         </table>
       </div>
+
+      <article className="of-card" style={{ marginTop: 20 }}>
+        <div className="of-card-title">Últimas ocorrências</div>
+        {ultimasOcorrencias.length > 0 ? (
+          <ul className="of-list">
+            {ultimasOcorrencias.map((item) => (
+              <li key={item.id} className="of-list-item">
+                <p className="of-list-title">
+                  {item.obra_nome} · {formatDate(item.data_ref)}
+                </p>
+                <p className="of-list-description">{item.ocorrencias}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="of-empty-text">Nenhuma ocorrência recente registrada.</p>
+        )}
+      </article>
     </section>
   );
 }

@@ -5,6 +5,13 @@ import { createMudancaAction } from "./actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
+const tipoLabels: Record<string, string> = {
+  escopo: "Escopo",
+  prazo: "Prazo",
+  custo: "Custo",
+  contratual: "Contratual",
+};
+
 export default async function MudancasPage() {
   const [obrasResult, mudancasResult] = await Promise.allSettled([listObras(), listMudancas()]);
   const warnings: string[] = [];
@@ -17,6 +24,15 @@ export default async function MudancasPage() {
       ? mudancasResult.value
       : (warnings.push("Falha ao carregar mudanças registradas (verifique migrations)."), []);
 
+  const totalMudancas = mudancas.length;
+  const pendentesAprovacao = mudancas.filter((item) => item.status === "pendente").length;
+  const impactoTotalPrazo = mudancas.reduce((acc, item) => acc + item.impacto_prazo_dias, 0);
+  const impactoTotalCusto = mudancas.reduce((acc, item) => acc + item.impacto_custo, 0);
+  const distribuicaoPorTipo = ["escopo", "prazo", "custo", "contratual"].map((tipo) => ({
+    tipo,
+    total: mudancas.filter((item) => item.tipo === tipo).length,
+  }));
+
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
@@ -26,6 +42,26 @@ export default async function MudancasPage() {
             <p className="of-empty-text">{warnings.join(" ")}</p>
           </article>
         ) : null}
+
+        <div className="of-stats-grid" style={{ marginBottom: 20 }}>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{totalMudancas}</div>
+            <div className="of-stat-label">Total de mudanças</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{pendentesAprovacao}</div>
+            <div className="of-stat-label">Pendentes de aprovação</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{impactoTotalPrazo}</div>
+            <div className="of-stat-label">Impacto total de prazo (dias)</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{money.format(impactoTotalCusto)}</div>
+            <div className="of-stat-label">Impacto total de custo</div>
+          </article>
+        </div>
+
         <form action={createMudancaAction} className="of-card of-form-grid md:grid-cols-3">
           <div className="of-card-title md:col-span-3">Gestão de mudanças (escopo, prazo, custo e contrato)</div>
           <select name="obra_id" className="of-input" defaultValue="" required>
@@ -87,6 +123,18 @@ export default async function MudancasPage() {
                 ) : null}
               </tbody>
             </table>
+          </div>
+        </article>
+
+        <article className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Distribuição por tipo</div>
+          <div className="of-stats-grid">
+            {distribuicaoPorTipo.map((item) => (
+              <article key={item.tipo} className="of-stat-card">
+                <div className="of-stat-value">{item.total}</div>
+                <div className="of-stat-label">{tipoLabels[item.tipo] ?? item.tipo}</div>
+              </article>
+            ))}
           </div>
         </article>
       </section>
