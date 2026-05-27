@@ -54,7 +54,7 @@ async function sendVerificationEmail(input: {
     throw new Error("RESEND_API_KEY não configurada");
   }
 
-  const from = env.RESEND_FROM_EMAIL ?? "ObrasCitY <no-reply@obrascity.com>";
+  const from = env.RESEND_FROM_EMAIL ?? "ObrasCitY <no-reply@obrascity.com.br>";
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {

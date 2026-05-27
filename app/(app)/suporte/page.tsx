@@ -7,19 +7,19 @@ const canais = [
     titulo: "Atendimento prioritario",
     descricao: "Suporte para incidentes que impactam a operacao da obra.",
     disponibilidade: "Seg a Sex · 08h as 18h",
-    contato: "suporte@obrascity.com",
+    contato: "suporte@obrascity.com.br",
   },
   {
     titulo: "Suporte comercial",
     descricao: "Dvidas sobre plano, upgrade, perfis adicionais e condicoes comerciais.",
     disponibilidade: "Seg a Sex · 09h as 18h",
-    contato: "comercial@obrascity.com",
+    contato: "comercial@obrascity.com.br",
   },
   {
     titulo: "Onboarding e treinamento",
     descricao: "Acompanhamento para adocao da plataforma com o seu time.",
     disponibilidade: "Agendamento",
-    contato: "onboarding@obrascity.com",
+    contato: "onboarding@obrascity.com.br",
   },
 ];
 
