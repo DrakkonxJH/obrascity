@@ -6,6 +6,7 @@ import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { openBillingPortalAction, startCheckoutAction } from "./actions";
+import { GatewayCheckoutForm } from "./gateway-selector";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 
@@ -75,19 +76,29 @@ function statusLabel(status: string | null | undefined) {
   if (value === "active") return "Ativa";
   if (value === "trialing") return "Em trial";
   if (value === "past_due") return "Pagamento pendente";
-  if (value === "canceled") return "Cancelada";
+  if (value === "pending_payment") return "Aguardando PIX";
+  if (value === "canceled" || value === "cancelada") return "Cancelada";
   if (value === "incomplete") return "Incompleta";
   return "Nao configurada";
+}
+
+function getBillingProviderLabel(subscriptionRef: string | null | undefined) {
+  if ((subscriptionRef ?? "").startsWith("mp_")) return "Mercado Pago";
+  if ((subscriptionRef ?? "").startsWith("asaas_")) return "Asaas";
+  return "Stripe";
 }
 
 export default async function PlanosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string; erro?: string; billing?: string }>;
+  searchParams: Promise<{ checkout?: string; erro?: string; billing?: string; gateway?: string }>;
 }) {
   const params = await searchParams;
   const [assinatura, profile] = await Promise.all([getAssinaturaAtual(), getCurrentProfile()]);
   const canManageBilling = profile ? BILLING_ROLES.has(profile.role as string) : false;
+  const billingProvider = getBillingProviderLabel(
+    assinatura?.external_subscription_id ?? assinatura?.external_customer_id,
+  );
 
   const currentPlan = (assinatura?.plano ?? "trial") as PlanId;
   const planOrder: Record<PlanId, number> = {
@@ -137,7 +148,13 @@ export default async function PlanosPage({
 
   const checkoutMessage =
     params.checkout === "success"
-      ? { kind: "success" as const, text: "Pagamento processado. Seu plano sera atualizado em instantes." }
+      ? {
+          kind: "success" as const,
+          text:
+            params.gateway === "mp" || params.gateway === "asaas"
+              ? "Assinatura iniciada. Confirme o PIX para ativar o plano; a atualização ocorre automaticamente após o webhook."
+              : "Pagamento processado. Seu plano sera atualizado em instantes.",
+        }
       : params.checkout === "cancel"
         ? { kind: "info" as const, text: "Checkout cancelado. Nenhuma cobranca foi feita." }
         : null;
@@ -201,7 +218,7 @@ export default async function PlanosPage({
           </p>
           <p className="of-list-description">
             {canManageBilling
-              ? "Voce pode abrir checkout e portal Stripe."
+              ? `Voce pode iniciar checkout e gerenciar a cobrança atual via ${billingProvider}.`
               : "Somente administrador/gestor altera plano."}
           </p>
         </article>
@@ -443,28 +460,14 @@ export default async function PlanosPage({
                       Sem permissao de cobrança
                     </div>
                   ) : (
-                    <form action={startCheckoutAction} style={{ width: "100%" }}>
-                      <input type="hidden" name="plan" value={item.id} />
-                      <input type="hidden" name="billingCycle" value={billingCycle} />
-                      <button
-                        type="submit"
-                        style={{
-                          width: "100%",
-                          padding: "11px 16px",
-                          background: item.highlight ? "#ff6b1a" : "var(--of-blue)",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: 6,
-                          fontWeight: 600,
-                          fontSize: "0.95rem",
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                        }}
-                        
-                      >
-                        {currentPlan === "trial" ? `Assinar ${item.name}` : `Fazer upgrade`}
-                      </button>
-                    </form>
+                    <GatewayCheckoutForm
+                      plan={item.id}
+                      billingCycle={billingCycle}
+                      planName={item.name}
+                      currentPlan={currentPlan}
+                      isUpgrade={currentPlan !== "trial"}
+                      startCheckoutAction={startCheckoutAction}
+                    />
                   )}
                 </div>
 
@@ -532,13 +535,21 @@ export default async function PlanosPage({
           <article className="of-card">
             <div className="of-card-title">Gerenciar cobrança</div>
             <p className="of-list-description mb-4">
-              Atualize cartão, gerencie PIX, cancele ou altere o plano no portal seguro do Stripe.
+              {billingProvider === "Stripe"
+                ? "Atualize cartão, gerencie PIX, cancele ou altere o plano no portal seguro do Stripe."
+                : `Sua assinatura atual usa ${billingProvider}. Confirme o PIX recorrente e acompanhe a ativação automática pelos webhooks.`}
             </p>
-            <form action={openBillingPortalAction}>
-              <button type="submit" className="of-btn-ghost" style={{ width: "100%", maxWidth: 320 }}>
-                Abrir portal do cliente Stripe
-              </button>
-            </form>
+            {billingProvider === "Stripe" ? (
+              <form action={openBillingPortalAction}>
+                <button type="submit" className="of-btn-ghost" style={{ width: "100%", maxWidth: 320 }}>
+                  Abrir portal do cliente Stripe
+                </button>
+              </form>
+            ) : (
+              <p className="of-list-description">
+                Para trocar de plano ou gerar um novo PIX, inicie um novo checkout na grade de planos acima.
+              </p>
+            )}
           </article>
         ) : (
           <article className="of-card">
