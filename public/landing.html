@@ -11,11 +11,15 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="ObrasCitY — Gestão de Obras">
 <meta property="og:description" content="Plataforma completa de gestão de obras. Controle financeiro, equipes, cronograma e documentos.">
-<meta property="og:image" content="/og-image.png">
+<meta property="og:image" content="/og-image.svg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ObrasCitY — Gestão de Obras">
 <meta name="twitter:description" content="Solução de gestão de obras para construtoras brasileiras.">
 <meta name="theme-color" content="#FF6B1A">
+<link rel="canonical" href="https://obrascity.com.br/">
+<meta property="og:url" content="https://obrascity.com.br/">
+<meta property="og:site_name" content="ObrasCitY">
+<meta name="twitter:site" content="@obrascity">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
@@ -691,7 +695,7 @@ section{position:relative;overflow:hidden}
    FOOTER
 ═══════════════════════════════════════════ */
 footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60px 0 32px}
-.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
 .footer-brand-desc{font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-top:14px;max-width:240px}
 .footer-col-title{
   font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;
@@ -740,22 +744,50 @@ footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60
   .footer-bottom{flex-direction:column;text-align:center}
 }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ObrasCitY",
+  "description": "Plataforma SaaS de gestão de obras para construtoras brasileiras. Controle financeiro, equipes, cronograma e documentos em uma só plataforma.",
+  "url": "https://obrascity.com.br",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "BRL",
+    "price": "99",
+    "priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "price": "99",
+      "priceCurrency": "BRL",
+      "unitText": "MONTH"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "reviewCount": "127"
+  }
+}
+</script>
 </head>
 <body>
 
 <!-- ═══════ NAV ═══════ -->
 <nav id="navbar">
   <div class="nav-inner">
-    <a href="#" class="nav-logo">
+    <a href="/" class="nav-logo">
       <div class="nav-logo-mark">🏗</div>
       <div class="nav-logo-text">OBRAS<em>CITY</em></div>
-    </span>
+    </a>
     <div class="nav-links">
       <a href="#solucao" class="nav-link">Solução</a>
       <a href="#numeros" class="nav-link">Resultados</a>
       <a href="#modulos" class="nav-link">Módulos</a>
       <a href="#depoimentos" class="nav-link">Clientes</a>
       <a href="#planos" class="nav-link">Planos</a>
+      <a href="/contato" class="nav-link">Contato</a>
     </div>
     <div class="nav-cta">
       <button class="btn-nav-ghost" onclick="location.href='/login'">Entrar</button>
@@ -775,6 +807,7 @@ footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60
   <a href="#modulos" onclick="document.getElementById('mobileMenu').classList.remove('open')">Módulos</a>
   <a href="#depoimentos" onclick="document.getElementById('mobileMenu').classList.remove('open')">Clientes</a>
   <a href="#planos" onclick="document.getElementById('mobileMenu').classList.remove('open')">Planos</a>
+  <a href="/contato" onclick="document.getElementById('mobileMenu').classList.remove('open')">Contato</a>
   <button class="btn-fire" onclick="location.href='/cadastro'">Começar grátis →</button>
 </div>
 
@@ -1283,9 +1316,9 @@ footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60
       <div>
         <div class="footer-col-title">Empresa</div>
         <div class="footer-links">
-          <a href="#hero" class="footer-link">Sobre nós</a>
+          <a href="/sobre" class="footer-link">Sobre nós</a>
           <a href="#depoimentos" class="footer-link">Clientes</a>
-          <a href="#cta-final" class="footer-link">Contato</a>
+          <a href="/contato" class="footer-link">Contato</a>
         </div>
       </div>
       <div>
@@ -1294,6 +1327,15 @@ footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60
           <a href="#faq" class="footer-link">Perguntas frequentes</a>
           <a href="/privacidade" class="footer-link">Política de privacidade</a>
           <a href="/termos" class="footer-link">Termos de uso</a>
+          <a href="/politica-de-cookies" class="footer-link">Política de cookies</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Comunidade</div>
+        <div class="footer-links">
+          <a href="https://www.instagram.com/obrascity" class="footer-link" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://www.linkedin.com/company/obrascity" class="footer-link" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://wa.me/5511999999999?text=Ol%C3%A1%2C+gostaria+de+saber+mais+sobre+o+ObrasCitY" class="footer-link" target="_blank" rel="noopener">WhatsApp</a>
         </div>
       </div>
     </div>
@@ -1308,6 +1350,18 @@ footer{background:var(--void);border-top:1px solid var(--border-dark);padding:60
     </div>
   </div>
 </footer>
+
+<!-- ═══════ WHATSAPP FLOAT ═══════ -->
+<a href="https://wa.me/5511999999999?text=Ol%C3%A1%2C+gostaria+de+saber+mais+sobre+o+ObrasCitY" target="_blank" rel="noopener" aria-label="Falar no WhatsApp" style="position:fixed;bottom:24px;right:24px;background:#25D366;color:#FFF;border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:9998;text-decoration:none;transition:transform .2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">💬</a>
+
+<!-- ═══════ COOKIE CONSENT (LGPD) ═══════ -->
+<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0C1018;border-top:1px solid rgba(255,107,26,0.3);padding:16px 24px;z-index:9999;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+  <p style="color:#8896B3;font-size:.85rem;margin:0;flex:1;min-width:200px">🍪 Usamos cookies essenciais e analíticos (anonimizados) para melhorar sua experiência. Conforme a <strong style="color:#F0F4FF">LGPD</strong>, você pode aceitar ou recusar cookies opcionais. <a href="/politica-de-cookies" style="color:#FF6B1A;text-decoration:underline">Saiba mais</a>.</p>
+  <div style="display:flex;gap:10px;flex-shrink:0">
+    <button onclick="rejectCookies()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:#8896B3;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:.85rem">Recusar opcionais</button>
+    <button onclick="acceptCookies()" style="background:#FF6B1A;border:none;color:#FFF;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600">Aceitar todos</button>
+  </div>
+</div>
 
 <script>
 if ('scrollRestoration' in history) {
@@ -1443,6 +1497,15 @@ function draw(){
 }
 window.addEventListener('resize',resize);
 resize();draw();
+
+// ── COOKIE CONSENT ──
+(function(){
+  if(!localStorage.getItem('cookie_consent')){
+    document.getElementById('cookieBanner').style.display='flex';
+  }
+})();
+function acceptCookies(){localStorage.setItem('cookie_consent','accepted');document.getElementById('cookieBanner').style.display='none';}
+function rejectCookies(){localStorage.setItem('cookie_consent','rejected');document.getElementById('cookieBanner').style.display='none';}
 </script>
 </body>
 </html>
