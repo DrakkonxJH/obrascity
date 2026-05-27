@@ -56,3 +56,4 @@ next-env.d.ts
 /artifacts
 /reports
 .netlify
+SECRETS_CHECKLIST.md
