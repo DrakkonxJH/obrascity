@@ -1,0 +1,18 @@
+alter table public.viabilidade_estudos
+  add column if not exists valor_investimento numeric,
+  add column if not exists receita_esperada numeric,
+  add column if not exists roi_percent numeric,
+  add column if not exists payback_meses integer,
+  add column if not exists vpl numeric,
+  add column if not exists tir_percent numeric,
+  add column if not exists area_terreno_m2 numeric,
+  add column if not exists area_construida_m2 numeric,
+  add column if not exists custo_m2 numeric,
+  add column if not exists preco_venda_m2 numeric,
+  add column if not exists impacto_ambiental text default 'nao_avaliado',
+  add column if not exists notas_tecnicas text,
+  add column if not exists notas_legais text,
+  add column if not exists notas_economicas text,
+  add column if not exists prazo_obra_meses integer,
+  add column if not exists indice_aproveitamento numeric,
+  add column if not exists taxa_ocupacao numeric;
