@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isMissingRelation } from "@/lib/db/migration-guard";
 
 export type AdminEmpresa = {
   id: string;
@@ -9,6 +10,13 @@ export type AdminEmpresa = {
   assinatura_id: string | null;
   periodo_fim: string | null;
   profile_count: number;
+  obra_count: number;
+  active_obra_count: number;
+  last_activity_at: string | null;
+  storage_estimate_mb: number;
+  profile_limit_override: number | null;
+  report_daily_limit_override: number | null;
+  feature_flag_count: number;
 };
 
 export type AdminProfile = {
@@ -95,16 +103,52 @@ function pickCurrentSubscription(rows: AssinaturaRow[]) {
 export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   const admin = createAdminClient();
 
-  const [empresasRes, assinaturasRes, profilesRes] = await Promise.all([
+  const [
+    empresasRes,
+    assinaturasRes,
+    profilesRes,
+    obrasRes,
+    fotosRes,
+    relatoriosRes,
+    diariosRes,
+    sessionsRes,
+    overridesRes,
+    flagsRes,
+  ] = await Promise.all([
     admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }),
     admin
       .from("assinaturas")
       .select("empresa_id, id, plano, status, periodo_fim, created_at")
       .order("created_at", { ascending: false }),
     admin.from("profiles").select("empresa_id"),
+    admin.from("obras").select("empresa_id, status, created_at"),
+    admin.from("fotos_obra").select("empresa_id, created_at"),
+    admin.from("relatorios").select("empresa_id, created_at"),
+    admin.from("diario_obra").select("empresa_id, created_at"),
+    admin.from("tenant_auth_sessions").select("empresa_id, last_seen_at"),
+    admin
+      .from("tenant_admin_overrides")
+      .select("empresa_id, profile_limit_override, report_daily_limit_override"),
+    admin.from("tenant_feature_flags").select("empresa_id"),
   ]);
 
-  if (empresasRes.error) throw new Error(empresasRes.error.message);
+  const errors = [
+    empresasRes.error,
+    assinaturasRes.error,
+    profilesRes.error,
+    obrasRes.error,
+    fotosRes.error,
+    relatoriosRes.error,
+    diariosRes.error,
+    sessionsRes.error,
+    overridesRes.error,
+    flagsRes.error,
+  ].filter((error) => Boolean(error) && !isMissingRelation((error as { message?: string }).message ?? "")) as Array<{
+    message?: string;
+  }>;
+  if (errors.length > 0) {
+    throw new Error((errors[0] as { message?: string }).message ?? "Erro ao carregar empresas");
+  }
 
   const assinMap = new Map<string, AssinaturaRow[]>();
   for (const a of assinaturasRes.data ?? []) {
@@ -126,8 +170,55 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
     profileCountMap.set(p.empresa_id, (profileCountMap.get(p.empresa_id) ?? 0) + 1);
   }
 
+  const obraCountMap = new Map<string, number>();
+  const activeObraCountMap = new Map<string, number>();
+  for (const obra of obrasRes.data ?? []) {
+    obraCountMap.set(obra.empresa_id, (obraCountMap.get(obra.empresa_id) ?? 0) + 1);
+    if (String(obra.status ?? "").toLowerCase() !== "concluida") {
+      activeObraCountMap.set(obra.empresa_id, (activeObraCountMap.get(obra.empresa_id) ?? 0) + 1);
+    }
+  }
+
+  const lastActivityMap = new Map<string, string>();
+  for (const session of sessionsRes.data ?? []) {
+    const lastSeen = String(session.last_seen_at ?? "");
+    const current = lastActivityMap.get(session.empresa_id);
+    if (!current || new Date(lastSeen).getTime() > new Date(current).getTime()) {
+      lastActivityMap.set(session.empresa_id, lastSeen);
+    }
+  }
+  for (const obra of obrasRes.data ?? []) {
+    const updatedAt = String(obra.created_at ?? "");
+    const current = lastActivityMap.get(obra.empresa_id);
+    if (!current || new Date(updatedAt).getTime() > new Date(current).getTime()) {
+      lastActivityMap.set(obra.empresa_id, updatedAt);
+    }
+  }
+
+  const storageEstimateMap = new Map<string, number>();
+  const addEstimate = (empresaId: string, mb: number) => {
+    storageEstimateMap.set(empresaId, (storageEstimateMap.get(empresaId) ?? 0) + mb);
+  };
+  for (const item of fotosRes.data ?? []) addEstimate(item.empresa_id, 1.8);
+  for (const item of relatoriosRes.data ?? []) addEstimate(item.empresa_id, 0.9);
+  for (const item of diariosRes.data ?? []) addEstimate(item.empresa_id, 0.25);
+
+  const overrideMap = new Map<string, { profile_limit_override: number | null; report_daily_limit_override: number | null }>();
+  for (const row of overridesRes.data ?? []) {
+    overrideMap.set(row.empresa_id, {
+      profile_limit_override: row.profile_limit_override ?? null,
+      report_daily_limit_override: row.report_daily_limit_override ?? null,
+    });
+  }
+
+  const featureFlagCountMap = new Map<string, number>();
+  for (const row of flagsRes.data ?? []) {
+    featureFlagCountMap.set(row.empresa_id, (featureFlagCountMap.get(row.empresa_id) ?? 0) + 1);
+  }
+
   return (empresasRes.data ?? []).map((e) => {
     const assinatura = pickCurrentSubscription(assinMap.get(e.id) ?? []);
+    const override = overrideMap.get(e.id);
     return {
       id: e.id,
       nome: e.nome,
@@ -137,6 +228,13 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
       assinatura_id: assinatura?.id ?? null,
       periodo_fim: assinatura?.periodo_fim ?? null,
       profile_count: profileCountMap.get(e.id) ?? 0,
+      obra_count: obraCountMap.get(e.id) ?? 0,
+      active_obra_count: activeObraCountMap.get(e.id) ?? 0,
+      last_activity_at: lastActivityMap.get(e.id) ?? null,
+      storage_estimate_mb: Number((storageEstimateMap.get(e.id) ?? 0).toFixed(2)),
+      profile_limit_override: override?.profile_limit_override ?? null,
+      report_daily_limit_override: override?.report_daily_limit_override ?? null,
+      feature_flag_count: featureFlagCountMap.get(e.id) ?? 0,
     };
   });
 }

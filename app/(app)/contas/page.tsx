@@ -14,6 +14,12 @@ import {
   listSupportTickets,
 } from "@/lib/db/admin-contas";
 import {
+  listTenantAdminOverrides,
+  listTenantBroadcasts,
+  listTenantFeatureFlags,
+  listTenantImpersonationSessions,
+} from "@/lib/db/master-admin";
+import {
   suspenderEmpresaAction,
   ativarEmpresaAction,
   alterarPlanoAction,
@@ -25,6 +31,12 @@ import {
   removerPerfilAction,
   resetarSenhaUsuarioAction,
   resetarDadosEmpresaAction,
+  salvarFeatureFlagAction,
+  salvarLimitesEmpresaAction,
+  removerFeatureFlagAction,
+  criarComunicadoTenantAction,
+  iniciarAcessoAssistidoAction,
+  encerrarAcessoAssistidoAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +58,11 @@ const MASTER_TABS = [
   { key: "suporte", label: "Suporte" },
   { key: "auditoria", label: "Auditoria" },
   { key: "runbooks", label: "Runbooks" },
+  { key: "impersonacao", label: "Acesso assistido" },
+  { key: "limites", label: "Limites e quotas" },
+  { key: "flags", label: "Feature flags" },
+  { key: "comunicacao", label: "Comunicação" },
+  { key: "health", label: "Health" },
   { key: "terminal", label: "Terminal" },
   { key: "integracoes", label: "Integrações" },
   { key: "deploy", label: "Deploy" },
@@ -181,13 +198,17 @@ export default async function ContasPage({
   const tab = params.tab ?? "empresas";
   const auditQuery = String(params.q ?? "").trim().toLowerCase();
 
-  const [empresas, perfis, alertas, tentativas, tickets, auditLogs] = await Promise.all([
+  const [empresas, perfis, alertas, tentativas, tickets, auditLogs, overrides, featureFlags, sessions, broadcasts] = await Promise.all([
     listAllEmpresas(),
     listAllProfiles(),
     listRecentSecurityAlerts(50),
     listRecentSignupAttempts(30),
     listSupportTickets(120),
     listMasterAuditLogs(150),
+    listTenantAdminOverrides(),
+    listTenantFeatureFlags(),
+    listTenantImpersonationSessions(),
+    listTenantBroadcasts(),
   ]);
 
   const totalAtivos = empresas.filter((e) => ACTIVE_STATUSES.has(e.assinatura_status)).length;
@@ -197,6 +218,11 @@ export default async function ContasPage({
   const empresasPagantes = empresas.filter((e) => e.assinatura_status === "active").length;
   const mrrEstimado = empresas.reduce((acc, e) => acc + (PLANO_MRR[e.plano] ?? 0), 0);
   const ticketsAbertos = tickets.filter((t) => t.status !== "resolvido" && t.status !== "fechado").length;
+  const totalObras = empresas.reduce((acc, e) => acc + (e.obra_count ?? 0), 0);
+  const totalObrasAtivas = empresas.reduce((acc, e) => acc + (e.active_obra_count ?? 0), 0);
+  const totalStorageEstimate = empresas.reduce((acc, e) => acc + (e.storage_estimate_mb ?? 0), 0);
+  const openAssistSessions = sessions.filter((session) => session.active && !session.revoked_at).length;
+  const enabledFlags = featureFlags.filter((flag) => flag.enabled).length;
   const filteredAuditLogs = auditLogs.filter((log) => {
     if (!auditQuery) return true;
     const haystack = [
@@ -285,6 +311,34 @@ export default async function ContasPage({
             {tentativas.filter((t) => !t.success).length} falhas recentes
           </p>
         </article>
+        <article className="of-metric-card">
+          <p className="of-kpi-icon">🏗️</p>
+          <p className="of-kpi-label">Obras ativas</p>
+          <p className="of-kpi-value">{totalObrasAtivas}</p>
+          <p className="of-metric-change">{totalObras} obras no total</p>
+        </article>
+        <article className="of-metric-card">
+          <p className="of-kpi-icon">💾</p>
+          <p className="of-kpi-label">Storage estimado</p>
+          <p className="of-kpi-value">{totalStorageEstimate.toFixed(1)} MB</p>
+          <p className="of-metric-change">baseado em mídia, relatórios e diários</p>
+        </article>
+        <article className="of-metric-card">
+          <p className="of-kpi-icon">🏁</p>
+          <p className="of-kpi-label">Feature flags ativas</p>
+          <p className="of-kpi-value">{enabledFlags}</p>
+          <p className="of-metric-change">de {featureFlags.length} registradas</p>
+        </article>
+        <Link
+          href="/contas?tab=impersonacao"
+          className="of-metric-card"
+          style={{ textDecoration: "none", color: "inherit", display: "block", cursor: "pointer" }}
+        >
+          <p className="of-kpi-icon">🪪</p>
+          <p className="of-kpi-label">Acessos assistidos</p>
+          <p className="of-kpi-value">{openAssistSessions}</p>
+          <p className="of-metric-change">sessões abertas para suporte</p>
+        </Link>
       </div>
 
       {/* ── TAB: EMPRESAS ── */}
@@ -301,6 +355,10 @@ export default async function ContasPage({
                   <th style={TH_STYLE}>Plano</th>
                   <th style={TH_STYLE}>Status</th>
                   <th style={TH_STYLE}>Usuários</th>
+                  <th style={TH_STYLE}>Obras</th>
+                  <th style={TH_STYLE}>Última atividade</th>
+                  <th style={TH_STYLE}>Storage</th>
+                  <th style={TH_STYLE}>Overrides</th>
                   <th style={TH_STYLE}>Vencimento</th>
                   <th style={TH_STYLE}>Criado em</th>
                   <th style={{ ...TH_STYLE, minWidth: 320 }}>Ações</th>
@@ -322,6 +380,14 @@ export default async function ContasPage({
                       <td style={TD_STYLE}><PlanoBadge plano={emp.plano} /></td>
                       <td style={TD_STYLE}><StatusBadge status={emp.assinatura_status} /></td>
                       <td style={{ ...TD_STYLE, textAlign: "center" }}>{emp.profile_count}</td>
+                      <td style={{ ...TD_STYLE, textAlign: "center" }}>{emp.active_obra_count}/{emp.obra_count}</td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{fmtDatetime(emp.last_activity_at)}</td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{emp.storage_estimate_mb.toFixed(1)} MB</td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.75rem" }}>
+                        {emp.profile_limit_override || emp.report_daily_limit_override || emp.feature_flag_count
+                          ? `${emp.profile_limit_override ?? "—"} perfis · ${emp.report_daily_limit_override ?? "—"} relatórios · ${emp.feature_flag_count} flags`
+                          : "Padrão do plano"}
+                      </td>
                       <td style={TD_STYLE}>{fmtDate(emp.periodo_fim)}</td>
                       <td style={TD_STYLE}>{fmtDate(emp.created_at)}</td>
                       <td style={TD_STYLE}>
@@ -385,7 +451,7 @@ export default async function ContasPage({
                   );
                 })}
                 {empresas.length === 0 && (
-                  <tr><td colSpan={7} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhuma empresa encontrada.</td></tr>
+                  <tr><td colSpan={11} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhuma empresa encontrada.</td></tr>
                 )}
               </tbody>
             </table>
@@ -625,6 +691,12 @@ export default async function ContasPage({
                   ["Resend", setup.resend, "E-mails transacionais"],
                   ["Redis", setup.redis, "Fila, rate limit e cache operacional"],
                   ["Turnstile", setup.turnstile, "Anti-bot em login/cadastro"],
+                  ["Bull Board", true, "Visualização das filas BullMQ"],
+                  ["Sentry/Axiom", false, "Logs e erros de produção"],
+                  ["Vercel Analytics", false, "Métricas de infra e navegação"],
+                  ["Instatus/BetterUptime", false, "Status page pública"],
+                  ["Intercom/Crisp/Plain", false, "Comunicação com clientes"],
+                  ["Dependabot", false, "Monitoramento de dependências"],
                 ].map(([name, enabled, purpose]) => (
                   <tr key={String(name)}>
                     <td style={TD_STYLE}>{name}</td>
@@ -854,6 +926,337 @@ export default async function ContasPage({
             </li>
           </ul>
         </article>
+      )}
+
+      {tab === "impersonacao" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Acesso assistido</div>
+            <p className="of-list-description" style={{ marginBottom: 12 }}>
+              Registra uma sessão assistida para reproduzir um problema do tenant sem depender da senha do cliente.
+            </p>
+            <form action={iniciarAcessoAssistidoAction} className="of-form-grid md:grid-cols-4">
+              <select name="empresa_id" className="of-input" required>
+                <option value="">Empresa</option>
+                {empresas.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.nome}
+                  </option>
+                ))}
+              </select>
+              <select name="profile_id" className="of-input">
+                <option value="">Perfil alvo (opcional)</option>
+                {perfis.map((perfil) => (
+                  <option key={perfil.id} value={perfil.id}>
+                    {perfil.nome} · {perfil.empresa_nome}
+                  </option>
+                ))}
+              </select>
+              <input name="reason" className="of-input md:col-span-2" placeholder="Motivo do acesso assistido" />
+              <button type="submit" className="of-btn-primary">Abrir sessão assistida</button>
+            </form>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Sessões assistidas recentes ({sessions.length})</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Empresa</th>
+                    <th style={TH_STYLE}>Perfil</th>
+                    <th style={TH_STYLE}>Motivo</th>
+                    <th style={TH_STYLE}>Expira</th>
+                    <th style={TH_STYLE}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((session) => (
+                    <tr key={session.id}>
+                      <td style={TD_STYLE}>{session.empresa_nome}</td>
+                      <td style={TD_STYLE}>{session.profile_id ?? "—"}</td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.8rem" }}>{session.reason}</td>
+                      <td style={TD_STYLE}>{fmtDatetime(session.expires_at)}</td>
+                      <td style={TD_STYLE}>
+                        <span className={session.active && !session.revoked_at ? "of-badge of-badge-green" : "of-badge of-badge-red"}>
+                          {session.active && !session.revoked_at ? "Ativa" : "Revogada"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {sessions.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhuma sessão assistida registrada.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+            <form action={encerrarAcessoAssistidoAction} style={{ marginTop: 12 }}>
+              <button type="submit" className="of-btn-ghost">Encerrar sessão assistida atual</button>
+            </form>
+          </article>
+        </div>
+      )}
+
+      {tab === "limites" && (
+        <article className="of-card">
+          <div className="of-card-title" style={{ marginBottom: 12 }}>Limites e quotas por tenant</div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={TH_STYLE}>Empresa</th>
+                  <th style={TH_STYLE}>Perfis</th>
+                  <th style={TH_STYLE}>Relatórios/dia</th>
+                  <th style={TH_STYLE}>Storage MB</th>
+                  <th style={TH_STYLE}>SLA h</th>
+                  <th style={TH_STYLE}>Notas</th>
+                  <th style={TH_STYLE}>Salvar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {empresas.map((emp) => {
+                  const override = overrides.find((item) => item.empresa_id === emp.id);
+                  const rowFormId = `limits-${emp.id}`;
+                  return (
+                    <tr key={emp.id}>
+                      <td style={TD_STYLE}>{emp.nome}</td>
+                      <td style={TD_STYLE}>
+                        <input
+                          form={rowFormId}
+                          name="profile_limit_override"
+                          type="number"
+                          className="of-input"
+                          defaultValue={override?.profile_limit_override ?? ""}
+                          placeholder="Perfis"
+                        />
+                      </td>
+                      <td style={TD_STYLE}>
+                        <input
+                          form={rowFormId}
+                          name="report_daily_limit_override"
+                          type="number"
+                          className="of-input"
+                          defaultValue={override?.report_daily_limit_override ?? ""}
+                          placeholder="Relatórios/dia"
+                        />
+                      </td>
+                      <td style={TD_STYLE}>
+                        <input
+                          form={rowFormId}
+                          name="storage_limit_mb"
+                          type="number"
+                          className="of-input"
+                          defaultValue={override?.storage_limit_mb ?? ""}
+                          placeholder="MB"
+                        />
+                      </td>
+                      <td style={TD_STYLE}>
+                        <input
+                          form={rowFormId}
+                          name="support_sla_hours"
+                          type="number"
+                          className="of-input"
+                          defaultValue={override?.support_sla_hours ?? ""}
+                          placeholder="SLA"
+                        />
+                      </td>
+                      <td style={TD_STYLE}>
+                        <input
+                          form={rowFormId}
+                          name="notes"
+                          className="of-input"
+                          defaultValue={override?.notes ?? ""}
+                          placeholder="Notas"
+                        />
+                      </td>
+                      <td style={TD_STYLE}>
+                        <form id={rowFormId} action={salvarLimitesEmpresaAction.bind(null, emp.id)}>
+                          <button type="submit" className="of-btn-primary">Salvar</button>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      )}
+
+      {tab === "flags" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Feature flags por tenant</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Empresa</th>
+                    <th style={TH_STYLE}>Feature</th>
+                    <th style={TH_STYLE}>Scope</th>
+                    <th style={TH_STYLE}>Estado</th>
+                    <th style={TH_STYLE}>Notas</th>
+                    <th style={TH_STYLE}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {featureFlags.map((flag) => (
+                    <tr key={flag.id}>
+                      <td style={TD_STYLE}>{flag.empresa_nome}</td>
+                      <td style={TD_STYLE}>{flag.feature_key}</td>
+                      <td style={TD_STYLE}>{flag.rollout_scope}</td>
+                      <td style={TD_STYLE}>
+                        <span className={flag.enabled ? "of-badge of-badge-green" : "of-badge of-badge-red"}>
+                          {flag.enabled ? "Ativa" : "Desativada"}
+                        </span>
+                      </td>
+                      <td style={{ ...TD_STYLE, fontSize: "0.78rem" }}>{flag.notes ?? "—"}</td>
+                      <td style={TD_STYLE}>
+                        <form action={removerFeatureFlagAction.bind(null, flag.empresa_id)}>
+                          <input type="hidden" name="feature_key" value={flag.feature_key} />
+                          <button type="submit" className="of-btn-ghost">Remover</button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                  {featureFlags.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhuma flag cadastrada.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Cadastrar / atualizar flag</div>
+            <form className="of-form-grid md:grid-cols-5" action={salvarFeatureFlagAction}>
+              <select name="empresa_id" className="of-input" defaultValue="">
+                <option value="">Empresa</option>
+                {empresas.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.nome}</option>
+                ))}
+              </select>
+              <input name="feature_key" className="of-input" placeholder="feature_key" />
+              <input name="rollout_scope" className="of-input" defaultValue="all" placeholder="Scope" />
+              <label className="of-empty-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input name="enabled" type="checkbox" />
+                Ativa
+              </label>
+              <input name="notes" className="of-input" placeholder="Notas" />
+              <button type="submit" className="of-btn-primary">Salvar flag</button>
+            </form>
+          </article>
+        </div>
+      )}
+
+      {tab === "comunicacao" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Enviar comunicado para tenant</div>
+            <form action={criarComunicadoTenantAction} className="of-form-grid md:grid-cols-3">
+              <select name="empresa_id" className="of-input">
+                <option value="">Toda a base / comunicado global</option>
+                {empresas.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.nome}</option>
+                ))}
+              </select>
+              <select name="severity" className="of-input" defaultValue="info">
+                <option value="info">Info</option>
+                <option value="warning">Aviso</option>
+                <option value="error">Crítico</option>
+              </select>
+              <input name="audience" className="of-input" defaultValue="all" placeholder="Audience" />
+              <input name="title" className="of-input md:col-span-3" placeholder="Título do comunicado" />
+              <textarea name="message" className="of-input md:col-span-3" placeholder="Mensagem do comunicado" />
+              <button type="submit" className="of-btn-primary">Publicar comunicado</button>
+            </form>
+          </article>
+
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Comunicados recentes ({broadcasts.length})</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Empresa</th>
+                    <th style={TH_STYLE}>Título</th>
+                    <th style={TH_STYLE}>Severidade</th>
+                    <th style={TH_STYLE}>Audience</th>
+                    <th style={TH_STYLE}>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {broadcasts.map((item) => (
+                    <tr key={item.id}>
+                      <td style={TD_STYLE}>{item.empresa_nome ?? "Global"}</td>
+                      <td style={TD_STYLE}>{item.title}</td>
+                      <td style={TD_STYLE}>{item.severity}</td>
+                      <td style={TD_STYLE}>{item.audience}</td>
+                      <td style={TD_STYLE}>{fmtDatetime(item.created_at)}</td>
+                    </tr>
+                  ))}
+                  {broadcasts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum comunicado registrado.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      )}
+
+      {tab === "health" && (
+        <div style={{ display: "grid", gap: 20 }}>
+          <div className="of-kpi-grid">
+            <article className="of-metric-card green">
+              <p className="of-kpi-icon">❤️</p>
+              <p className="of-kpi-label">API principal</p>
+              <p className="of-kpi-value">OK</p>
+              <p className="of-metric-change">/api/health</p>
+            </article>
+            <article className="of-metric-card blue">
+              <p className="of-kpi-icon">⚙️</p>
+              <p className="of-kpi-label">Health de ops</p>
+              <p className="of-kpi-value">OK</p>
+              <p className="of-metric-change">/api/health/ops</p>
+            </article>
+            <article className="of-metric-card yellow">
+              <p className="of-kpi-icon">📬</p>
+              <p className="of-kpi-label">Filas</p>
+              <p className="of-kpi-value">{ticketsAbertos}</p>
+              <p className="of-metric-change">tickets abertos para suporte</p>
+            </article>
+            <article className="of-metric-card purple">
+              <p className="of-kpi-icon">💵</p>
+              <p className="of-kpi-label">MRR estimado</p>
+              <p className="of-kpi-value">R$ {mrrEstimado.toLocaleString("pt-BR")}</p>
+              <p className="of-metric-change">carteira total do plano</p>
+            </article>
+          </div>
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 12 }}>Checklist operacional</div>
+            <ul className="of-list">
+              <li className="of-list-item">
+                <p className="of-list-title">Monitoramento</p>
+                <p className="of-list-description">Endpoint de health e fila disponíveis para dashboards externos.</p>
+              </li>
+              <li className="of-list-item">
+                <p className="of-list-title">Billing</p>
+                <p className="of-list-description">Assinaturas sincronizadas com Stripe e trilha de auditoria registrada.</p>
+              </li>
+              <li className="of-list-item">
+                <p className="of-list-title">Compliance</p>
+                <p className="of-list-description">LGPD, privacidade e retenção já expostos no console e nas rotinas de exportação.</p>
+              </li>
+            </ul>
+          </article>
+        </div>
       )}
 
       {tab === "terminal" && (

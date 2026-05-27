@@ -31,6 +31,9 @@ export async function signOut() {
     }
   }
   cookieStore.delete("of_tenant_session");
+  cookieStore.delete("of_support_preview_empresa_id");
+  cookieStore.delete("of_support_preview_profile_id");
+  cookieStore.delete("of_support_preview_session_id");
   await supabase.auth.signOut();
   redirect("/login");
 }

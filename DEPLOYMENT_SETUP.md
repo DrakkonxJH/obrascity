@@ -34,6 +34,7 @@ No projeto da Vercel:
 - `RESEND_API_KEY`
 - `CONTROLE_TOTAL_OWNER_EMAIL`
 - `CONTROLE_TOTAL_OWNER_PROFILE_ID`
+- `CONTROLE_TOTAL_ALLOWED_IPS`
 
 ## Configuração de GitHub Actions (opcional)
 

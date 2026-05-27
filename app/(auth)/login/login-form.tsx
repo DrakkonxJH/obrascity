@@ -103,6 +103,10 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
         <Link href="/cadastro" className="of-login-v2-demo">
           Cadastre-se
         </Link>
+
+        <Link href="/master-login" className="of-login-v2-forgot" style={{ justifyContent: "center" }}>
+          Acesso master
+        </Link>
       </form>
 
     </>

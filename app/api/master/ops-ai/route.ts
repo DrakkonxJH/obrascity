@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { getRequestIpFromHeaders, isMasterIpAllowed } from "@/lib/auth/master-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getEnv } from "@/lib/validations/env";
 import { getManagedQueues } from "@/lib/queue/connection";
@@ -285,6 +286,9 @@ export async function POST(request: NextRequest) {
   const profile = await getCurrentProfile();
   if (!isControlTotalOwner(profile)) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+  }
+  if (!isMasterIpAllowed(getRequestIpFromHeaders(request.headers))) {
+    return NextResponse.json({ error: "Acesso restrito por allowlist de IP" }, { status: 403 });
   }
 
   const payload = (await request.json().catch(() => null)) as RequestBody | null;

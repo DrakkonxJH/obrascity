@@ -20,6 +20,7 @@ const envSchema = z.object({
   DATA_ENCRYPTION_KEY: z.string().min(1).optional(),
   CONTROLE_TOTAL_OWNER_EMAIL: z.string().email().optional(),
   CONTROLE_TOTAL_OWNER_PROFILE_ID: z.string().min(1).optional(),
+  CONTROLE_TOTAL_ALLOWED_IPS: z.string().optional(),
 });
 
 export function getEnv() {

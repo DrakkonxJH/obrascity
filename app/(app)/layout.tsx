@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
@@ -12,6 +12,8 @@ import { listEquipes } from "@/lib/db/equipes";
 import { supportsObraTrash } from "@/lib/db/obras";
 import { mapDbNotifications } from "@/lib/notifications/map";
 import { validateAndTouchTenantSession } from "@/lib/db/seguranca-corporativa";
+import { getRequestIpFromHeaders, isMasterIpAllowed } from "@/lib/auth/master-access";
+import { encerrarAcessoAssistidoAction } from "./contas/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +77,11 @@ export default async function AppLayout({
     appWarnings.push(error instanceof Error ? error.message : "Erro ao carregar perfil.");
   }
 
+  const requestIp = getRequestIpFromHeaders(await headers());
+  if (isControlTotalOwner(profile) && !isMasterIpAllowed(requestIp)) {
+    redirect("/login");
+  }
+
   const canAccessControlTotal = isControlTotalOwner(profile);
   if (profile && !profile.empresa_id && !canAccessControlTotal) {
     redirect("/conta-pendente");
@@ -104,6 +111,7 @@ export default async function AppLayout({
   }
 
   const adminManagementOnly = canAccessControlTotal;
+  const previewSessionId = (await cookies()).get("of_support_preview_session_id")?.value ?? null;
 
   const [summaryResult, notificacoesResult, masterNotificationsResult, equipesResult, trashEnabledResult] = await Promise.allSettled([
     getLayoutSummary(),
@@ -160,6 +168,28 @@ export default async function AppLayout({
         >
           <div className="of-card-title">Carregamento parcial</div>
           <p className="of-empty-text">{appWarnings.join(" ")}</p>
+        </article>
+      ) : null}
+      {previewSessionId ? (
+        <article
+          className="of-card"
+          style={{
+            margin: "16px",
+            borderColor: "var(--of-blue)",
+            background: "rgba(88, 166, 255, 0.08)",
+          }}
+        >
+          <div className="of-card-title">Modo de acesso assistido</div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <p className="of-empty-text" style={{ margin: 0 }}>
+              Você está visualizando um tenant em modo assistido. Use o botão para voltar ao console master.
+            </p>
+            <form action={encerrarAcessoAssistidoAction}>
+              <button type="submit" className="of-btn-primary">
+                Encerrar acesso assistido
+              </button>
+            </form>
+          </div>
         </article>
       ) : null}
       <AppShell

@@ -8,6 +8,7 @@ import { checkRateLimit } from "@/lib/security/rate-limit";
 import { normalizeEmail } from "@/lib/security/signup-guard";
 import { createSecurityAlert } from "@/lib/security/security-alerts";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { getControlTotalAllowedIps, getRequestIpFromHeaders, isMasterIpAllowed } from "@/lib/auth/master-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolvePublicAppOrigin } from "@/lib/validations/env";
 import { provisionTrialTenant } from "@/lib/auth/provision-tenant";
@@ -50,10 +51,7 @@ export async function signInAction(
   }
 
   const headerStore = await headers();
-  const ip =
-    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headerStore.get("x-real-ip") ??
-    "unknown";
+  const ip = getRequestIpFromHeaders(headerStore);
 
   const limit = await checkRateLimit({
     key: `login:${ip}:${email}`,
@@ -135,7 +133,41 @@ export async function signInAction(
     profileRole = String(profile?.role ?? "");
     const empresaId = String(profile?.empresa_id ?? "");
     const userFactorsCount = data.user?.factors?.length ?? 0;
-    if (empresaId) {
+    const isMasterOwner = isControlTotalOwner({
+      id: data.user?.id,
+      email: data.user?.email ?? null,
+      role: profileRole,
+    });
+
+    if (isMasterOwner) {
+      if (!isMasterIpAllowed(ip)) {
+        await supabase.auth.signOut();
+        return {
+          ok: false,
+          message: `A conta master só pode acessar a partir dos IPs permitidos${getControlTotalAllowedIps().length > 0 ? "." : " (allowlist não configurada)."}`,
+        };
+      }
+
+      if (userFactorsCount === 0) {
+        await createSecurityAlert({
+          category: "login",
+          severity: "high",
+          reason: "master_mfa_required",
+          email,
+          ip,
+          metadata: {
+            role: profileRole,
+          },
+        });
+        await supabase.auth.signOut();
+        return {
+          ok: false,
+          message: "A conta master exige MFA obrigatório antes do acesso.",
+        };
+      }
+    }
+
+    if (empresaId && !isMasterOwner) {
       const tenantPolicy = await getTenantSecurityPolicyByEmpresa(empresaId);
       const requiresMfaByRole = tenantPolicy.mfa_required_roles.includes(profileRole);
       if (requiresMfaByRole && userFactorsCount === 0) {

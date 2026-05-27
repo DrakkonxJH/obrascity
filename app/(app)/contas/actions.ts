@@ -1,10 +1,21 @@
 "use server";
 
+import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { getRequestIpFromHeaders, isMasterIpAllowed } from "@/lib/auth/master-access";
 import { isAssignableProfileRole, type ProfileRole } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  createTenantBroadcast,
+  createTenantImpersonationSession,
+  removeTenantFeatureFlag,
+  revokeTenantImpersonationSession,
+  upsertTenantAdminOverride,
+  upsertTenantFeatureFlag,
+} from "@/lib/db/master-admin";
 
 const SECURITY_ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
 const VALID_PLANS = new Set(["trial", "starter", "pro", "enterprise"]);
@@ -13,6 +24,10 @@ async function assertControlTotal() {
   const profile = await getCurrentProfile();
   if (!isControlTotalOwner(profile)) {
     throw new Error("Acesso negado");
+  }
+  const ip = getRequestIpFromHeaders(await headers());
+  if (!isMasterIpAllowed(ip)) {
+    throw new Error("Acesso restrito por allowlist de IP");
   }
   return profile;
 }
@@ -35,6 +50,15 @@ async function logMasterAudit(input: {
     empresa_id: input.empresaId ?? null,
     details: input.details ?? {},
   });
+}
+
+function parseOptionalNumber(value: string, fieldName: string) {
+  if (!value) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Valor inválido para ${fieldName}`);
+  }
+  return parsed;
 }
 
 export async function suspenderEmpresaAction(empresaId: string) {
@@ -435,4 +459,222 @@ export async function atualizarPerfilUsuarioAction(profileId: string, formData: 
   });
 
   revalidatePath("/contas");
+}
+
+export async function salvarLimitesEmpresaAction(empresaId: string, formData: FormData) {
+  const actor = await assertControlTotal();
+  const profileLimit = String(formData.get("profile_limit_override") ?? "").trim();
+  const reportDailyLimit = String(formData.get("report_daily_limit_override") ?? "").trim();
+  const storageLimit = String(formData.get("storage_limit_mb") ?? "").trim();
+  const supportSlaHours = String(formData.get("support_sla_hours") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  await upsertTenantAdminOverride({
+    empresa_id: empresaId,
+    profile_limit_override: parseOptionalNumber(profileLimit, "perfil"),
+    report_daily_limit_override: parseOptionalNumber(reportDailyLimit, "relatórios/dia"),
+    storage_limit_mb: parseOptionalNumber(storageLimit, "storage"),
+    support_sla_hours: parseOptionalNumber(supportSlaHours, "SLA"),
+    notes: notes || null,
+    updated_by_profile_id: actor?.id ?? null,
+  });
+
+  await logMasterAudit({
+    action: "tenant_limites_atualizados",
+    targetType: "empresa",
+    targetId: empresaId,
+    empresaId,
+    details: {
+    profile_limit_override: parseOptionalNumber(profileLimit, "perfil"),
+    report_daily_limit_override: parseOptionalNumber(reportDailyLimit, "relatórios/dia"),
+    storage_limit_mb: parseOptionalNumber(storageLimit, "storage"),
+    support_sla_hours: parseOptionalNumber(supportSlaHours, "SLA"),
+    },
+  });
+
+  revalidatePath("/contas");
+}
+
+export async function salvarFeatureFlagAction(formData: FormData) {
+  const actor = await assertControlTotal();
+  const empresaId = String(formData.get("empresa_id") ?? "").trim();
+  const featureKey = String(formData.get("feature_key") ?? "").trim();
+  const enabled = String(formData.get("enabled") ?? "").trim() === "on";
+  const rolloutScope = String(formData.get("rollout_scope") ?? "all").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (!empresaId || !featureKey) {
+    throw new Error("Feature key obrigatória");
+  }
+
+  await upsertTenantFeatureFlag({
+    empresa_id: empresaId,
+    feature_key: featureKey,
+    enabled,
+    rollout_scope: rolloutScope || "all",
+    notes: notes || null,
+    updated_by_profile_id: actor?.id ?? null,
+  });
+
+  await logMasterAudit({
+    action: "tenant_feature_flag_atualizada",
+    targetType: "empresa",
+    targetId: empresaId,
+    empresaId,
+    details: { feature_key: featureKey, enabled, rollout_scope: rolloutScope || "all" },
+  });
+
+  revalidatePath("/contas");
+}
+
+export async function removerFeatureFlagAction(empresaId: string, formData: FormData) {
+  await assertControlTotal();
+  const featureKey = String(formData.get("feature_key") ?? "").trim();
+  if (!featureKey) {
+    throw new Error("Feature key obrigatória");
+  }
+
+  await removeTenantFeatureFlag(empresaId, featureKey);
+
+  await logMasterAudit({
+    action: "tenant_feature_flag_removida",
+    targetType: "empresa",
+    targetId: empresaId,
+    empresaId,
+    details: { feature_key: featureKey },
+  });
+
+  revalidatePath("/contas");
+}
+
+export async function criarComunicadoTenantAction(formData: FormData) {
+  const actor = await assertControlTotal();
+  const empresaId = String(formData.get("empresa_id") ?? "").trim() || null;
+  const title = String(formData.get("title") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+  const severity = String(formData.get("severity") ?? "info").trim().toLowerCase();
+  const audience = String(formData.get("audience") ?? "all").trim().toLowerCase();
+
+  if (!title || !message) {
+    throw new Error("Comunicado precisa de título e mensagem");
+  }
+
+  const broadcastId = await createTenantBroadcast({
+    empresaId,
+    title,
+    message,
+    severity,
+    audience,
+    createdByProfileId: actor?.id ?? null,
+  });
+
+  if (empresaId) {
+    const admin = createAdminClient();
+    const { data: profiles, error } = await admin.from("profiles").select("id").eq("empresa_id", empresaId);
+    if (error) throw new Error(`Erro ao carregar perfis para comunicado: ${error.message}`);
+    const rows = (profiles ?? []).map((profile) => ({
+      empresa_id: empresaId,
+      user_id: profile.id,
+      titulo: title,
+      lida: false,
+      link: "/suporte",
+    }));
+    if (rows.length > 0) {
+      const { error: notifError } = await admin.from("notificacoes").insert(rows);
+      if (notifError) throw new Error(`Erro ao criar notificações: ${notifError.message}`);
+    }
+  } else {
+    const admin = createAdminClient();
+    const { data: profiles, error } = await admin.from("profiles").select("id, empresa_id");
+    if (error) throw new Error(`Erro ao carregar perfis para comunicado global: ${error.message}`);
+    const rows = (profiles ?? []).map((profile) => ({
+      empresa_id: profile.empresa_id,
+      user_id: profile.id,
+      titulo: title,
+      lida: false,
+      link: "/suporte",
+    }));
+    if (rows.length > 0) {
+      const { error: notifError } = await admin.from("notificacoes").insert(rows);
+      if (notifError) throw new Error(`Erro ao criar notificações globais: ${notifError.message}`);
+    }
+  }
+
+  await logMasterAudit({
+    action: "tenant_comunicado_enviado",
+    targetType: "broadcast",
+    targetId: broadcastId,
+    empresaId,
+    details: { title, severity, audience },
+  });
+
+  revalidatePath("/contas");
+}
+
+export async function iniciarAcessoAssistidoAction(formData: FormData) {
+  const actor = await assertControlTotal();
+  const empresaId = String(formData.get("empresa_id") ?? "").trim();
+  const profileId = String(formData.get("profile_id") ?? "").trim() || null;
+  const reason = String(formData.get("reason") ?? "Acesso assistido para suporte").trim();
+
+  if (!empresaId) {
+    throw new Error("Empresa obrigatória");
+  }
+
+  const sessionId = await createTenantImpersonationSession({
+    empresaId,
+    profileId,
+    actorProfileId: actor?.id ?? null,
+    actorEmail: actor?.email ?? null,
+    reason,
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set("of_support_preview_empresa_id", empresaId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: true,
+    path: "/",
+    maxAge: 60 * 60 * 8,
+  });
+  if (profileId) {
+    cookieStore.set("of_support_preview_profile_id", profileId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      path: "/",
+      maxAge: 60 * 60 * 8,
+    });
+  }
+  if (sessionId) {
+    cookieStore.set("of_support_preview_session_id", sessionId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      path: "/",
+      maxAge: 60 * 60 * 8,
+    });
+  }
+
+  await logMasterAudit({
+    action: "tenant_acesso_assistido_iniciado",
+    targetType: "empresa",
+    targetId: empresaId,
+    empresaId,
+    details: { profileId, reason, sessionId },
+  });
+
+  redirect("/dashboard");
+}
+
+export async function encerrarAcessoAssistidoAction() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get("of_support_preview_session_id")?.value ?? null;
+  if (sessionId) {
+    await revokeTenantImpersonationSession(sessionId);
+  }
+  cookieStore.delete("of_support_preview_empresa_id");
+  cookieStore.delete("of_support_preview_profile_id");
+  cookieStore.delete("of_support_preview_session_id");
+  redirect("/contas");
 }
