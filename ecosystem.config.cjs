@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "obrascity-worker",
-      cwd: "/home/julio-sousa/Documentos/obrascity/obras-saas",
+      cwd: "/home/julio-sousa/Documentos/obrascity/obrascity",
       script: "npm",
       args: "run worker:start",
       interpreter: "none",

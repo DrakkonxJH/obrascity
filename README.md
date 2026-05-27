@@ -1,4 +1,4 @@
-# ObrasCitY (obras-saas)
+# ObrasCitY
 
 Plataforma SaaS para gestão de obras com operação multiempresa (tenant), focada em controle operacional, financeiro e governança.
 

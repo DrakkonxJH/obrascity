@@ -76,7 +76,7 @@ Sem essa trilha completa, o restante não deve avançar para go-live.
 
 Comandos:
 ```bash
-cd "/home/julio-sousa/Documentos/obrascity/obras-saas"
+cd "/home/julio-sousa/Documentos/obrascity/obrascity"
 npm run lint
 npm run typecheck
 npm run build
@@ -98,7 +98,7 @@ npm run build
 
 Comandos de auditoria:
 ```bash
-cd "/home/julio-sousa/Documentos/obrascity/obras-saas"
+cd "/home/julio-sousa/Documentos/obrascity/obrascity"
 export SUPABASE_ACCESS_TOKEN="<TOKEN>"
 supabase migration list
 ```
@@ -403,19 +403,19 @@ Considerar go-live completo apenas quando todos os itens abaixo estiverem verdad
 
 Subir app local:
 ```bash
-cd "/home/julio-sousa/Documentos/obrascity/obras-saas"
+cd "/home/julio-sousa/Documentos/obrascity/obrascity"
 npm run dev
 ```
 
 Subir worker local:
 ```bash
-cd "/home/julio-sousa/Documentos/obrascity/obras-saas"
+cd "/home/julio-sousa/Documentos/obrascity/obrascity"
 npm run worker:dev
 ```
 
 Auditar migrations:
 ```bash
-cd "/home/julio-sousa/Documentos/obrascity/obras-saas"
+cd "/home/julio-sousa/Documentos/obrascity/obrascity"
 export SUPABASE_ACCESS_TOKEN="<TOKEN>"
 supabase migration list
 ```
