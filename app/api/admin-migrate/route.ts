@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Client } from "pg";
 
 // ⚠️  ONE-TIME MIGRATION RUNNER — DELETE THIS FILE after use.
 //
-// Uses Supabase Management API to run DDL migrations that cannot go through
-// the regular JS client (which lacks DDL privileges).
-//
-// Call (no env vars needed — pass your PAT directly):
+// OPTION A — Senha do banco PostgreSQL (recomendado):
 //   curl -X POST https://planobras.vercel.app/api/admin-migrate \
 //        -H "Content-Type: application/json" \
-//        -d '{"pat":"sbp_YOUR_TOKEN_HERE","secret":"migrate-obras-2025"}'
+//        -d '{"dbPassword":"SUA_SENHA_DB","secret":"migrate-obras-2025"}'
+//   Senha em: https://supabase.com/dashboard/project/dskcjkrgzwvsjdahfpgd/settings/database
 //
-// Generate a PAT at: https://supabase.com/dashboard/account/tokens
+// OPTION B — Supabase Personal Access Token:
+//   curl -X POST https://planobras.vercel.app/api/admin-migrate \
+//        -H "Content-Type: application/json" \
+//        -d '{"pat":"sbp_TOKEN","secret":"migrate-obras-2025"}'
+//   Gerar PAT em: https://supabase.com/dashboard/account/tokens
 
 // Each statement runs individually so failures are reported per-statement.
 const STATEMENTS = [
@@ -498,28 +501,78 @@ const SUPABASE_PROJECT_REF = "dskcjkrgzwvsjdahfpgd";
 const ADMIN_SECRET = "migrate-obras-2025";
 
 export async function POST(req: NextRequest) {
-  let body: { pat?: string; secret?: string } = {};
+  let body: { pat?: string; dbPassword?: string; secret?: string } = {};
   try { body = await req.json(); } catch { /* empty body */ }
 
   const pat = body.pat ?? process.env.SUPABASE_ACCESS_TOKEN;
+  const dbPassword = body.dbPassword;
   const secret = body.secret ?? req.headers.get("x-admin-secret");
 
-  if (!pat) {
+  if (!pat && !dbPassword) {
     return NextResponse.json(
-      { error: "Missing PAT. Pass {pat:'sbp_...'} in the request body. Generate at https://supabase.com/dashboard/account/tokens" },
+      { error: "Forneça dbPassword (senha do banco) ou pat (Supabase PAT sbp_...). Veja comentários no topo do arquivo." },
       { status: 400 }
     );
   }
 
-  if (secret !== ADMIN_SECRET && secret !== process.env.SUPABASE_ACCESS_TOKEN) {
+  if (secret !== ADMIN_SECRET) {
     return NextResponse.json({ error: "Unauthorized — wrong secret" }, { status: 401 });
   }
-
-  const apiBase = `https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`;
 
   const errors: { stmt: string; error: string }[] = [];
   const skipped: string[] = [];
   let applied = 0;
+
+  // ── OPTION A: direct PostgreSQL connection (dbPassword) ──────────────────
+  if (dbPassword) {
+    const client = new Client({
+      host: `db.${SUPABASE_PROJECT_REF}.supabase.co`,
+      port: 5432,
+      database: "postgres",
+      user: "postgres",
+      password: dbPassword,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 20000,
+    });
+
+    try {
+      await client.connect();
+    } catch (connErr) {
+      return NextResponse.json(
+        { error: `Falha ao conectar ao banco: ${String(connErr)}. Verifique a senha em: https://supabase.com/dashboard/project/${SUPABASE_PROJECT_REF}/settings/database` },
+        { status: 500 }
+      );
+    }
+
+    for (const stmt of STATEMENTS) {
+      const label = stmt.replace(/\s+/g, " ").slice(0, 80);
+      try {
+        await client.query(stmt);
+        applied++;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/already exists|duplicate/i.test(msg)) {
+          skipped.push(label);
+        } else {
+          errors.push({ stmt: label, error: msg });
+        }
+      }
+    }
+
+    await client.end().catch(() => {});
+
+    return NextResponse.json({
+      method: "direct-pg",
+      total: STATEMENTS.length,
+      applied,
+      skipped: skipped.length,
+      errors: errors.length,
+      errorDetails: errors,
+    });
+  }
+
+  // ── OPTION B: Supabase Management API (PAT) ───────────────────────────────
+  const apiBase = `https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`;
 
   for (const stmt of STATEMENTS) {
     const label = stmt.replace(/\s+/g, " ").slice(0, 80);
@@ -534,9 +587,8 @@ export async function POST(req: NextRequest) {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({ message: res.statusText }));
-        const msg: string = (body as { message?: string }).message ?? JSON.stringify(body);
-        // Ignore "already exists" type errors — they're fine for idempotency
+        const body2 = await res.json().catch(() => ({ message: res.statusText }));
+        const msg: string = (body2 as { message?: string }).message ?? JSON.stringify(body2);
         if (/already exists|duplicate/i.test(msg)) {
           skipped.push(label);
         } else {
@@ -551,6 +603,7 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({
+    method: "management-api",
     total: STATEMENTS.length,
     applied,
     skipped: skipped.length,
