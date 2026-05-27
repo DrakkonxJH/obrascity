@@ -31,15 +31,14 @@ const DISPOSABLE_DOMAINS = new Set([
 ]);
 
 const ALLOWED_ORIGINS = new Set([
-  "https://obrascity.com",
-  "https://www.obrascity.com",
   "https://obrascity.com.br",
+  "https://www.obrascity.com.br",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);
 
 function buildCorsHeaders(origin: string | null) {
-  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://obrascity.com";
+  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://obrascity.com.br";
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signup-edge-secret",
