@@ -26,9 +26,16 @@ export async function createSubscriptionCheckoutSession(input: {
   const stripe = new Stripe(env.STRIPE_SECRET_KEY);
   const origin = getAppOrigin();
 
+  // Use payment_method_configuration so PIX (and other methods) are included
+  // automatically when activated in the Stripe Dashboard.
+  // Explicit payment_method_types with "pix" is NOT supported for subscription mode.
+  const pmcId = process.env.STRIPE_PAYMENT_METHOD_CONFIG_ID;
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    payment_method_types: ["card", "pix"],
+    ...(pmcId
+      ? { payment_method_configuration: pmcId }
+      : { payment_method_types: ["card"] }),
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/planos?checkout=success`,
     cancel_url: `${origin}/planos?checkout=cancel`,
@@ -41,11 +48,6 @@ export async function createSubscriptionCheckoutSession(input: {
     subscription_data: {
       metadata: {
         empresa_id: input.empresaId,
-      },
-    },
-    payment_method_options: {
-      pix: {
-        expires_after_seconds: 86400, // QR Code válido por 24h
       },
     },
     allow_promotion_codes: true,
