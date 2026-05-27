@@ -570,8 +570,8 @@ export default async function PlanosPage({
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600 }}>
                 💳 Cartão de crédito
               </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600 }}>
-                ⚡ PIX
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600, opacity: 0.55 }} title="PIX em breve — disponível após ativação pelo Stripe">
+                ⚡ PIX (em breve)
               </span>
             </div>
           </div>
