@@ -10,11 +10,11 @@ export default function TermosPage() {
       <div className="highlight-box">
         <strong>📋 Por que você precisa ler isso?</strong><br />
         Estes Termos de Uso formam um contrato legal entre você (ou a empresa que você representa)
-        e o PlanObras. Eles definem os direitos e obrigações de ambas as partes, o que é permitido
+        e o ObrasCitY. Eles definem os direitos e obrigações de ambas as partes, o que é permitido
         fazer na plataforma, o que é proibido, como funciona o pagamento, o que acontece em caso de
         problemas e muito mais.<br /><br />
         <strong>Ao clicar em "Criar Conta", "Aceito os Termos" ou ao simplesmente utilizar qualquer
-        funcionalidade do PlanObras, você declara, sob sua responsabilidade, que:</strong>
+        funcionalidade do ObrasCitY, você declara, sob sua responsabilidade, que:</strong>
         <ul style={{ marginTop: 8 }}>
           <li>Leu e compreendeu integralmente este documento;</li>
           <li>Concorda com todas as regras aqui estabelecidas;</li>
@@ -26,21 +26,21 @@ export default function TermosPage() {
       {/* 1 */}
       <h2><span className="num">1</span> Quem Somos — Identificação das Partes</h2>
       <p>
-        O <strong>PlanObras</strong> é uma plataforma digital especializada em gestão de obras,
+        O <strong>ObrasCitY</strong> é uma plataforma digital especializada em gestão de obras,
         projetos de construção civil, controle de equipes e acompanhamento de indicadores de
         performance para o setor da construção. A plataforma é desenvolvida, mantida e operada por
-        seus titulares legais, doravante denominados simplesmente "<strong>PlanObras</strong>",
+        seus titulares legais, doravante denominados simplesmente "<strong>ObrasCitY</strong>",
         "<strong>nós</strong>", "<strong>nos</strong>" ou "<strong>nosso</strong>".
       </p>
       <p>
-        A plataforma é acessível exclusivamente por meio do domínio oficial do PlanObras na internet,
+        A plataforma é acessível exclusivamente por meio do domínio oficial do ObrasCitY na internet,
         e por aplicativos ou integrações devidamente autorizados e divulgados em nosso site. Qualquer
         versão não oficial da plataforma deve ser imediatamente reportada ao nosso suporte.
       </p>
       <p>
         <strong>Você, o Usuário</strong>, é qualquer pessoa física maior de 18 anos ou pessoa jurídica
         regularmente constituída que acesse, navegue, se cadastre ou utilize qualquer funcionalidade
-        da plataforma PlanObras — seja como responsável pela conta da empresa, como membro convidado
+        da plataforma ObrasCitY — seja como responsável pela conta da empresa, como membro convidado
         da equipe, ou como visitante das páginas públicas do site.
       </p>
       <div className="info-box">
@@ -62,10 +62,10 @@ export default function TermosPage() {
       </p>
       <ul>
         <li>
-          <strong>Plataforma:</strong> O sistema PlanObras como um todo — incluindo a interface web
+          <strong>Plataforma:</strong> O sistema ObrasCitY como um todo — incluindo a interface web
           acessível pelo navegador, os painéis de controle, todos os módulos de funcionalidades
           (diário de obra, CRM, relatórios, financeiro, etc.), as APIs de integração e qualquer
-          outra ferramenta disponibilizada pelo PlanObras, seja ela gratuita ou paga.
+          outra ferramenta disponibilizada pelo ObrasCitY, seja ela gratuita ou paga.
         </li>
         <li>
           <strong>Conta:</strong> O conjunto formado pelas credenciais de acesso (e-mail e senha),
@@ -74,13 +74,13 @@ export default function TermosPage() {
         </li>
         <li>
           <strong>Conta Master:</strong> Conta de uso <em>exclusivo</em> da equipe técnica do
-          PlanObras. Esta conta serve para manutenção do sistema, suporte técnico avançado,
+          ObrasCitY. Esta conta serve para manutenção do sistema, suporte técnico avançado,
           monitoramento de funcionamento da plataforma e auxílio aos clientes quando solicitado.
           A Conta Master <strong>não é uma conta de cliente</strong> e não está sujeita às mesmas
           regras de planos e assinaturas dos demais usuários.
         </li>
         <li>
-          <strong>Empresa / Tenant:</strong> Cada empresa cliente do PlanObras possui um ambiente
+          <strong>Empresa / Tenant:</strong> Cada empresa cliente do ObrasCitY possui um ambiente
           totalmente isolado dentro da plataforma, chamado de "tenant". Isso significa que todos os
           dados, usuários, projetos e configurações de uma empresa ficam completamente separados dos
           dados de qualquer outra empresa. Usuários de empresas diferentes não se enxergam e não
@@ -100,7 +100,7 @@ export default function TermosPage() {
         </li>
         <li>
           <strong>Plano:</strong> O pacote de funcionalidades e limites contratado pela empresa.
-          Atualmente, o PlanObras oferece três planos: <strong>Starter</strong>,
+          Atualmente, o ObrasCitY oferece três planos: <strong>Starter</strong>,
           <strong>Pro</strong> e <strong>Enterprise</strong>. Cada plano possui características,
           limites e preços diferentes, descritos na página de Planos do site.
         </li>
@@ -108,7 +108,7 @@ export default function TermosPage() {
           <strong>Dados do Usuário:</strong> Todas as informações, arquivos, textos, imagens,
           fotografias, vídeos, documentos, planilhas, medições, contratos, registros de diário de
           obra, dados financeiros e qualquer outro conteúdo inserido, carregado ou gerado pelo
-          Usuário na plataforma. Esses dados pertencem ao Usuário, não ao PlanObras.
+          Usuário na plataforma. Esses dados pertencem ao Usuário, não ao ObrasCitY.
         </li>
         <li>
           <strong>Conteúdo:</strong> Termo mais amplo que abrange qualquer material de qualquer
@@ -116,7 +116,7 @@ export default function TermosPage() {
           qualquer conteúdo de terceiros eventualmente incluído pelo Usuário.
         </li>
         <li>
-          <strong>Integração:</strong> Conexão técnica entre o PlanObras e um serviço externo
+          <strong>Integração:</strong> Conexão técnica entre o ObrasCitY e um serviço externo
           (como Stripe para pagamentos, WhatsApp Business para comunicação, etc.) ativada e
           autorizada pelo Usuário. Ao ativar uma integração, parte dos dados pode transitar pelo
           serviço externo, que possui seus próprios termos de uso.
@@ -129,7 +129,7 @@ export default function TermosPage() {
           <strong>LGPD:</strong> Lei Geral de Proteção de Dados Pessoais, Lei Federal nº 13.709,
           de 14 de agosto de 2018. É a principal lei brasileira que regula o tratamento de dados
           pessoais. Consulte nossa Política de Privacidade para entender como a LGPD se aplica ao
-          PlanObras.
+          ObrasCitY.
         </li>
         <li>
           <strong>Marco Civil da Internet:</strong> Lei Federal nº 12.965, de 23 de abril de 2014.
@@ -150,7 +150,7 @@ export default function TermosPage() {
       <h2><span className="num">3</span> Aceite dos Termos — Quem Pode Usar a Plataforma</h2>
       <h3>3.1 Capacidade Civil</h3>
       <p>
-        Para utilizar o PlanObras, você precisa ter <strong>capacidade civil plena</strong>. Em
+        Para utilizar o ObrasCitY, você precisa ter <strong>capacidade civil plena</strong>. Em
         termos simples, isso significa:
       </p>
       <ul>
@@ -178,7 +178,7 @@ export default function TermosPage() {
         </li>
         <li>
           Leu, entendeu e concorda integralmente com estes Termos de Uso e com a Política de
-          Privacidade do PlanObras;
+          Privacidade do ObrasCitY;
         </li>
         <li>
           Todas as informações fornecidas no cadastro são verdadeiras, corretas, atualizadas e
@@ -198,13 +198,13 @@ export default function TermosPage() {
           terceiros;
         </li>
         <li>
-          Não está proibido de utilizar o PlanObras por qualquer decisão judicial, administrativa
+          Não está proibido de utilizar o ObrasCitY por qualquer decisão judicial, administrativa
           ou contratual vigente.
         </li>
       </ul>
       <h3>3.3 Menores de Idade</h3>
       <p>
-        O PlanObras é uma ferramenta profissional e não é destinado, em nenhuma hipótese, a
+        O ObrasCitY é uma ferramenta profissional e não é destinado, em nenhuma hipótese, a
         menores de 18 (dezoito) anos. Não coletamos intencionalmente dados de menores e não
         permitimos que eles utilizem a plataforma de forma independente. Caso identifiquemos uma
         conta cadastrada por menor de idade, ela será imediatamente suspensa e os dados excluídos.
@@ -218,13 +218,13 @@ export default function TermosPage() {
       <h2><span className="num">4</span> Cadastro, Conta e Acesso à Plataforma</h2>
       <h3>4.1 Como Criar uma Conta</h3>
       <p>
-        Para ter acesso às funcionalidades do PlanObras, é necessário criar uma conta. O processo
+        Para ter acesso às funcionalidades do ObrasCitY, é necessário criar uma conta. O processo
         de cadastro exige o fornecimento de, no mínimo: nome completo, endereço de e-mail válido
         e ativo, senha segura e informações básicas sobre a empresa (razão social ou nome
         fantasia). Dados adicionais podem ser solicitados conforme o plano contratado.
       </p>
       <p>
-        O PlanObras se reserva o direito de, a qualquer momento e sem necessidade de justificativa
+        O ObrasCitY se reserva o direito de, a qualquer momento e sem necessidade de justificativa
         prévia: (i) recusar novos cadastros; (ii) solicitar informações adicionais de verificação;
         (iii) suspender o processamento de um cadastro enquanto analisa sua conformidade com estes
         Termos.
@@ -235,20 +235,20 @@ export default function TermosPage() {
         Por isso, é fundamental que seja um e-mail: (i) de sua propriedade; (ii) ativo e
         monitorado regularmente; (iii) mantido atualizado em seu perfil. Notificações importantes
         sobre sua conta (faturas, alertas de segurança, alterações nos Termos, etc.) serão enviadas
-        para esse endereço. O PlanObras não se responsabiliza por problemas decorrentes de e-mail
+        para esse endereço. O ObrasCitY não se responsabiliza por problemas decorrentes de e-mail
         desatualizado, inativo, com caixa cheia ou com filtros de spam muito restritivos.
       </p>
       <h3>4.3 Segurança das Credenciais — Responsabilidade Total do Usuário</h3>
       <p>
-        A senha da sua conta é de <strong>sua responsabilidade exclusiva</strong>. O PlanObras
+        A senha da sua conta é de <strong>sua responsabilidade exclusiva</strong>. O ObrasCitY
         jamais pedirá sua senha por e-mail, telefone, WhatsApp, chat ou qualquer outro canal.
-        Se alguém solicitar sua senha alegando ser do PlanObras, trate isso como uma tentativa de
+        Se alguém solicitar sua senha alegando ser do ObrasCitY, trate isso como uma tentativa de
         fraude (phishing) e nos reporte imediatamente.
       </p>
       <p>Para manter sua conta segura, recomendamos:</p>
       <ul>
         <li>Use uma senha longa (mínimo 12 caracteres), com letras maiúsculas e minúsculas, números e símbolos;</li>
-        <li>Não reutilize a senha do PlanObras em outros serviços;</li>
+        <li>Não reutilize a senha do ObrasCitY em outros serviços;</li>
         <li>Não compartilhe sua senha com ninguém, nem com colegas de trabalho;</li>
         <li>Ative a autenticação em dois fatores (2FA) quando disponível;</li>
         <li>Não acesse a plataforma de redes Wi-Fi públicas sem VPN;</li>
@@ -262,14 +262,14 @@ export default function TermosPage() {
       </p>
       <h3>4.4 Uma Conta por Pessoa</h3>
       <p>
-        Cada pessoa física deve manter apenas uma conta no PlanObras. A criação de múltiplas contas
+        Cada pessoa física deve manter apenas uma conta no ObrasCitY. A criação de múltiplas contas
         com o objetivo de burlar limitações de planos, obter períodos de trial repetidos ou por
         qualquer outra razão é expressamente proibida e pode resultar no bloqueio de todas as contas
         identificadas.
       </p>
       <h3>4.5 Isolamento de Dados por Empresa (Tenant)</h3>
       <p>
-        Este é um dos pilares de segurança do PlanObras. Cada empresa cadastrada existe em um
+        Este é um dos pilares de segurança do ObrasCitY. Cada empresa cadastrada existe em um
         ambiente completamente isolado — chamado de "tenant" — dentro da plataforma. Isso significa,
         na prática, que:
       </p>
@@ -286,7 +286,7 @@ export default function TermosPage() {
       </div>
       <h3>4.6 Limites de Usuários por Plano</h3>
       <p>
-        Cada plano do PlanObras permite um número máximo de usuários (perfis) ativos
+        Cada plano do ObrasCitY permite um número máximo de usuários (perfis) ativos
         simultaneamente dentro da conta da empresa:
       </p>
       <table>
@@ -325,20 +325,20 @@ export default function TermosPage() {
       <h2><span className="num">5</span> Planos, Preços, Pagamentos e Assinatura</h2>
       <h3>5.1 Visão Geral dos Planos</h3>
       <p>
-        O PlanObras é um serviço pago, oferecido por meio de assinaturas recorrentes (mensais ou
+        O ObrasCitY é um serviço pago, oferecido por meio de assinaturas recorrentes (mensais ou
         anuais). Os planos disponíveis, com suas funcionalidades e preços vigentes, estão sempre
         descritos na página de Planos do site. Recomendamos consultar essa página antes de
         contratar para entender exatamente o que está incluído em cada plano.
       </p>
       <p>
         Os preços exibidos no site são em Reais (BRL) e incluem todos os impostos aplicáveis à
-        prestação de serviço de software, salvo indicação em contrário. O PlanObras pode oferecer
+        prestação de serviço de software, salvo indicação em contrário. O ObrasCitY pode oferecer
         descontos, cupons ou condições especiais a seu exclusivo critério, válidos apenas durante
         o período informado.
       </p>
       <h3>5.2 Período de Avaliação Gratuita (Trial)</h3>
       <p>
-        O PlanObras pode oferecer um período de avaliação gratuita ("trial") para novos
+        O ObrasCitY pode oferecer um período de avaliação gratuita ("trial") para novos
         cadastros, conforme descrito na página de cadastro no momento da criação da conta. Durante
         o trial:
       </p>
@@ -365,7 +365,7 @@ export default function TermosPage() {
         </li>
         <li>
           <strong>Processamento de pagamento:</strong> Todos os pagamentos são processados pela
-          Stripe, plataforma certificada PCI-DSS nível 1. O PlanObras não armazena dados de
+          Stripe, plataforma certificada PCI-DSS nível 1. O ObrasCitY não armazena dados de
           cartão de crédito em seus servidores — esses dados ficam exclusivamente na Stripe;
         </li>
         <li>
@@ -425,7 +425,7 @@ export default function TermosPage() {
         <li>
           <strong>Primeiros 7 dias (garantia de satisfação):</strong> Se você contratou um plano
           pago pela primeira vez e, dentro de 7 (sete) dias corridos a partir da data da
-          primeira cobrança, decidir que o PlanObras não atende às suas necessidades, solicitaremos
+          primeira cobrança, decidir que o ObrasCitY não atende às suas necessidades, solicitaremos
           o reembolso integral do valor pago. Para isso, basta entrar em contato com o suporte
           dentro desse prazo;
         </li>
@@ -462,7 +462,7 @@ export default function TermosPage() {
       </p>
       <h3>5.8 Alteração de Preços</h3>
       <p>
-        O PlanObras pode alterar os preços dos planos. Qualquer aumento de preço será comunicado
+        O ObrasCitY pode alterar os preços dos planos. Qualquer aumento de preço será comunicado
         com antecedência mínima de 30 (trinta) dias por e-mail. A alteração só será aplicada à
         sua assinatura a partir do próximo ciclo de cobrança após o aviso. Se não concordar com
         o novo preço, você pode cancelar antes da data de vigência da alteração.
@@ -472,12 +472,12 @@ export default function TermosPage() {
       <h2><span className="num">6</span> O Que Você Pode e Não Pode Fazer na Plataforma</h2>
       <h3>6.1 Finalidade da Plataforma</h3>
       <p>
-        O PlanObras foi desenvolvido exclusivamente para uso profissional no contexto da gestão
+        O ObrasCitY foi desenvolvido exclusivamente para uso profissional no contexto da gestão
         de obras e projetos de construção civil. Ao contratar o serviço, você se compromete a
         utilizá-lo apenas para as finalidades previstas e compatíveis com essa natureza.
       </p>
       <h3>6.2 Usos Expressamente Permitidos</h3>
-      <p>Você pode usar o PlanObras para:</p>
+      <p>Você pode usar o ObrasCitY para:</p>
       <ul>
         <li>Gerenciar obras, canteiros, projetos de construção, reformas e serviços de engenharia;</li>
         <li>Registrar e acompanhar diários de obra, anotações de vistoria e relatórios de progresso;</li>
@@ -505,7 +505,7 @@ export default function TermosPage() {
         </li>
         <li>
           <strong>Acesso não autorizado:</strong> Tentar acessar contas, dados ou sistemas de
-          outros usuários, empresas ou da própria infraestrutura do PlanObras sem autorização
+          outros usuários, empresas ou da própria infraestrutura do ObrasCitY sem autorização
           expressa, incluindo o uso de credenciais obtidas de forma indevida;
         </li>
         <li>
@@ -521,7 +521,7 @@ export default function TermosPage() {
         <li>
           <strong>Código malicioso:</strong> Enviar, carregar ou tentar instalar vírus,
           ransomware, spyware, trojans, worms, keyloggers ou qualquer outro código malicioso na
-          plataforma ou nos sistemas do PlanObras;
+          plataforma ou nos sistemas do ObrasCitY;
         </li>
         <li>
           <strong>Ataques cibernéticos:</strong> Realizar ou tentar realizar ataques de negação
@@ -551,7 +551,7 @@ export default function TermosPage() {
         <li>
           <strong>Revenda não autorizada:</strong> Revender, sublicenciar, alugar, ceder ou de
           qualquer forma transferir o acesso à plataforma para terceiros sem autorização prévia
-          e escrita do PlanObras;
+          e escrita do ObrasCitY;
         </li>
         <li>
           <strong>Contorno de medidas de segurança:</strong> Tentar burlar qualquer medida de
@@ -560,7 +560,7 @@ export default function TermosPage() {
         </li>
         <li>
           <strong>Sobrecarga intencional:</strong> Realizar ações que sobrecarreguem
-          desproporcionalmente a infraestrutura do PlanObras, prejudicando outros usuários;
+          desproporcionalmente a infraestrutura do ObrasCitY, prejudicando outros usuários;
         </li>
         <li>
           <strong>Coleta massiva de dados:</strong> Realizar mineração de dados (data mining),
@@ -570,7 +570,7 @@ export default function TermosPage() {
       </ul>
       <div className="highlight-box">
         <strong>⚠️ Consequências da violação:</strong> A prática de qualquer ação proibida acima
-        autoriza o PlanObras a: (1) suspender ou encerrar imediatamente a conta sem aviso prévio
+        autoriza o ObrasCitY a: (1) suspender ou encerrar imediatamente a conta sem aviso prévio
         e sem reembolso; (2) preservar logs e evidências para fins legais; (3) notificar as
         autoridades competentes; (4) ingressar com as medidas judiciais cabíveis para reparação
         de danos, incluindo ação de indenização.
@@ -581,19 +581,19 @@ export default function TermosPage() {
       <h3>7.1 Seus Dados São Seus — Propriedade do Conteúdo</h3>
       <p>
         Deixamos isso bem claro: <strong>tudo o que você inserir na plataforma continua sendo
-        seu</strong>. O PlanObras não reivindica propriedade sobre nenhum dos dados, documentos,
+        seu</strong>. O ObrasCitY não reivindica propriedade sobre nenhum dos dados, documentos,
         fotos, relatórios ou informações que você inserir. Você é o proprietário integral do seu
         conteúdo.
       </p>
       <p>
-        O que concedemos ao PlanObras é apenas uma <strong>licença de uso técnica e operacional</strong>
+        O que concedemos ao ObrasCitY é apenas uma <strong>licença de uso técnica e operacional</strong>
         — ou seja, a autorização necessária para que nossos sistemas possam armazenar, processar,
         exibir e fazer backup dos seus dados, com o único objetivo de fornecer o serviço a você.
         Essa licença é: não-exclusiva (você pode usar seus dados em outros lugares também),
         gratuita (não pagamos nem cobramos por ela), mundial (necessária porque os servidores podem
         estar em diferentes países) e temporária (encerra quando você exclui a conta).
       </p>
-      <h3>7.2 O PlanObras Não Usa Seus Dados para Fins Comerciais</h3>
+      <h3>7.2 O ObrasCitY Não Usa Seus Dados para Fins Comerciais</h3>
       <p>
         Nós <strong>não utilizamos</strong> o conteúdo dos seus projetos, obras, clientes,
         documentos ou qualquer dado operacional para: (i) vender a terceiros; (ii) criar produtos
@@ -609,7 +609,7 @@ export default function TermosPage() {
       <h3>7.3 Responsabilidade pelo Conteúdo Inserido</h3>
       <p>
         Você é o <strong>único e exclusivo responsável</strong> por todo o conteúdo que inserir,
-        carregar ou compartilhar na plataforma. O PlanObras não monitora, revisa, edita ou aprova
+        carregar ou compartilhar na plataforma. O ObrasCitY não monitora, revisa, edita ou aprova
         o conteúdo dos usuários antes da publicação. Isso inclui:
       </p>
       <ul>
@@ -630,7 +630,7 @@ export default function TermosPage() {
         Ao inserir dados pessoais de outras pessoas na plataforma — como nome, CPF, telefone,
         endereço e dados profissionais de funcionários, clientes, fornecedores ou subempreiteiros —
         você se torna o <strong>controlador</strong> desses dados nos termos da LGPD, e o
-        PlanObras atua como operador.
+        ObrasCitY atua como operador.
       </p>
       <p>
         Nessa condição, você declara e garante que:
@@ -643,7 +643,7 @@ export default function TermosPage() {
       </ul>
       <h3>7.5 Conteúdo Ilegal ou Violador — Remoção</h3>
       <p>
-        Embora não monitoremos o conteúdo dos usuários de forma proativa, o PlanObras se reserva
+        Embora não monitoremos o conteúdo dos usuários de forma proativa, o ObrasCitY se reserva
         o direito de remover, sem aviso prévio, qualquer conteúdo que: (i) seja claramente ilegal;
         (ii) viole direitos de terceiros; (iii) coloque em risco a segurança de outros usuários;
         (iv) seja denunciado por outros usuários e confirmado como violador. Nos casos mais graves,
@@ -651,23 +651,23 @@ export default function TermosPage() {
       </p>
 
       {/* 8 */}
-      <h2><span className="num">8</span> Propriedade Intelectual do PlanObras</h2>
+      <h2><span className="num">8</span> Propriedade Intelectual do ObrasCitY</h2>
       <p>
-        Toda a tecnologia, design e identidade do PlanObras são resultado de muito trabalho e
+        Toda a tecnologia, design e identidade do ObrasCitY são resultado de muito trabalho e
         investimento. Por isso, é importante que você entenda o que pode e o que não pode fazer
         com relação à propriedade intelectual da plataforma.
       </p>
       <p>
-        São de propriedade exclusiva do PlanObras ou de seus licenciadores, e estão protegidos pelas
+        São de propriedade exclusiva do ObrasCitY ou de seus licenciadores, e estão protegidos pelas
         leis brasileiras e internacionais de propriedade intelectual:
       </p>
       <ul>
-        <li>A marca "PlanObras", o logo, o logotipo e toda a identidade visual da plataforma;</li>
+        <li>A marca "ObrasCitY", o logo, o logotipo e toda a identidade visual da plataforma;</li>
         <li>O design, a interface, o layout e a experiência do usuário (UX) da plataforma;</li>
         <li>Todo o código-fonte, algoritmos, banco de dados, arquitetura e tecnologia por trás da plataforma;</li>
         <li>Os modelos de relatórios, dashboards e templates disponibilizados pela plataforma;</li>
-        <li>A documentação técnica, guias de uso, materiais de treinamento e qualquer conteúdo produzido pelo PlanObras;</li>
-        <li>As integrações e APIs desenvolvidas pelo PlanObras.</li>
+        <li>A documentação técnica, guias de uso, materiais de treinamento e qualquer conteúdo produzido pelo ObrasCitY;</li>
+        <li>As integrações e APIs desenvolvidas pelo ObrasCitY.</li>
       </ul>
       <p>
         Ao utilizar a plataforma, você <strong>não adquire</strong> nenhum direito de propriedade
@@ -676,10 +676,10 @@ export default function TermosPage() {
         previstos nestes Termos.
       </p>
       <p>
-        É expressamente proibido, sem autorização prévia e escrita do PlanObras: (i) reproduzir
+        É expressamente proibido, sem autorização prévia e escrita do ObrasCitY: (i) reproduzir
         ou copiar a interface, design ou qualquer elemento visual da plataforma; (ii) criar
-        produtos ou serviços derivados ou concorrentes baseados na tecnologia do PlanObras; (iii)
-        usar a marca PlanObras de qualquer forma que possa causar confusão ou associação indevida;
+        produtos ou serviços derivados ou concorrentes baseados na tecnologia do ObrasCitY; (iii)
+        usar a marca ObrasCitY de qualquer forma que possa causar confusão ou associação indevida;
         (iv) remover ou alterar avisos de copyright ou propriedade intelectual.
       </p>
 
@@ -687,7 +687,7 @@ export default function TermosPage() {
       <h2><span className="num">9</span> Disponibilidade, Manutenções e Atualizações do Sistema</h2>
       <h3>9.1 Nosso Compromisso com a Disponibilidade</h3>
       <p>
-        O PlanObras se compromete a envidar seus melhores esforços técnicos e operacionais para
+        O ObrasCitY se compromete a envidar seus melhores esforços técnicos e operacionais para
         manter a plataforma disponível e funcionando da melhor forma possível, 24 horas por dia,
         7 dias por semana, 365 dias por ano. Trabalhamos com infraestrutura redundante e
         monitoramento contínuo exatamente para isso.
@@ -699,7 +699,7 @@ export default function TermosPage() {
         nosso controle podem causar instabilidades ou indisponibilidades.
       </p>
       <h3>9.2 Causas de Indisponibilidade</h3>
-      <p>O PlanObras não se responsabiliza por interrupções causadas por:</p>
+      <p>O ObrasCitY não se responsabiliza por interrupções causadas por:</p>
       <ul>
         <li>Manutenções programadas previamente comunicadas;</li>
         <li>Falhas nos serviços de infraestrutura de terceiros (AWS, Vercel, Cloudflare, etc.);</li>
@@ -723,7 +723,7 @@ export default function TermosPage() {
       </p>
       <h3>9.4 Evolução da Plataforma</h3>
       <p>
-        O PlanObras está em constante evolução. Isso significa que, ao longo do tempo, poderemos:
+        O ObrasCitY está em constante evolução. Isso significa que, ao longo do tempo, poderemos:
       </p>
       <ul>
         <li>Adicionar novas funcionalidades, módulos ou integrações;</li>
@@ -740,9 +740,9 @@ export default function TermosPage() {
 
       {/* 10 */}
       <h2><span className="num">10</span> Suspensão e Encerramento de Conta</h2>
-      <h3>10.1 Suspensão por Iniciativa do PlanObras</h3>
+      <h3>10.1 Suspensão por Iniciativa do ObrasCitY</h3>
       <p>
-        O PlanObras pode suspender ou encerrar uma conta — temporária ou definitivamente — nos
+        O ObrasCitY pode suspender ou encerrar uma conta — temporária ou definitivamente — nos
         seguintes casos, com ou sem aviso prévio dependendo da gravidade:
       </p>
       <ul>
@@ -794,15 +794,15 @@ export default function TermosPage() {
       </div>
 
       {/* 11 */}
-      <h2><span className="num">11</span> Limitação de Responsabilidade do PlanObras</h2>
+      <h2><span className="num">11</span> Limitação de Responsabilidade do ObrasCitY</h2>
       <p>
-        O PlanObras é uma ferramenta de gestão e organização de informações. Não somos responsáveis
+        O ObrasCitY é uma ferramenta de gestão e organização de informações. Não somos responsáveis
         pela qualidade técnica das obras, pela veracidade dos dados inseridos pelos usuários, pelas
         decisões tomadas com base nas informações da plataforma ou por danos decorrentes de uso
         inadequado.
       </p>
       <p>
-        Especificamente, o PlanObras <strong>não se responsabiliza</strong> por:
+        Especificamente, o ObrasCitY <strong>não se responsabiliza</strong> por:
       </p>
       <ul>
         <li>
@@ -832,21 +832,21 @@ export default function TermosPage() {
         </li>
         <li>
           <strong>Falhas de serviços de terceiros:</strong> Interrupções no Stripe, WhatsApp, ou
-          qualquer outro serviço externo integrado que estejam fora do controle do PlanObras;
+          qualquer outro serviço externo integrado que estejam fora do controle do ObrasCitY;
         </li>
         <li>
           <strong>Danos indiretos e consequenciais:</strong> Quaisquer danos que não sejam
-          consequência direta e imediata de uma falha comprovada do PlanObras.
+          consequência direta e imediata de uma falha comprovada do ObrasCitY.
         </li>
       </ul>
       <p>
-        Em qualquer caso, a responsabilidade total do PlanObras perante o Usuário fica limitada
+        Em qualquer caso, a responsabilidade total do ObrasCitY perante o Usuário fica limitada
         ao valor efetivamente pago pelo Usuário nos últimos 3 (três) meses de assinatura,
         excetuadas situações em que a lei impeça tal limitação.
       </p>
       <div className="info-box">
         <strong>💡 Lembrete importante sobre o uso profissional:</strong><br />
-        O PlanObras é uma ferramenta de apoio à gestão — não um substituto para o julgamento
+        O ObrasCitY é uma ferramenta de apoio à gestão — não um substituto para o julgamento
         técnico profissional. Sempre consulte os responsáveis técnicos pela obra (engenheiros,
         arquitetos, etc.) para decisões que envolvam segurança estrutural, segurança dos
         trabalhadores ou compliance legal da construção.
@@ -855,7 +855,7 @@ export default function TermosPage() {
       {/* 12 */}
       <h2><span className="num">12</span> Integrações com Serviços Externos</h2>
       <p>
-        O PlanObras pode oferecer a possibilidade de integrar a plataforma com serviços externos
+        O ObrasCitY pode oferecer a possibilidade de integrar a plataforma com serviços externos
         de terceiros. No momento, as principais integrações disponíveis ou em desenvolvimento
         incluem serviços de pagamento (Stripe), comunicação (WhatsApp Business), e-mail e
         armazenamento em nuvem.
@@ -865,16 +865,16 @@ export default function TermosPage() {
       </p>
       <ul>
         <li>
-          A integração pode envolver o tráfego de dados entre o PlanObras e o serviço externo.
+          A integração pode envolver o tráfego de dados entre o ObrasCitY e o serviço externo.
           Ao ativar uma integração, você autoriza esse tráfego de dados;
         </li>
         <li>
           Você estará sujeito também aos <strong>Termos de Uso e Política de Privacidade do
-          serviço externo</strong>, que são independentes dos termos do PlanObras. É sua
+          serviço externo</strong>, que são independentes dos termos do ObrasCitY. É sua
           responsabilidade ler e aceitar esses termos;
         </li>
         <li>
-          O PlanObras não se responsabiliza por falhas, indisponibilidades, mudanças ou
+          O ObrasCitY não se responsabiliza por falhas, indisponibilidades, mudanças ou
           descontinuidade dos serviços externos;
         </li>
         <li>
@@ -883,15 +883,15 @@ export default function TermosPage() {
         </li>
         <li>
           Cobranças dos serviços externos (quando aplicável) são feitas diretamente pelo próprio
-          serviço externo, não pelo PlanObras.
+          serviço externo, não pelo ObrasCitY.
         </li>
       </ul>
 
       {/* 13 */}
       <h2><span className="num">13</span> Confidencialidade Mútua</h2>
-      <h3>13.1 Compromisso do PlanObras</h3>
+      <h3>13.1 Compromisso do ObrasCitY</h3>
       <p>
-        O PlanObras trata todas as informações dos clientes como estritamente confidenciais. Nossos
+        O ObrasCitY trata todas as informações dos clientes como estritamente confidenciais. Nossos
         funcionários, prestadores de serviço e parceiros técnicos só têm acesso às informações
         estritamente necessárias para a realização de suas funções, e são contratualmente obrigados
         a manter sigilo.
@@ -904,8 +904,8 @@ export default function TermosPage() {
       </p>
       <h3>13.2 Compromisso do Usuário</h3>
       <p>
-        Ao utilizar o PlanObras, você poderá ter acesso a informações técnicas, comerciais ou
-        operacionais do PlanObras que não são de domínio público — como características do sistema,
+        Ao utilizar o ObrasCitY, você poderá ter acesso a informações técnicas, comerciais ou
+        operacionais do ObrasCitY que não são de domínio público — como características do sistema,
         roadmap de funcionalidades, estrutura de preços, vulnerabilidades corrigidas, etc. Você se
         compromete a manter essas informações em sigilo e a não divulgá-las sem autorização.
       </p>
@@ -913,14 +913,14 @@ export default function TermosPage() {
       {/* 14 */}
       <h2><span className="num">14</span> Segurança da Plataforma — O Que Fazemos para Protegê-lo</h2>
       <p>
-        A segurança dos seus dados é uma prioridade absoluta no PlanObras. Implementamos múltiplas
+        A segurança dos seus dados é uma prioridade absoluta no ObrasCitY. Implementamos múltiplas
         camadas de proteção:
       </p>
       <h3>14.1 Segurança Técnica</h3>
       <ul>
         <li><strong>Criptografia em trânsito:</strong> Toda comunicação entre seu navegador e nossos servidores é criptografada com TLS 1.2 ou superior (HTTPS). Nenhum dado trafega em texto claro;</li>
         <li><strong>Criptografia em repouso:</strong> Dados sensíveis são armazenados com criptografia AES-256, um dos padrões mais seguros disponíveis atualmente;</li>
-        <li><strong>Senhas com hash:</strong> Senhas são armazenadas exclusivamente em formato hash irreversível com bcrypt (fator de custo mínimo 12). Nenhum funcionário do PlanObras tem acesso à sua senha real — nem nós mesmos conseguimos recuperá-la, apenas redefini-la;</li>
+        <li><strong>Senhas com hash:</strong> Senhas são armazenadas exclusivamente em formato hash irreversível com bcrypt (fator de custo mínimo 12). Nenhum funcionário do ObrasCitY tem acesso à sua senha real — nem nós mesmos conseguimos recuperá-la, apenas redefini-la;</li>
         <li><strong>Isolamento por tenant:</strong> Dados de cada empresa são isolados em nível de banco de dados, impedindo qualquer cruzamento de dados entre empresas diferentes;</li>
         <li><strong>Tokens seguros:</strong> Autenticação baseada em JWT com expiração controlada e rotação de tokens;</li>
         <li><strong>Proteções contra ataques comuns:</strong> Implementamos proteções contra SQL injection, XSS, CSRF, clickjacking e outros vetores de ataque comuns;</li>
@@ -946,7 +946,7 @@ export default function TermosPage() {
       {/* 15 */}
       <h2><span className="num">15</span> Comunicações e Notificações</h2>
       <p>
-        Ao criar uma conta, você concorda em receber comunicações do PlanObras por e-mail e por
+        Ao criar uma conta, você concorda em receber comunicações do ObrasCitY por e-mail e por
         notificações dentro da plataforma. As comunicações são divididas em dois tipos:
       </p>
       <ul>
@@ -1003,7 +1003,7 @@ export default function TermosPage() {
       <p>
         Estes Termos de Uso, juntamente com a Política de Privacidade e quaisquer outros documentos
         expressamente incorporados por referência (como termos específicos de planos Enterprise),
-        constituem o <strong>acordo completo e integral</strong> entre você e o PlanObras sobre
+        constituem o <strong>acordo completo e integral</strong> entre você e o ObrasCitY sobre
         o uso da plataforma, substituindo quaisquer negociações, propostas, comunicações ou
         entendimentos anteriores sobre o mesmo objeto, sejam verbais ou escritos.
       </p>
@@ -1015,26 +1015,26 @@ export default function TermosPage() {
       </p>
       <h3>17.3 Não Renúncia de Direitos</h3>
       <p>
-        Se o PlanObras deixar de exercer algum direito previsto nestes Termos em uma situação
+        Se o ObrasCitY deixar de exercer algum direito previsto nestes Termos em uma situação
         específica, isso não significa que estamos abrindo mão desse direito para situações
         futuras. Qualquer renúncia formal de direitos deve ser feita por escrito e assinada por
-        representante autorizado do PlanObras.
+        representante autorizado do ObrasCitY.
       </p>
       <h3>17.4 Cessão</h3>
       <p>
         O Usuário não pode ceder, transferir ou delegar seus direitos ou obrigações decorrentes
-        destes Termos a terceiros sem prévia autorização escrita do PlanObras. O PlanObras pode
+        destes Termos a terceiros sem prévia autorização escrita do ObrasCitY. O ObrasCitY pode
         ceder estes Termos em caso de fusão, aquisição, venda de ativos ou reorganização societária,
         mediante notificação ao Usuário com antecedência razoável e garantindo que o novo
         controlador mantenha proteções equivalentes.
       </p>
       <h3>17.5 Força Maior e Caso Fortuito</h3>
       <p>
-        O PlanObras não será responsabilizado por atrasos, falhas ou descumprimento de obrigações
+        O ObrasCitY não será responsabilizado por atrasos, falhas ou descumprimento de obrigações
         causados por eventos imprevisíveis e fora do controle razoável das partes, incluindo:
         desastres naturais, guerras, terrorismo, pandemias, greves gerais, falhas massivas de
         energia, falhas de infraestrutura de internet em escala nacional ou global, e ações
-        governamentais que impeçam a operação normal. Nesses casos, o PlanObras notificará os
+        governamentais que impeçam a operação normal. Nesses casos, o ObrasCitY notificará os
         Usuários o mais brevemente possível sobre a situação e os prazos para normalização.
       </p>
       <h3>17.6 Idioma</h3>
@@ -1062,7 +1062,7 @@ export default function TermosPage() {
       <p>
         Antes de qualquer medida judicial, as partes comprometem-se a buscar, de boa-fé e por
         prazo mínimo de 30 dias, uma solução amigável para eventuais conflitos, por meio do canal
-        de suporte oficial do PlanObras. Acreditamos que a maioria dos problemas pode ser
+        de suporte oficial do ObrasCitY. Acreditamos que a maioria dos problemas pode ser
         resolvida com diálogo.
       </p>
       <h3>18.3 Foro de Eleição</h3>

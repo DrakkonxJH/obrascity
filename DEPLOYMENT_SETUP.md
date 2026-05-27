@@ -38,7 +38,7 @@ No projeto da Vercel:
 ## Configuração de GitHub Actions (opcional)
 
 Se quiser usar também o workflow do GitHub Actions:
-1. Acesse https://github.com/DrakkonxJH/planobras/settings/secrets/actions
+1. Acesse https://github.com/DrakkonxJH/obrascity/settings/secrets/actions
 2. Cadastre `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 3. Cadastre as variáveis de ambiente necessárias para o workflow
 
@@ -72,23 +72,23 @@ Como o worker não deve rodar junto da instância web, mantenha um processo dedi
 4. Verificar saúde: `npm run worker:health`
 
 Arquivos de processo:
-- `ecosystem.config.cjs` (processo `planobras-worker`)
-- logs em `/tmp/planobras-worker.out.log` e `/tmp/planobras-worker.err.log`
+- `ecosystem.config.cjs` (processo `obrascity-worker`)
+- logs em `/tmp/obrascity-worker.out.log` e `/tmp/obrascity-worker.err.log`
 
 ## Runbook operacional (incidente rápido)
 
 ### Sintoma: jobs acumulando / falhando
 
 1. Verificar API operacional: `GET /api/health/ops`
-2. Verificar worker: `pm2 status planobras-worker`
-3. Reiniciar worker: `pm2 restart planobras-worker`
+2. Verificar worker: `pm2 status obrascity-worker`
+3. Reiniciar worker: `pm2 restart obrascity-worker`
 4. Rodar healthcheck: `npm run worker:health`
 5. Se Redis estiver com política diferente de `noeviction`, ajustar no provedor gerenciado.
 
 ### Sintoma: webhook Stripe falhando
 
 1. Confirmar `STRIPE_WEBHOOK_SECRET` no ambiente
-2. Confirmar endpoint ativo: `https://planobras.vercel.app/api/webhooks/stripe`
+2. Confirmar endpoint ativo: `https://obrascity.vercel.app/api/webhooks/stripe`
 3. Revisar eventos e tentativas no dashboard Stripe
 4. Reprocessar eventos pendentes após correção
 
@@ -96,9 +96,9 @@ Arquivos de processo:
 
 ### Rollback da aplicação web (Vercel)
 
-1. Listar deploys recentes no painel da Vercel (projeto `planobras`).
+1. Listar deploys recentes no painel da Vercel (projeto `obrascity`).
 2. Selecionar último deployment estável.
-3. Promover deployment estável para Production (alias `planobras.vercel.app`).
+3. Promover deployment estável para Production (alias `obrascity.vercel.app`).
 4. Rodar smoke imediato:
    - `/api/health`
    - `/api/health/ops`

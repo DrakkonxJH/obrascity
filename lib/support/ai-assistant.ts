@@ -62,7 +62,7 @@ async function generateWithOpenAI(message: string, history: SupportChatTurn[]) {
     {
       role: "system",
       content:
-        "Você é o assistente de suporte do PlanObras. Responda em português do Brasil, com orientação prática e objetiva, focada em uso da plataforma de obras, segurança e operação. Se houver risco operacional ou de segurança, recomende escalonamento para ticket humano.",
+        "Você é o assistente de suporte do ObrasCitY. Responda em português do Brasil, com orientação prática e objetiva, focada em uso da plataforma de obras, segurança e operação. Se houver risco operacional ou de segurança, recomende escalonamento para ticket humano.",
     },
     ...history.slice(-8).map((turn) => ({
       role: turn.role,

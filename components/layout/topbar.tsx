@@ -26,7 +26,7 @@ function getPageMeta(pathname: string) {
       return value;
     }
   }
-  return { title: "PlanObras", icon: "🏗️" };
+  return { title: "ObrasCitY", icon: "🏗️" };
 }
 
 type TopbarProps = {

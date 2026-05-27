@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PlanObras",
+  title: "ObrasCitY",
   description: "Plataforma SaaS de gestão e monitoramento de obras",
 };
 

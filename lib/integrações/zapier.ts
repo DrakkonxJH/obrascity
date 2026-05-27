@@ -60,7 +60,7 @@ export const acoesDisponiveis: Record<TipoAccaoZapier, string> = {
 };
 
 export function gerarURLWebhook(configId: string): string {
-  return `https://api.planobras.com/v1/zapier/webhook/${configId}`;
+  return `https://api.obrascity.com/v1/zapier/webhook/${configId}`;
 }
 
 export function validarOAuthToken(token: string): boolean {

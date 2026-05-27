@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: "planobras-worker",
-      cwd: "/home/julio-sousa/Documentos/planobras/obras-saas",
+      name: "obrascity-worker",
+      cwd: "/home/julio-sousa/Documentos/obrascity/obras-saas",
       script: "npm",
       args: "run worker:start",
       interpreter: "none",
@@ -14,8 +14,8 @@ module.exports = {
       min_uptime: "10s",
       restart_delay: 5000,
       watch: false,
-      out_file: "/tmp/planobras-worker.out.log",
-      error_file: "/tmp/planobras-worker.err.log",
+      out_file: "/tmp/obrascity-worker.out.log",
+      error_file: "/tmp/obrascity-worker.err.log",
       time: true,
     },
   ],

@@ -169,7 +169,7 @@ async function generateReply(message: string, context: Awaited<ReturnType<typeof
       role: "system",
       content:
         [
-          "Você é o assistente de operações do PlanObras.",
+          "Você é o assistente de operações do ObrasCitY.",
           "Responda em português do Brasil, de forma objetiva e operacional.",
           "Você analisa alertas, filas, tickets e auditoria.",
           "Nunca sugira ações destrutivas ou irreversíveis sem aprovação humana.",

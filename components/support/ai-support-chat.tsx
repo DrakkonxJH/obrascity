@@ -22,7 +22,7 @@ export function AiSupportChat() {
     {
       role: "assistant",
       content:
-        "Olá! Sou o assistente de suporte do PlanObras. Me descreva o problema e eu te guio no diagnóstico. Se precisar, posso abrir ticket automaticamente.",
+        "Olá! Sou o assistente de suporte do ObrasCitY. Me descreva o problema e eu te guio no diagnóstico. Se precisar, posso abrir ticket automaticamente.",
     },
   ]);
   const [lastMeta, setLastMeta] = useState<Omit<ApiResponse, "answer"> | null>(null);

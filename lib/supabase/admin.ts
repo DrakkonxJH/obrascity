@@ -15,7 +15,7 @@ export function createAdminClient() {
     },
     global: {
       headers: {
-        "X-Client-Info": "planobras-admin",
+        "X-Client-Info": "obrascity-admin",
       },
     },
   });

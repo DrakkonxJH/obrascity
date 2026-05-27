@@ -1,4 +1,4 @@
-# PlanObras (obras-saas)
+# ObrasCitY (obras-saas)
 
 Plataforma SaaS para gestão de obras com operação multiempresa (tenant), focada em controle operacional, financeiro e governança.
 
@@ -19,7 +19,7 @@ Plataforma SaaS para gestão de obras com operação multiempresa (tenant), foca
 
 ## Endereçamento atual
 
-- **URL pública ativa:** `https://planobras.vercel.app`
+- **URL pública ativa:** `https://obrascity.vercel.app`
 - **Domínio próprio:** ainda em regularização/configuração de DNS.
 
 ## Stack
@@ -100,7 +100,7 @@ tests/                  # testes automatizados críticos
   - `/api/health/ops`
   - `/api/queue/metrics`
   - módulo **Governança** (auditoria + observabilidade tenant)
-- Runbook operacional: `DEPLOYMENT_SETUP.md` e `GUIA_GO_LIVE_PLANOBRAS.md`.
+- Runbook operacional: `DEPLOYMENT_SETUP.md` e `GUIA_GO_LIVE_OBRASCITY.md`.
 - Roteiro completo de processo de obra (15 andares): `GUIA_ROTEIRO_OBRA_COMPLETA_15_ANDARES.md`.
 - Relatório de execução do roteiro no produto: `RELATORIO_EXECUCAO_ROTEIRO_OBRA_ROTEIRO.md`.
 

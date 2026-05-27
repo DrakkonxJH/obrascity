@@ -88,7 +88,7 @@ export async function signUpAction(
         data: {
           nome,
           empresa_nome: empresaNome,
-          signup_source: "planobras_web",
+          signup_source: "obrascity_web",
         },
       },
     });

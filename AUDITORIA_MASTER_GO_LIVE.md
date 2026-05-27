@@ -1,4 +1,4 @@
-# Auditoria Master - Go-Live PlanObras
+# Auditoria Master - Go-Live ObrasCitY
 
 Data: 23/05/2026  
 Objetivo: validar o que está realmente pronto na conta master para operação em produção.
@@ -46,8 +46,8 @@ Legenda:
 |---|---|---|---|
 | `RESEND_API_KEY` configurada localmente | SIM | `.env.local` | Replicar em Production |
 | `RESEND_FROM_EMAIL` configurado | SIM | `.env.local` | Validar remetente final |
-| Domínio `planobras.com` verificado no Resend | NÃO | Painel mostrou `Status: Pendente` | Configurar DNS correto |
-| DNS público do domínio existente (NS/A) | NÃO | `dig` sem resposta para `planobras.com` | Corrigir delegação DNS |
+| Domínio `obrascity.com` verificado no Resend | NÃO | Painel mostrou `Status: Pendente` | Configurar DNS correto |
+| DNS público do domínio existente (NS/A) | NÃO | `dig` sem resposta para `obrascity.com` | Corrigir delegação DNS |
 | Envio de e-mail de verificação funcionando | NÃO | Erro 403 domínio não verificado | Resolver domínio |
 
 ## 5) Billing (Stripe)
@@ -97,7 +97,7 @@ Leitura executiva:
 
 ## 9) Sequência de execução imediata (sem pular etapas)
 
-1. Resolver DNS autoritativo do `planobras.com`.
+1. Resolver DNS autoritativo do `obrascity.com`.
 2. Obter `Verified` no Resend.
 3. Reexecutar cadastro com e-mail novo e validar role `visualizador`.
 4. Auditar env vars Production na Vercel (Supabase/Redis/Stripe/Resend).

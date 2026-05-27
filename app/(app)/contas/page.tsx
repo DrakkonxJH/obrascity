@@ -219,8 +219,8 @@ export default async function ContasPage({
     redis: Boolean(process.env.REDIS_URL),
     turnstile: Boolean(process.env.TURNSTILE_SECRET_KEY),
   };
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://planobras.vercel.app";
-  const vercelDomain = "https://planobras.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://obrascity.vercel.app";
+  const vercelDomain = "https://obrascity.vercel.app";
 
   return (
     <section className="of-page" style={{ display: "grid", gap: 20 }}>

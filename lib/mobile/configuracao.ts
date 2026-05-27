@@ -49,8 +49,8 @@ export interface NotificacaoPush {
 }
 
 export const configPadraoMobile: ConfigMobile = {
-  app_id: "com.planobras.app",
-  app_name: "PlanObras",
+  app_id: "com.obrascity.app",
+  app_name: "ObrasCitY",
   versao: "1.0.0",
   plataformas_ativas: ["pwa"],
   push_notifications_ativa: true,

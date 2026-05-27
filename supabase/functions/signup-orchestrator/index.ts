@@ -31,15 +31,15 @@ const DISPOSABLE_DOMAINS = new Set([
 ]);
 
 const ALLOWED_ORIGINS = new Set([
-  "https://planobras.com",
-  "https://www.planobras.com",
-  "https://planobras.vercel.app",
+  "https://obrascity.com",
+  "https://www.obrascity.com",
+  "https://obrascity.vercel.app",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);
 
 function buildCorsHeaders(origin: string | null) {
-  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://planobras.com";
+  const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://obrascity.com";
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signup-edge-secret",
@@ -285,7 +285,7 @@ Deno.serve(async (request) => {
     options: {
       emailRedirectTo: `${payload.appOrigin}/auth/callback`,
       data: {
-        signup_source: "planobras_web",
+        signup_source: "obrascity_web",
         nome: payload.nome,
         empresa_nome: payload.empresaNome,
       },

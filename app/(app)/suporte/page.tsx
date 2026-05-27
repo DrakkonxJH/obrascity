@@ -7,19 +7,19 @@ const canais = [
     titulo: "Atendimento prioritario",
     descricao: "Suporte para incidentes que impactam a operacao da obra.",
     disponibilidade: "Seg a Sex · 08h as 18h",
-    contato: "suporte@planobras.com",
+    contato: "suporte@obrascity.com",
   },
   {
     titulo: "Suporte comercial",
     descricao: "Dvidas sobre plano, upgrade, perfis adicionais e condicoes comerciais.",
     disponibilidade: "Seg a Sex · 09h as 18h",
-    contato: "comercial@planobras.com",
+    contato: "comercial@obrascity.com",
   },
   {
     titulo: "Onboarding e treinamento",
     descricao: "Acompanhamento para adocao da plataforma com o seu time.",
     disponibilidade: "Agendamento",
-    contato: "onboarding@planobras.com",
+    contato: "onboarding@obrascity.com",
   },
 ];
 
@@ -34,7 +34,7 @@ export default function SuportePage() {
             SAC e Guia de Uso
           </h1>
           <p className="of-empty-text">
-            Central de atendimento e orientacoes praticas para sua equipe usar o PlanObras com
+            Central de atendimento e orientacoes praticas para sua equipe usar o ObrasCitY com
             segurança e produtividade.
           </p>
         </div>

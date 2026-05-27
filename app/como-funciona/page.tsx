@@ -34,7 +34,7 @@ export default function ComoFuncionaPage() {
     <main className="of-page">
       <section className="of-card" style={{ marginBottom: 20 }}>
         <div className="of-card-title" style={{ marginBottom: 10 }}>
-          Como funciona o PlanObras
+          Como funciona o ObrasCitY
         </div>
         <h1 className="of-page-title" style={{ marginBottom: 10 }}>
           Uma apresentação rápida de como a plataforma organiza a obra do início ao fim.
