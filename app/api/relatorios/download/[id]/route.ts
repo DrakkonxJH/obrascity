@@ -3,6 +3,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { listQualidade } from "@/lib/db/qualidade";
+import { listMudancas } from "@/lib/db/mudancas";
+import { listViabilidade } from "@/lib/db/viabilidade";
+import { listObras } from "@/lib/db/obras";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -148,6 +152,79 @@ export async function GET(_: Request, context: RouteContext) {
           efetivo: Number(item.efetivo ?? 0),
           ocorrencias: item.ocorrencias ?? null,
         })),
+      },
+      fileName,
+    );
+  }
+
+  if (tipo === "qualidade") {
+    const qualidade = await listQualidade();
+    const ncRows = qualidade.naoConformidades.filter((item) => !obraId || item.obra_id === obraId);
+    const checklist = qualidade.checklist.filter((item) => !obraId || item.obra_id === obraId);
+    const checklistsConformes = checklist.filter((item) => item.conforme).length;
+    return jsonResponseAsFile(
+      {
+        tipo: "qualidade",
+        generated_at: new Date().toISOString(),
+        obra_id: obraId,
+        indicadores: {
+          total_nc: ncRows.length,
+          abertas: ncRows.filter((item) => ["aberta", "em_tratamento", "reaberta"].includes(item.status)).length,
+          criticas: ncRows.filter((item) => item.severidade === "alta").length,
+          indice_qualidade: checklist.length ? Number(((checklistsConformes / checklist.length) * 100).toFixed(1)) : 0,
+        },
+        itens: ncRows.map((item) => ({
+          obra: item.obra_nome,
+          categoria: item.categoria,
+          severidade: item.severidade,
+          status: item.status,
+          prazo: item.prazo,
+        })),
+      },
+      fileName,
+    );
+  }
+
+  if (tipo === "mudancas") {
+    const mudancas = (await listMudancas()).filter((item) => !obraId || item.obra_id === obraId);
+    if (formato === "xlsx") {
+      const csv = [
+        "obra,tipo,titulo,impacto_prazo_dias,impacto_custo,status",
+        ...mudancas.map((item) => `${item.obra_nome},${item.tipo},${item.titulo},${item.impacto_prazo_dias},${item.impacto_custo},${item.status}`),
+      ].join("\n");
+      return csvResponseAsFile(csv, fileName);
+    }
+    return jsonResponseAsFile(
+      {
+        tipo: "mudancas",
+        generated_at: new Date().toISOString(),
+        obra_id: obraId,
+        itens: mudancas,
+      },
+      fileName,
+    );
+  }
+
+  if (tipo === "viabilidade") {
+    const [estudos, obras] = await Promise.all([listViabilidade(), listObras()]);
+    const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
+    const itens = estudos
+      .filter((item) => !obraId || item.obra_id === obraId)
+      .map((item) => ({
+        obra: obraNomeById.get(item.obra_id) ?? "Obra",
+        status_tecnico: item.status_tecnico,
+        status_legal: item.status_legal,
+        status_economico: item.status_economico,
+        go_no_go: item.go_no_go,
+        parecer: item.parecer,
+        updated_at: item.updated_at,
+      }));
+    return jsonResponseAsFile(
+      {
+        tipo: "viabilidade",
+        generated_at: new Date().toISOString(),
+        obra_id: obraId,
+        estudos: itens,
       },
       fileName,
     );

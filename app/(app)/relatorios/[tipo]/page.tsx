@@ -7,13 +7,16 @@ import { listEquipes, listMembros } from "@/lib/db/equipes";
 import { listMateriais, listPedidosCompra } from "@/lib/db/materiais";
 import { listDiarios } from "@/lib/db/diario";
 import { getDashboardResumo } from "@/lib/db/obras";
+import { listQualidade } from "@/lib/db/qualidade";
+import { listMudancas } from "@/lib/db/mudancas";
+import { listViabilidade } from "@/lib/db/viabilidade";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "../actions";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 
-type ReportType = "progresso" | "financeiro" | "equipes" | "materiais" | "diario" | "executivo";
+type ReportType = "progresso" | "financeiro" | "equipes" | "materiais" | "diario" | "executivo" | "qualidade" | "mudancas" | "viabilidade";
 
-type PageParams = { params: { tipo: string } };
+type PageParams = { params: Promise<{ tipo: string }> };
 
 const reportMeta: Record<
   ReportType,
@@ -29,6 +32,9 @@ const reportMeta: Record<
   materiais: { title: "Relatório de Materiais", subtitle: "Estoque, consumo e pedidos pendentes.", formats: ["pdf", "excel"] },
   diario: { title: "Diário de Obra", subtitle: "Registro operacional diário por obra.", formats: ["pdf"] },
   executivo: { title: "Sumário Executivo", subtitle: "Visão diretiva com KPIs e riscos críticos.", formats: ["pdf"] },
+  qualidade: { title: "Relatório de Qualidade", subtitle: "Checklists, não conformidades e índice de qualidade.", formats: ["pdf"] },
+  mudancas: { title: "Relatório de Mudanças", subtitle: "Impacto acumulado de prazo e custo nas obras.", formats: ["pdf", "excel"] },
+  viabilidade: { title: "Relatório de Viabilidade", subtitle: "Estudos GO/NO-GO técnico, legal e econômico.", formats: ["pdf"] },
 };
 
 function isReportType(value: string): value is ReportType {
@@ -39,8 +45,15 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
+function formatDate(value: string | null | undefined) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleDateString("pt-BR");
+}
+
 export default async function ReportTypePage({ params }: PageParams) {
-  const { tipo } = params;
+  const { tipo } = await params;
   if (!isReportType(tipo)) notFound();
 
   const meta = reportMeta[tipo];
@@ -350,6 +363,269 @@ export default async function ReportTypePage({ params }: PageParams) {
     );
   }
 
+  if (tipo === "qualidade") {
+    const qualidade = await listQualidade();
+    const checklistsConformes = qualidade.checklist.filter((item) => item.conforme).length;
+    const indiceQualidade = qualidade.checklist.length
+      ? Number(((checklistsConformes / qualidade.checklist.length) * 100).toFixed(1))
+      : 0;
+    const planosAbertos = qualidade.planosAcao.filter((item) => item.status !== "concluido").length;
+
+    mainSection = (
+      <div className="of-card">
+        <div className="of-card-title">Resumo da Qualidade</div>
+        <div className="of-kpi-grid">
+          <article className="of-metric-card blue">
+            <p className="of-kpi-label">NC totais</p>
+            <p className="of-kpi-value">{qualidade.kpis.totalNc}</p>
+          </article>
+          <article className="of-metric-card yellow">
+            <p className="of-kpi-label">NC abertas</p>
+            <p className="of-kpi-value">{qualidade.kpis.abertas}</p>
+          </article>
+          <article className="of-metric-card green">
+            <p className="of-kpi-label">Índice de qualidade</p>
+            <p className="of-kpi-value">{indiceQualidade}%</p>
+          </article>
+          <article className="of-metric-card purple">
+            <p className="of-kpi-label">Ações corretivas abertas</p>
+            <p className="of-kpi-value">{planosAbertos}</p>
+          </article>
+        </div>
+      </div>
+    );
+    detailSection = (
+      <>
+        <div className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Não conformidades recentes</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Obra</th>
+                  <th>Categoria</th>
+                  <th>Severidade</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {qualidade.naoConformidades.slice(0, 10).map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.obra_nome}</td>
+                    <td>{item.categoria}</td>
+                    <td>{item.severidade}</td>
+                    <td>{item.status}</td>
+                  </tr>
+                ))}
+                {qualidade.naoConformidades.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="of-empty-text">
+                      Nenhuma não conformidade registrada.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Checklists e ações corretivas</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Indicador</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Itens de checklist conformes</td>
+                  <td>{checklistsConformes}/{qualidade.checklist.length}</td>
+                </tr>
+                <tr>
+                  <td>Planos de ação cadastrados</td>
+                  <td>{qualidade.planosAcao.length}</td>
+                </tr>
+                <tr>
+                  <td>NC críticas</td>
+                  <td>{qualidade.kpis.criticas}</td>
+                </tr>
+                <tr>
+                  <td>MTTR (dias)</td>
+                  <td>{qualidade.kpis.mttrDias}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (tipo === "mudancas") {
+    const mudancas = await listMudancas();
+    const pendentes = mudancas.filter((item) => ["pendente", "em_aprovacao"].includes(item.status)).length;
+    const aprovadas = mudancas.filter((item) => item.status === "aprovada").length;
+    const rejeitadas = mudancas.filter((item) => item.status === "rejeitada").length;
+    const impactoPrazo = mudancas.reduce((acc, item) => acc + item.impacto_prazo_dias, 0);
+    const impactoCusto = mudancas.reduce((acc, item) => acc + item.impacto_custo, 0);
+    const distribuicao = Array.from(new Set(mudancas.map((item) => item.tipo))).map((tipoItem) => ({
+      tipo: tipoItem,
+      total: mudancas.filter((item) => item.tipo === tipoItem).length,
+    }));
+
+    mainSection = (
+      <div className="of-card">
+        <div className="of-card-title">Resumo de Mudanças</div>
+        <div className="of-kpi-grid">
+          <article className="of-metric-card blue">
+            <p className="of-kpi-label">Solicitações</p>
+            <p className="of-kpi-value">{mudancas.length}</p>
+          </article>
+          <article className="of-metric-card yellow">
+            <p className="of-kpi-label">Pendentes</p>
+            <p className="of-kpi-value">{pendentes}</p>
+          </article>
+          <article className="of-metric-card green">
+            <p className="of-kpi-label">Aprovadas</p>
+            <p className="of-kpi-value">{aprovadas}</p>
+          </article>
+          <article className="of-metric-card">
+            <p className="of-kpi-label">Rejeitadas</p>
+            <p className="of-kpi-value">{rejeitadas}</p>
+          </article>
+        </div>
+      </div>
+    );
+    detailSection = (
+      <>
+        <div className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Impacto acumulado</div>
+          <div className="of-kpi-grid">
+            <article className="of-metric-card yellow">
+              <p className="of-kpi-label">Prazo acumulado</p>
+              <p className="of-kpi-value">{impactoPrazo} dias</p>
+            </article>
+            <article className="of-metric-card blue">
+              <p className="of-kpi-label">Custo acumulado</p>
+              <p className="of-kpi-value">{formatMoney(impactoCusto)}</p>
+            </article>
+          </div>
+        </div>
+        <div className="of-card" style={{ marginTop: 20 }}>
+          <div className="of-card-title">Mudanças recentes e distribuição</div>
+          <div className="of-table-wrap" style={{ border: 0 }}>
+            <table className="of-table">
+              <thead>
+                <tr>
+                  <th>Obra</th>
+                  <th>Tipo</th>
+                  <th>Status / distribuição</th>
+                  <th>Impacto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mudancas.slice(0, 10).map((item) => {
+                  const totalTipo = distribuicao.find((entry) => entry.tipo === item.tipo)?.total ?? 0;
+                  return (
+                    <tr key={item.id}>
+                      <td>{item.obra_nome}</td>
+                      <td>{item.tipo}</td>
+                      <td>{item.status} · {totalTipo} do tipo</td>
+                      <td>{item.impacto_prazo_dias} dias / {formatMoney(item.impacto_custo)}</td>
+                    </tr>
+                  );
+                })}
+                {mudancas.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="of-empty-text">
+                      Nenhuma solicitação de mudança registrada.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (tipo === "viabilidade") {
+    const [estudos, obras] = await Promise.all([listViabilidade(), listObras()]);
+    const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
+    const estudosComObra = estudos.map((item) => ({
+      ...item,
+      obra_nome: obraNomeById.get(item.obra_id) ?? "Obra",
+    }));
+    const gos = estudosComObra.filter((item) => item.go_no_go === "go").length;
+    const noGos = estudosComObra.filter((item) => item.go_no_go === "no_go").length;
+    const pendentes = estudosComObra.filter((item) => item.go_no_go === "pendente").length;
+
+    mainSection = (
+      <div className="of-card">
+        <div className="of-card-title">Resumo de Viabilidade</div>
+        <div className="of-kpi-grid">
+          <article className="of-metric-card blue">
+            <p className="of-kpi-label">Estudos</p>
+            <p className="of-kpi-value">{estudosComObra.length}</p>
+          </article>
+          <article className="of-metric-card green">
+            <p className="of-kpi-label">GO</p>
+            <p className="of-kpi-value">{gos}</p>
+          </article>
+          <article className="of-metric-card">
+            <p className="of-kpi-label">NO-GO</p>
+            <p className="of-kpi-value">{noGos}</p>
+          </article>
+          <article className="of-metric-card yellow">
+            <p className="of-kpi-label">Pendentes</p>
+            <p className="of-kpi-value">{pendentes}</p>
+          </article>
+        </div>
+      </div>
+    );
+    detailSection = (
+      <div className="of-card" style={{ marginTop: 20 }}>
+        <div className="of-card-title">Estudos consolidados</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Obra</th>
+                <th>Técnico</th>
+                <th>Legal</th>
+                <th>Econômico</th>
+                <th>GO/NO-GO</th>
+                <th>Atualizado em</th>
+              </tr>
+            </thead>
+            <tbody>
+              {estudosComObra.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.obra_nome}</td>
+                  <td>{item.status_tecnico}</td>
+                  <td>{item.status_legal}</td>
+                  <td>{item.status_economico}</td>
+                  <td>{item.go_no_go}</td>
+                  <td>{formatDate(item.updated_at)}</td>
+                </tr>
+              ))}
+              {estudosComObra.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="of-empty-text">
+                    Nenhum estudo de viabilidade cadastrado.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <FeatureGateWrapper feature="relatórios_basic">
       <section className="of-page">
@@ -409,7 +685,13 @@ export default async function ReportTypePage({ params }: PageParams) {
         <p className="of-empty-text">
           {tipo === "diario"
             ? "Acesse o registro operacional diário por obra."
-            : "Este painel consolida os dados do tipo selecionado e permite solicitar exportação no formato desejado."}
+            : tipo === "qualidade"
+              ? "Consolida checklists, não conformidades, índice de qualidade e ações corretivas por obra."
+              : tipo === "mudancas"
+                ? "Consolida solicitações de mudança, aprovações e impacto acumulado de prazo e custo."
+                : tipo === "viabilidade"
+                  ? "Consolida estudos GO/NO-GO com visão técnica, legal e econômica por empreendimento."
+                  : "Este painel consolida os dados do tipo selecionado e permite solicitar exportação no formato desejado."}
         </p>
       </div>
       </section>

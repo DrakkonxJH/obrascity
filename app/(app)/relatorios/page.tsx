@@ -46,6 +46,36 @@ const reportCards = [
     href: "/relatorios/materiais",
   },
   {
+    tipo: "qualidade",
+    icon: "🛡️",
+    titulo: "Relatório de Qualidade",
+    desc: "Checklists de inspeção, não conformidades registradas, índice de qualidade e ações corretivas por obra.",
+    foot: "Por obra",
+    badge: "of-badge-green",
+    badgeLabel: "PDF",
+    href: "/relatorios/qualidade",
+  },
+  {
+    tipo: "mudancas",
+    icon: "🔁",
+    titulo: "Relatório de Mudanças",
+    desc: "Solicitações de mudança aprovadas e rejeitadas, impacto acumulado de prazo e custo, distribuição por tipo.",
+    foot: "Consolidado",
+    badge: "of-badge-yellow",
+    badgeLabel: "PDF / Excel",
+    href: "/relatorios/mudancas",
+  },
+  {
+    tipo: "viabilidade",
+    icon: "🔎",
+    titulo: "Relatório de Viabilidade",
+    desc: "Estudos de viabilidade técnica, legal e econômica. Resumo de GO/NO-GO por empreendimento.",
+    foot: "Por estudo",
+    badge: "of-badge-blue",
+    badgeLabel: "PDF",
+    href: "/relatorios/viabilidade",
+  },
+  {
     tipo: "diario",
     icon: "📝",
     titulo: "Diário de Obra",
@@ -113,6 +143,9 @@ export default async function RelatóriosPage() {
           <option value="financeiro">Financeiro</option>
           <option value="equipes">Equipes</option>
           <option value="materiais">Materiais</option>
+          <option value="qualidade">Qualidade</option>
+          <option value="mudancas">Mudanças</option>
+          <option value="viabilidade">Viabilidade</option>
           <option value="diario">Diário de obra</option>
           <option value="executivo">Executivo</option>
         </select>

@@ -28,6 +28,11 @@ function normalizeReportFormat(value: string | null | undefined) {
   return format || "pdf";
 }
 
+function isMissingTableError(message: string, table: string) {
+  const text = message.toLowerCase();
+  return text.includes(table.toLowerCase()) && (text.includes("does not exist") || text.includes("could not find the table"));
+}
+
 function safeCsvValue(value: unknown) {
   const raw = String(value ?? "");
   if (raw.includes(",") || raw.includes("\"") || raw.includes("\n")) {
@@ -163,6 +168,124 @@ async function loadReportPayload(admin: ReturnType<typeof createAdminClient>, re
         clima: row.clima ?? null,
         efetivo: Number(row.efetivo ?? 0),
         ocorrencias: row.ocorrencias ?? null,
+      }));
+
+    return { tipo: report.tipo, generatedAt, obraId: report.obra_id, items };
+  }
+
+  if (report.tipo === "qualidade") {
+    const [ncResult, checklistResult] = await Promise.all([
+      admin
+        .from("nao_conformidades")
+        .select("obra_id, categoria, severidade, status, prazo, created_at, obras(nome)")
+        .eq("empresa_id", report.empresa_id)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("qualidade_checklists")
+        .select("obra_id, norma, item, status, conforme, inspecionado_em, obras(nome)")
+        .eq("empresa_id", report.empresa_id)
+        .order("created_at", { ascending: false }),
+    ]);
+    if (ncResult.error && !isMissingTableError(ncResult.error.message, "nao_conformidades")) {
+      throw new Error(`Erro ao montar dataset de qualidade: ${ncResult.error.message}`);
+    }
+    if (checklistResult.error && !isMissingTableError(checklistResult.error.message, "qualidade_checklists")) {
+      throw new Error(`Erro ao montar checklist de qualidade: ${checklistResult.error.message}`);
+    }
+
+    const ncRows = (ncResult.error ? [] : (ncResult.data ?? [])).filter((row) => !report.obra_id || row.obra_id === report.obra_id);
+    const checklistRows = (checklistResult.error ? [] : (checklistResult.data ?? [])).filter((row) => !report.obra_id || row.obra_id === report.obra_id);
+    const checklistsConformes = checklistRows.filter((row) => Boolean(row.conforme)).length;
+
+    const items = [
+      {
+        categoria: "indicadores",
+        total_nc: ncRows.length,
+        nc_abertas: ncRows.filter((row) => ["aberta", "em_tratamento", "reaberta"].includes(String(row.status ?? ""))).length,
+        nc_criticas: ncRows.filter((row) => String(row.severidade ?? "") === "alta").length,
+        indice_qualidade: checklistRows.length ? Number(((checklistsConformes / checklistRows.length) * 100).toFixed(1)) : 0,
+      },
+      ...ncRows.map((row) => ({
+        categoria: "nao_conformidade",
+        obra: (row.obras as { nome?: string } | null)?.nome ?? "Obra",
+        tipo: row.categoria ?? "",
+        severidade: row.severidade ?? "",
+        status: row.status ?? "",
+        prazo: row.prazo ?? null,
+      })),
+      ...checklistRows.map((row) => ({
+        categoria: "checklist",
+        obra: (row.obras as { nome?: string } | null)?.nome ?? "Obra",
+        norma: row.norma ?? "",
+        item: row.item ?? "",
+        status: row.status ?? "",
+        conforme: Boolean(row.conforme),
+        inspecionado_em: row.inspecionado_em ?? null,
+      })),
+    ];
+
+    return { tipo: report.tipo, generatedAt, obraId: report.obra_id, items };
+  }
+
+  if (report.tipo === "mudancas") {
+    const { data, error } = await admin
+      .from("change_requests")
+      .select("obra_id, tipo, titulo, impacto_prazo_dias, impacto_custo, status, created_at, obras(nome)")
+      .eq("empresa_id", report.empresa_id)
+      .order("created_at", { ascending: false });
+    if (error) {
+      if (isMissingTableError(error.message, "change_requests")) {
+        return { tipo: report.tipo, generatedAt, obraId: report.obra_id, items: [] };
+      }
+      throw new Error(`Erro ao montar dataset de mudanças: ${error.message}`);
+    }
+
+    const items = (data ?? [])
+      .filter((row) => !report.obra_id || row.obra_id === report.obra_id)
+      .map((row) => ({
+        obra: (row.obras as { nome?: string } | null)?.nome ?? "Obra",
+        tipo: row.tipo ?? "",
+        titulo: row.titulo ?? "",
+        impacto_prazo_dias: Number(row.impacto_prazo_dias ?? 0),
+        impacto_custo: Number(row.impacto_custo ?? 0),
+        status: row.status ?? "",
+      }));
+
+    return { tipo: report.tipo, generatedAt, obraId: report.obra_id, items };
+  }
+
+  if (report.tipo === "viabilidade") {
+    const [estudosResult, obrasResult] = await Promise.all([
+      admin
+        .from("viabilidade_estudos")
+        .select("obra_id, status_tecnico, status_legal, status_economico, go_no_go, parecer, updated_at")
+        .eq("empresa_id", report.empresa_id)
+        .order("updated_at", { ascending: false }),
+      admin
+        .from("obras")
+        .select("id, nome")
+        .eq("empresa_id", report.empresa_id)
+        .is("deleted_at", null),
+    ]);
+    if (estudosResult.error) {
+      if (isMissingTableError(estudosResult.error.message, "viabilidade_estudos")) {
+        return { tipo: report.tipo, generatedAt, obraId: report.obra_id, items: [] };
+      }
+      throw new Error(`Erro ao montar dataset de viabilidade: ${estudosResult.error.message}`);
+    }
+    if (obrasResult.error) throw new Error(`Erro ao carregar obras para viabilidade: ${obrasResult.error.message}`);
+
+    const obraNomeById = new Map((obrasResult.data ?? []).map((row) => [String(row.id), String(row.nome ?? "Obra")]));
+    const items = (estudosResult.data ?? [])
+      .filter((row) => !report.obra_id || row.obra_id === report.obra_id)
+      .map((row) => ({
+        obra: obraNomeById.get(String(row.obra_id ?? "")) ?? "Obra",
+        status_tecnico: row.status_tecnico ?? "",
+        status_legal: row.status_legal ?? "",
+        status_economico: row.status_economico ?? "",
+        go_no_go: row.go_no_go ?? "",
+        parecer: row.parecer ?? "",
+        updated_at: row.updated_at ?? null,
       }));
 
     return { tipo: report.tipo, generatedAt, obraId: report.obra_id, items };

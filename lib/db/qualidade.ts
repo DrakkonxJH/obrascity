@@ -678,6 +678,21 @@ export async function listChecklistItems(filters: QualidadeFiltro = {}): Promise
   });
 }
 
+export async function listQualidade(filters: QualidadeFiltro = {}) {
+  const [naoConformidades, checklist] = await Promise.all([
+    listNaoConformidades(filters),
+    listChecklistItems(filters),
+  ]);
+  const planosAcao = await listPlanosAcao(naoConformidades.map((item) => item.id));
+
+  return {
+    naoConformidades,
+    checklist,
+    planosAcao,
+    kpis: buildQualidadeKpis(naoConformidades),
+  };
+}
+
 export function buildQualidadeKpis(ncRows: NaoConformidadeItem[]): QualidadeKpis {
   const abertas = ncRows.filter((nc) => ["aberta", "em_tratamento", "reaberta"].includes(nc.status)).length;
   const hoje = new Date().toISOString().slice(0, 10);
