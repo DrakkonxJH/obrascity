@@ -532,7 +532,7 @@ export default async function PlanosPage({
           <article className="of-card">
             <div className="of-card-title">Gerenciar cobrança</div>
             <p className="of-list-description mb-4">
-              Atualize cartão, cancele ou altere o plano no portal seguro do Stripe.
+              Atualize cartão, gerencie PIX, cancele ou altere o plano no portal seguro do Stripe.
             </p>
             <form action={openBillingPortalAction}>
               <button type="submit" className="of-btn-ghost" style={{ width: "100%", maxWidth: 320 }}>
@@ -562,6 +562,19 @@ export default async function PlanosPage({
               {assinatura?.periodo_fim ? new Date(assinatura.periodo_fim).toLocaleDateString("pt-BR") : "—"}
             </strong>
           </p>
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--of-border)" }}>
+            <p className="of-list-description" style={{ fontSize: "0.78rem", color: "var(--of-text-secondary)", marginBottom: 8 }}>
+              Formas de pagamento aceitas:
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600 }}>
+                💳 Cartão de crédito
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600 }}>
+                ⚡ PIX
+              </span>
+            </div>
+          </div>
         </article>
       </div>
     </section>

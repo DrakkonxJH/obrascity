@@ -119,6 +119,46 @@ export async function handleStripeEvent(event: Stripe.Event) {
     return;
   }
 
+  // PIX payments: invoice.paid fires when a PIX QR Code is paid.
+  // This activates subscriptions that were in `incomplete` status waiting for PIX.
+  if (event.type === "invoice.paid" || event.type === "invoice.payment_failed") {
+    const invoice = event.data.object as Stripe.Invoice;
+    const rawSubRef = invoice.parent?.subscription_details?.subscription;
+    const subscriptionId =
+      typeof rawSubRef === "string" ? rawSubRef : (rawSubRef as Stripe.Subscription | null | undefined)?.id;
+    if (!subscriptionId) return;
+
+    const sub = await stripe.subscriptions.retrieve(subscriptionId);
+    const empresaId = getEmpresaIdFromMetadata(sub.metadata);
+    if (!empresaId) return;
+
+    const priceId = getStripePriceIdFromSubscriptionItem(sub.items.data[0]);
+    const plano = mapStripePriceIdToPlan(priceId) as PlanId | null;
+    if (!plano) return;
+
+    const status = event.type === "invoice.paid" ? mapStripeStatus(sub.status) : "past_due";
+    const periodEndUnix = subscriptionItemPeriodEnd(sub);
+    const periodoFim = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
+    const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+
+    await admin.rpc("sync_subscription_from_stripe", {
+      p_empresa_id: empresaId,
+      p_plano: plano,
+      p_status: status,
+      p_external_customer_id: customerId ?? null,
+      p_external_subscription_id: subscriptionId,
+      p_periodo_fim: periodoFim,
+    });
+
+    await admin.rpc("log_stripe_event", {
+      p_empresa_id: empresaId,
+      p_event_type: event.type,
+      p_external_event_id: event.id,
+      p_payload: event as unknown as Record<string, unknown>,
+    });
+    return;
+  }
+
   if (
     event.type === "customer.subscription.updated" ||
     event.type === "customer.subscription.created" ||

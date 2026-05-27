@@ -28,17 +28,24 @@ export async function createSubscriptionCheckoutSession(input: {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
+    payment_method_types: ["card", "pix"],
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/planos?checkout=success`,
     cancel_url: `${origin}/planos?checkout=cancel`,
     customer_email: input.customerEmail,
     client_reference_id: input.empresaId,
+    locale: "pt-BR",
     metadata: {
       empresa_id: input.empresaId,
     },
     subscription_data: {
       metadata: {
         empresa_id: input.empresaId,
+      },
+    },
+    payment_method_options: {
+      pix: {
+        expires_after_seconds: 86400, // QR Code válido por 24h
       },
     },
     allow_promotion_codes: true,
