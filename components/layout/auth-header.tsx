@@ -192,7 +192,7 @@ export function AuthHeader() {
           <Link href="/" className="nav-logo">
             <div className="nav-logo-mark">🏗</div>
             <div className="nav-logo-text">
-              PLAN<em>OBRAS</em>
+              OBRAS<em>CITY</em>
             </div>
           </Link>
           <div className="nav-links">
