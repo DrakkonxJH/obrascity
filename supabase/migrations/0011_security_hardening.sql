@@ -295,7 +295,7 @@ $$;
 revoke all on function public.log_stripe_event(uuid, text, text, jsonb) from public;
 grant execute on function public.log_stripe_event(uuid, text, text, jsonb) to service_role;
 
--- Fallback trigger: only provision when signup came from PlanObras web
+-- Fallback trigger: only provision when signup came from ObrasCitY web
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -308,7 +308,7 @@ declare
   v_empresa text;
 begin
   v_source := coalesce(new.raw_user_meta_data ->> 'signup_source', '');
-  if v_source <> 'planobras_web' then
+  if v_source <> 'obrascity_web' then
     return new;
   end if;
 

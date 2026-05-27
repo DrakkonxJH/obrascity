@@ -1,4 +1,4 @@
-const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://planobras.vercel.app").replace(/\/+$/, "");
+const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://obrascity.vercel.app").replace(/\/+$/, "");
 
 async function getJson(path) {
   const response = await fetch(`${appUrl}${path}`, { headers: { Accept: "application/json" } });

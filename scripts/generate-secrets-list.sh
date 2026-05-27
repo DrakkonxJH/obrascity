@@ -4,7 +4,7 @@
 
 echo "=== Variáveis a adicionar no GitHub Secrets ==="
 echo ""
-echo "URL: https://github.com/DrakkonxJH/planobras/settings/secrets/actions"
+echo "URL: https://github.com/DrakkonxJH/obrascity/settings/secrets/actions"
 echo ""
 echo "Clique em 'New repository secret' para cada linha abaixo:"
 echo ""

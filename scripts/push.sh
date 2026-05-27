@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TOKEN_FILE="${ROOT}/../.github-token.local"
 BRANCH="${1:-main}"
-REMOTE="${GITHUB_REMOTE:-DrakkonxJH/planobras}"
+REMOTE="${GITHUB_REMOTE:-DrakkonxJH/obrascity}"
 
 if [[ ! -f "$TOKEN_FILE" ]]; then
   echo "Erro: token não encontrado em $TOKEN_FILE"
