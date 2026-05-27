@@ -19,7 +19,7 @@ Plataforma SaaS para gestão de obras com operação multiempresa (tenant), foca
 
 ## Endereçamento atual
 
-- **URL pública ativa:** `https://obrascity.vercel.app`
+- **URL pública ativa:** `https://obrascity.com.br`
 - **Domínio próprio:** ainda em regularização/configuração de DNS.
 
 ## Stack

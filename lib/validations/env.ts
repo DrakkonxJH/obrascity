@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const DEFAULT_PUBLIC_APP_URL = "https://obrascity.vercel.app";
+const DEFAULT_PUBLIC_APP_URL = "https://obrascity.com.br";
 
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),

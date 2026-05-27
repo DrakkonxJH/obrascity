@@ -21,20 +21,20 @@ jobs:
 
       - name: Check app health
         run: |
-          curl -fsS "https://obrascity.vercel.app/api/health" >/tmp/health.json
+          curl -fsS "https://obrascity.com.br/api/health" >/tmp/health.json
           cat /tmp/health.json
 
       - name: Check ops health
         run: |
-          curl -fsS "https://obrascity.vercel.app/api/health/ops" >/tmp/ops.json
+          curl -fsS "https://obrascity.com.br/api/health/ops" >/tmp/ops.json
           cat /tmp/ops.json
 
       - name: Check queue metrics
         run: |
-          curl -fsS "https://obrascity.vercel.app/api/queue/metrics" >/tmp/queue.json
+          curl -fsS "https://obrascity.com.br/api/queue/metrics" >/tmp/queue.json
           cat /tmp/queue.json
 
       - name: Enforce SLO thresholds
         env:
-          NEXT_PUBLIC_APP_URL: https://obrascity.vercel.app
+          NEXT_PUBLIC_APP_URL: https://obrascity.com.br
         run: npm run ops:slo-check

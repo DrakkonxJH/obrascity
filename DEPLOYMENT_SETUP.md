@@ -88,7 +88,7 @@ Arquivos de processo:
 ### Sintoma: webhook Stripe falhando
 
 1. Confirmar `STRIPE_WEBHOOK_SECRET` no ambiente
-2. Confirmar endpoint ativo: `https://obrascity.vercel.app/api/webhooks/stripe`
+2. Confirmar endpoint ativo: `https://obrascity.com.br/api/webhooks/stripe`
 3. Revisar eventos e tentativas no dashboard Stripe
 4. Reprocessar eventos pendentes após correção
 
@@ -98,7 +98,7 @@ Arquivos de processo:
 
 1. Listar deploys recentes no painel da Vercel (projeto `obrascity`).
 2. Selecionar último deployment estável.
-3. Promover deployment estável para Production (alias `obrascity.vercel.app`).
+3. Promover deployment estável para Production (alias `obrascity.com.br`).
 4. Rodar smoke imediato:
    - `/api/health`
    - `/api/health/ops`

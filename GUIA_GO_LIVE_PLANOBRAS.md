@@ -128,7 +128,7 @@ Status atual local:
 - [x] `SUPABASE_SERVICE_KEY` configurada.
 - [x] `REDIS_URL` configurada.
 - [x] `DATA_ENCRYPTION_KEY` configurada.
-- [x] `NEXT_PUBLIC_APP_URL=https://obrascity.vercel.app` no `.env.local`.
+- [x] `NEXT_PUBLIC_APP_URL=https://obrascity.com.br` no `.env.local`.
 - [x] `RESEND_API_KEY` configurada no `.env.local`.
 - [x] `RESEND_FROM_EMAIL` configurada no `.env.local`.
 - [x] `SIGNUP_EDGE_SHARED_SECRET` configurada no `.env.local`.
@@ -143,7 +143,7 @@ Status atual local:
 ## Fase D - Domínio e DNS
 
 Objetivo:
-- Aplicação pública respondendo no domínio final (`obrascity.vercel.app` até domínio próprio).
+- Aplicação pública respondendo no domínio final (`obrascity.com.br` até domínio próprio).
 - E-mail de transação autenticado (SPF/DKIM/MX).
 
 Pendências críticas detectadas:
@@ -317,14 +317,14 @@ Smoke test mínimo:
 - Tentativa de ajuste Redis via `CONFIG SET` falhou com `ERR Unsupported CONFIG parameter: maxmemory-policy` (provedor gerenciado limita esse comando).
 - Vercel Production validado via CLI (`vercel env ls production`) com `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`, `REDIS_URL`, `DATA_ENCRYPTION_KEY`, `SIGNUP_EDGE_SHARED_SECRET`, `NEXT_PUBLIC_APP_URL`.
 - Vercel Preview validado via CLI (`vercel env ls preview`) sem variáveis cadastradas.
-- Deploy de produção realizado com alias `https://obrascity.vercel.app` (build concluído e publicado).
-- Decisão operacional atual: manter `https://obrascity.vercel.app` como domínio público da aplicação até registrar/validar domínio próprio.
+- Deploy de produção realizado com alias `https://obrascity.com.br` (build concluído e publicado).
+- Decisão operacional atual: manter `https://obrascity.com.br` como domínio público da aplicação até registrar/validar domínio próprio.
 - Correção aplicada no `proxy.ts`: manutenção agora depende de `MAINTENANCE_MODE=true` (não bloqueia produção por padrão).
 - Smoke pós-deploy em produção: `/` = 307, `/login` = 200, `/cadastro` = 200, `/api/health` = 200, `/api/health/ops` = 200, `/api/queue/metrics` = 200.
 - Resend API key local é restrita a envio (`restricted_api_key`), sem permissão para listar/verificar domínios por API.
 - Stripe em modo teste configurado: produtos/preços de Starter/Pro/Enterprise criados com IDs válidos.
 - Variáveis Stripe/Resend aplicadas em **Production** na Vercel: `STRIPE_SECRET_KEY`, `STRIPE_PRICE_*_IDS`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`.
-- Endpoint Stripe criado: `https://obrascity.vercel.app/api/webhooks/stripe` (`we_1TaAMEFJTwlYxOjq89yT3jG2`) e secret registrado na Vercel.
+- Endpoint Stripe criado: `https://obrascity.com.br/api/webhooks/stripe` (`we_1TaAMEFJTwlYxOjq89yT3jG2`) e secret registrado na Vercel.
 - Re-deploy de produção executado após configuração de variáveis de billing.
 - Endpoint de webhook responde em produção (400 esperado sem assinatura `stripe-signature`).
 - Resend API key fornecida agora aceita listagem da conta (retorno sem domínios cadastrados no momento).

@@ -33,7 +33,7 @@ const DISPOSABLE_DOMAINS = new Set([
 const ALLOWED_ORIGINS = new Set([
   "https://obrascity.com",
   "https://www.obrascity.com",
-  "https://obrascity.vercel.app",
+  "https://obrascity.com.br",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);
