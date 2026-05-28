@@ -20,6 +20,8 @@ function entityLabel(entityType: string) {
   if (entityType === "purchase_order") return "Pedido de compra";
   if (entityType === "medicao") return "Medição";
   if (entityType === "cronograma_change") return "Mudança de cronograma";
+  if (entityType === "change_request") return "Solicitação de mudança";
+  if (entityType === "financeiro_titulo") return "Título financeiro";
   if (entityType === "quality_issue") return "Não conformidade";
   if (entityType === "financial_entry") return "Título financeiro";
   return entityType;

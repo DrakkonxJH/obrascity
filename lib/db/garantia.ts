@@ -14,6 +14,8 @@ export type GarantiaChamadoItem = {
   criticidade: string;
   status: string;
   sla_horas: number;
+  prazo_resposta_em: string | null;
+  prazo_solucao_em: string | null;
   created_at: string;
   resolvido_em: string | null;
 };
@@ -32,7 +34,9 @@ export async function listGarantiaChamados(): Promise<GarantiaChamadoItem[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("garantia_chamados")
-    .select("id, obra_id, unidade, sistema, titulo, descricao, criticidade, status, sla_horas, created_at, resolvido_em, obras(nome)")
+    .select(
+      "id, obra_id, unidade, sistema, titulo, descricao, criticidade, status, sla_horas, prazo_resposta_em, prazo_solucao_em, created_at, resolvido_em, obras(nome)",
+    )
     .eq("empresa_id", empresaId)
     .order("created_at", { ascending: false })
     .limit(400);
@@ -52,6 +56,8 @@ export async function listGarantiaChamados(): Promise<GarantiaChamadoItem[]> {
     criticidade: String(row.criticidade ?? "media"),
     status: String(row.status ?? "aberto"),
     sla_horas: Number(row.sla_horas ?? 24),
+    prazo_resposta_em: row.prazo_resposta_em ? String(row.prazo_resposta_em) : null,
+    prazo_solucao_em: row.prazo_solucao_em ? String(row.prazo_solucao_em) : null,
     created_at: String(row.created_at ?? ""),
     resolvido_em: row.resolvido_em ? String(row.resolvido_em) : null,
   }));
@@ -160,4 +166,3 @@ export async function createGarantiaInteracao(input: { chamadoId: string; mensag
     throw new Error(`Erro ao registrar interação de garantia: ${error.message}`);
   }
 }
-

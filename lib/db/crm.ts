@@ -1,5 +1,6 @@
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { createServerClient } from "@/lib/supabase/server";
+import { type SupabaseClient } from "@supabase/supabase-js";
 
 export type CrmLead = {
   id: string;
@@ -38,6 +39,249 @@ type UpsertCrmLeadInput = {
 
 const CRM_SELECT =
   "id, empresa_id, nome, contato, cargo, email, telefone, valor, etapa, origem, obra, prioridade, ultima_atividade, notas, created_at, updated_at";
+
+function mapLeadEtapaToDealStage(etapa: CrmLead["etapa"]): string {
+  if (etapa === "Contato") return "novos";
+  if (etapa === "Qualificação") return "qualificacao";
+  if (etapa === "Proposta") return "proposta";
+  if (etapa === "Negociação") return "negociacao";
+  if (etapa === "Fechado") return "ganho";
+  return "perdido";
+}
+
+function mapLeadEtapaToDealStatus(etapa: CrmLead["etapa"]): "aberto" | "ganho" | "perdido" {
+  if (etapa === "Fechado") return "ganho";
+  if (etapa === "Perdido") return "perdido";
+  return "aberto";
+}
+
+function mapLeadPrioridadeToDealPriority(prioridade: CrmLead["prioridade"]): "alta" | "media" | "baixa" {
+  if (prioridade === "Alta") return "alta";
+  if (prioridade === "Baixa") return "baixa";
+  return "media";
+}
+
+function asIsoDateTime(dateOrIso: string) {
+  const maybe = new Date(dateOrIso);
+  if (!Number.isFinite(maybe.getTime())) {
+    return new Date().toISOString();
+  }
+  return maybe.toISOString();
+}
+
+async function ensureCompanyId(supabase: SupabaseClient, empresaId: string, companyName: string) {
+  const nome = companyName.trim();
+  if (!nome) return null;
+
+  const existing = await supabase
+    .from("crm_companies")
+    .select("id")
+    .eq("empresa_id", empresaId)
+    .eq("nome", nome)
+    .maybeSingle<{ id: string }>();
+
+  if (existing.error) {
+    throw new Error(`Erro ao buscar empresa CRM: ${existing.error.message}`);
+  }
+  if (existing.data?.id) return existing.data.id;
+
+  const created = await supabase
+    .from("crm_companies")
+    .insert({ empresa_id: empresaId, nome })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (created.error || !created.data?.id) {
+    throw new Error(`Erro ao criar empresa CRM: ${created.error?.message ?? "falha desconhecida"}`);
+  }
+  return created.data.id;
+}
+
+async function ensureContactId(
+  supabase: SupabaseClient,
+  empresaId: string,
+  contactName: string,
+  email: string,
+  telefone: string,
+  cargo: string,
+  companyId: string | null,
+) {
+  const nome = contactName.trim();
+  if (!nome) return null;
+
+  let existingId: string | null = null;
+  const cleanEmail = email.trim();
+
+  if (cleanEmail) {
+    const byEmail = await supabase
+      .from("crm_contacts")
+      .select("id")
+      .eq("empresa_id", empresaId)
+      .eq("email", cleanEmail)
+      .maybeSingle<{ id: string }>();
+    if (byEmail.error) {
+      throw new Error(`Erro ao buscar contato CRM por email: ${byEmail.error.message}`);
+    }
+    existingId = byEmail.data?.id ?? null;
+  }
+
+  if (!existingId) {
+    const byName = await supabase
+      .from("crm_contacts")
+      .select("id")
+      .eq("empresa_id", empresaId)
+      .eq("nome", nome)
+      .maybeSingle<{ id: string }>();
+    if (byName.error) {
+      throw new Error(`Erro ao buscar contato CRM por nome: ${byName.error.message}`);
+    }
+    existingId = byName.data?.id ?? null;
+  }
+
+  const payload = {
+    empresa_id: empresaId,
+    company_id: companyId,
+    nome,
+    email: cleanEmail || null,
+    telefone: telefone.trim() || null,
+    cargo: cargo.trim() || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existingId) {
+    const updated = await supabase
+      .from("crm_contacts")
+      .update(payload)
+      .eq("empresa_id", empresaId)
+      .eq("id", existingId)
+      .select("id")
+      .single<{ id: string }>();
+    if (updated.error || !updated.data?.id) {
+      throw new Error(`Erro ao atualizar contato CRM: ${updated.error?.message ?? "falha desconhecida"}`);
+    }
+    return updated.data.id;
+  }
+
+  const created = await supabase.from("crm_contacts").insert(payload).select("id").single<{ id: string }>();
+  if (created.error || !created.data?.id) {
+    throw new Error(`Erro ao criar contato CRM: ${created.error?.message ?? "falha desconhecida"}`);
+  }
+  return created.data.id;
+}
+
+async function findObraIdByName(supabase: SupabaseClient, empresaId: string, obraNome: string) {
+  const clean = obraNome.trim();
+  if (!clean) return null;
+  const result = await supabase
+    .from("obras")
+    .select("id")
+    .eq("empresa_id", empresaId)
+    .eq("nome", clean)
+    .maybeSingle<{ id: string }>();
+  if (result.error) {
+    throw new Error(`Erro ao buscar obra vinculada ao lead: ${result.error.message}`);
+  }
+  return result.data?.id ?? null;
+}
+
+async function syncLeadToDeal(supabase: SupabaseClient, lead: CrmLead) {
+  const leadTag = `lead:${lead.id}`;
+  const companyId = await ensureCompanyId(supabase, lead.empresa_id, lead.nome);
+  const contactId = await ensureContactId(
+    supabase,
+    lead.empresa_id,
+    lead.contato,
+    lead.email,
+    lead.telefone,
+    lead.cargo,
+    companyId,
+  );
+  const obraId = await findObraIdByName(supabase, lead.empresa_id, lead.obra);
+
+  const existingDeal = await supabase
+    .from("crm_deals")
+    .select("id, tags")
+    .eq("empresa_id", lead.empresa_id)
+    .contains("tags", [leadTag])
+    .maybeSingle<{ id: string; tags: string[] | null }>();
+
+  if (existingDeal.error) {
+    throw new Error(`Erro ao localizar deal vinculado ao lead: ${existingDeal.error.message}`);
+  }
+
+  const basePayload = {
+    empresa_id: lead.empresa_id,
+    company_id: companyId,
+    contact_id: contactId,
+    obra_id: obraId,
+    nome: lead.obra?.trim() ? `${lead.nome} — ${lead.obra}` : lead.nome,
+    descricao: lead.notas || null,
+    stage: mapLeadEtapaToDealStage(lead.etapa),
+    status: mapLeadEtapaToDealStatus(lead.etapa),
+    priority: mapLeadPrioridadeToDealPriority(lead.prioridade),
+    valor: lead.valor ?? 0,
+    last_activity_at: asIsoDateTime(lead.ultima_atividade),
+    next_activity_at: null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existingDeal.data?.id) {
+    const existingTags = Array.from(new Set([...(existingDeal.data.tags ?? []), "lead-sync", leadTag]));
+    const update = await supabase
+      .from("crm_deals")
+      .update({ ...basePayload, tags: existingTags })
+      .eq("empresa_id", lead.empresa_id)
+      .eq("id", existingDeal.data.id)
+      .select("id")
+      .single<{ id: string }>();
+    if (update.error || !update.data?.id) {
+      throw new Error(`Erro ao atualizar deal sincronizado: ${update.error?.message ?? "falha desconhecida"}`);
+    }
+    return update.data.id;
+  }
+
+  const insert = await supabase
+    .from("crm_deals")
+    .insert({
+      ...basePayload,
+      owner_profile_id: null,
+      tags: ["lead-sync", leadTag],
+    })
+    .select("id")
+    .single<{ id: string }>();
+  if (insert.error || !insert.data?.id) {
+    throw new Error(`Erro ao criar deal sincronizado: ${insert.error?.message ?? "falha desconhecida"}`);
+  }
+  return insert.data.id;
+}
+
+async function deleteLinkedDeal(supabase: SupabaseClient, empresaId: string, leadId: string) {
+  const leadTag = `lead:${leadId}`;
+  const existingDeal = await supabase
+    .from("crm_deals")
+    .select("id")
+    .eq("empresa_id", empresaId)
+    .contains("tags", [leadTag])
+    .maybeSingle<{ id: string }>();
+  if (existingDeal.error) {
+    throw new Error(`Erro ao buscar deal para remoção: ${existingDeal.error.message}`);
+  }
+  if (!existingDeal.data?.id) return;
+
+  const deleteActivities = await supabase
+    .from("crm_activities")
+    .delete()
+    .eq("empresa_id", empresaId)
+    .eq("deal_id", existingDeal.data.id);
+  if (deleteActivities.error) {
+    throw new Error(`Erro ao remover atividades do deal: ${deleteActivities.error.message}`);
+  }
+
+  const deleteDeal = await supabase.from("crm_deals").delete().eq("empresa_id", empresaId).eq("id", existingDeal.data.id);
+  if (deleteDeal.error) {
+    throw new Error(`Erro ao remover deal vinculado ao lead: ${deleteDeal.error.message}`);
+  }
+}
 
 export async function listCrmLeads(): Promise<CrmLead[]> {
   const empresaId = await getEmpresaIdFromProfile();
@@ -142,7 +386,10 @@ export async function upsertCrmLead(input: UpsertCrmLeadInput) {
     throw new Error(`Erro ao salvar lead no CRM: ${error?.message ?? "falha desconhecida"}`);
   }
 
-  return data as CrmLead;
+  const lead = data as CrmLead;
+  await syncLeadToDeal(supabase, lead);
+
+  return lead;
 }
 
 export async function updateCrmLeadStage(id: string, etapa: CrmLead["etapa"]) {
@@ -161,12 +408,15 @@ export async function updateCrmLeadStage(id: string, etapa: CrmLead["etapa"]) {
     throw new Error(`Erro ao atualizar etapa do lead: ${error?.message ?? "lead não encontrado"}`);
   }
 
-  return data as CrmLead;
+  const lead = data as CrmLead;
+  await syncLeadToDeal(supabase, lead);
+  return lead;
 }
 
 export async function deleteCrmLead(id: string) {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
+  await deleteLinkedDeal(supabase, empresaId, id);
   const { error } = await supabase
     .from("crm_leads")
     .delete()

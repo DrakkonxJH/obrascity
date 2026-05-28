@@ -27,6 +27,12 @@ export default async function GarantiaPage() {
 
   const emAtendimento = chamados.filter((item) => item.status === "em_atendimento").length;
   const resolvidos = chamados.filter((item) => item.status === "resolvido").length;
+  const resolvidosForaSla = chamados.filter((item) => {
+    if (item.status !== "resolvido" || !item.resolvido_em) return false;
+    const prazo = item.prazo_solucao_em ?? item.prazo_resposta_em;
+    if (!prazo) return false;
+    return new Date(item.resolvido_em).getTime() > new Date(prazo).getTime();
+  }).length;
   const slaMedio = chamados.length > 0
     ? (chamados.reduce((acc, item) => acc + item.sla_horas, 0) / chamados.length).toFixed(1)
     : "0";
@@ -51,12 +57,16 @@ export default async function GarantiaPage() {
             <div className="of-stat-label">Em atendimento</div>
           </article>
           <article className="of-stat-card">
-            <div className="of-stat-value">{resolvidos}</div>
-            <div className="of-stat-label">Resolvidos</div>
+            <div className="of-stat-value">{resolvidosForaSla}</div>
+            <div className="of-stat-label">Resolvidos fora SLA</div>
           </article>
           <article className="of-stat-card">
             <div className="of-stat-value">{slaMedio}h</div>
             <div className="of-stat-label">SLA médio</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{resolvidos}</div>
+            <div className="of-stat-label">Resolvidos</div>
           </article>
         </div>
 
@@ -99,6 +109,7 @@ export default async function GarantiaPage() {
                   <th>Criticidade</th>
                   <th>Status</th>
                   <th>SLA</th>
+                  <th>Prazo</th>
                   <th>Ação</th>
                 </tr>
               </thead>
@@ -110,6 +121,21 @@ export default async function GarantiaPage() {
                     <td>{item.criticidade}</td>
                     <td>{item.status}</td>
                     <td className="of-mono">{item.sla_horas}h</td>
+                    <td>
+                      {(() => {
+                        const prazo = item.prazo_solucao_em ?? item.prazo_resposta_em;
+                        if (!prazo) return <span className="of-badge of-badge-yellow">Sem prazo</span>;
+                        if (item.status !== "resolvido" || !item.resolvido_em) {
+                          return <span className="of-badge of-badge-blue">Prazo definido</span>;
+                        }
+                        const foraSla = new Date(item.resolvido_em).getTime() > new Date(prazo).getTime();
+                        return (
+                          <span className={`of-badge ${foraSla ? "of-badge-red" : "of-badge-green"}`}>
+                            {foraSla ? "Resolvido fora SLA" : "Resolvido no SLA"}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td>
                       <form action={updateGarantiaStatusAction} style={{ display: "flex", gap: 8 }}>
                         <input type="hidden" name="chamado_id" value={item.id} />
@@ -127,7 +153,7 @@ export default async function GarantiaPage() {
                 ))}
                 {chamados.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="of-empty-text">
+                    <td colSpan={7} className="of-empty-text">
                       Sem chamados de garantia.
                     </td>
                   </tr>

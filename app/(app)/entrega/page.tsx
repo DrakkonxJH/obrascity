@@ -23,7 +23,7 @@ export default async function EntregaPage() {
       ? entregasResult.value
       : (warnings.push("Falha ao carregar entregas (verifique migrations)."), []);
 
-  const itensTestados = comissionamentos.filter((item) => item.status === "testado").length;
+  const itensTestados = comissionamentos.filter((item) => item.status === "testado" || item.status === "concluido").length;
   const entregasConcluidas = entregas.filter((item) => item.status === "entregue").length;
   const chavesEntregues = entregas.filter((item) => item.chaves_entregues).length;
 
@@ -75,6 +75,7 @@ export default async function EntregaPage() {
             <select name="status" className="of-input" defaultValue="pendente">
               <option value="pendente">Pendente</option>
               <option value="testado">Testado</option>
+              <option value="concluido">Concluído</option>
               <option value="reprovado">Reprovado</option>
             </select>
             <input name="observacao" className="of-input" placeholder="Observação" />
