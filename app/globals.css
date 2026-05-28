@@ -1805,6 +1805,116 @@ a {
   justify-content: flex-end;
 }
 
+.of-replan-divider {
+  height: 1px;
+  background: var(--of-border);
+  margin: 16px 0;
+}
+
+.of-replan-header {
+  margin-bottom: 12px;
+}
+
+.of-replan-title {
+  margin: 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--of-text-2);
+  font-weight: 700;
+}
+
+.of-replan-list {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.of-replan-item {
+  border: 1px solid var(--of-border);
+  background: rgba(15, 23, 42, 0.42);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.of-replan-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.of-replan-obra {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--of-text);
+}
+
+.of-replan-date {
+  font-size: 0.68rem;
+  color: var(--of-text-3);
+}
+
+.of-replan-motivo {
+  margin: 0 0 8px;
+  font-size: 0.80rem;
+  color: var(--of-text-2);
+  line-height: 1.4;
+}
+
+.of-replan-impacts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.of-replan-impact {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 6px;
+}
+
+.of-replan-label {
+  margin: 0;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--of-text-3);
+}
+
+.of-replan-value {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--of-text);
+}
+
+.of-replan-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+}
+
+.of-replan-status.pendente {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.of-replan-status.aprovado {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.16);
+}
+
 .of-fin-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2296,6 +2406,9 @@ a {
     grid-template-columns: 1fr;
   }
   .of-crono-edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .of-replan-impacts {
     grid-template-columns: 1fr;
   }
   .of-crono-edit-head,

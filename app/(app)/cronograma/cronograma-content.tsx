@@ -214,45 +214,82 @@ export async function CronogramaContent() {
           </div>
         </article>
 
-        <form action={createReplanejamentoAction} className="of-card of-form-grid">
+        <article className="of-card">
           <div className="of-card-title">Replanejamento</div>
-          <select name="obra_id" required className="of-input" defaultValue="">
-            <option value="" disabled>
-              Obra impactada
-            </option>
-            {obras.map((obra) => (
-              <option key={obra.id} value={obra.id}>
-                {obra.nome}
+          <form action={createReplanejamentoAction} className="of-form-grid" style={{ marginBottom: 18 }}>
+            <select name="obra_id" required className="of-input" defaultValue="">
+              <option value="" disabled>
+                Obra impactada
               </option>
-            ))}
-          </select>
-          <input name="motivo" required className="of-input" placeholder="Motivo do replanejamento" />
-          <div className="of-inline-grid-2">
-            <input
-              name="impacto_prazo_dias"
-              type="number"
-              min={0}
-              defaultValue={0}
-              className="of-input"
-              placeholder="Impacto em dias"
-            />
-            <input
-              name="impacto_custo"
-              type="number"
-              min={0}
-              step="0.01"
-              defaultValue={0}
-              className="of-input"
-              placeholder="Impacto financeiro"
-            />
+              {obras.map((obra) => (
+                <option key={obra.id} value={obra.id}>
+                  {obra.nome}
+                </option>
+              ))}
+            </select>
+            <input name="motivo" required className="of-input" placeholder="Motivo do replanejamento" />
+            <div className="of-inline-grid-2">
+              <input
+                name="impacto_prazo_dias"
+                type="number"
+                min={0}
+                defaultValue={0}
+                className="of-input"
+                placeholder="Impacto em dias"
+              />
+              <input
+                name="impacto_custo"
+                type="number"
+                min={0}
+                step="0.01"
+                defaultValue={0}
+                className="of-input"
+                placeholder="Impacto financeiro"
+              />
+            </div>
+            <button type="submit" className="of-btn-primary">
+              Registrar replanejamento
+            </button>
+          </form>
+
+          <div className="of-replan-divider" />
+
+          <div className="of-replan-header">
+            <h4 className="of-replan-title">Histórico ({replanejamentos.length})</h4>
           </div>
-          <button type="submit" className="of-btn-primary">
-            Registrar replanejamento
-          </button>
-          <p className="of-empty-text">
-            Registros: <strong>{replanejamentos.length}</strong>
-          </p>
-        </form>
+
+          {replanejamentos.length > 0 ? (
+            <div className="of-replan-list">
+              {replanejamentos.map((item) => (
+                <div className="of-replan-item" key={item.id}>
+                  <div className="of-replan-head">
+                    <p className="of-replan-obra">{item.obra_nome}</p>
+                    <span className="of-replan-date">{new Date(item.created_at).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                  <p className="of-replan-motivo">{item.motivo}</p>
+                  <div className="of-replan-impacts">
+                    <div className="of-replan-impact">
+                      <span className="of-replan-label">Impacto em prazo</span>
+                      <span className="of-replan-value">{item.impacto_prazo_dias} dias</span>
+                    </div>
+                    <div className="of-replan-impact">
+                      <span className="of-replan-label">Impacto financeiro</span>
+                      <span className="of-replan-value">R$ {item.impacto_custo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="of-replan-impact">
+                      <span className="of-replan-label">Status</span>
+                      <span className={`of-replan-status ${item.status}`}>{item.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="of-empty-text" style={{ margin: 0, padding: "12px 0" }}>
+              Nenhum replanejamento registrado.
+            </p>
+          )}
+        </article>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
