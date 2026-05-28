@@ -56,6 +56,63 @@ export async function listCrmLeads() {
   return (data ?? []) as CrmLead[];
 }
 
+function mapTaskStatusToEtapa(status: string): CrmLead["etapa"] {
+  const s = status.toLowerCase();
+  if (s.includes("conclu")) return "Fechado";
+  if (s.includes("atras")) return "Negociação";
+  if (s.includes("andamento") || s.includes("execucao") || s.includes("execução")) return "Proposta";
+  if (s.includes("cancel")) return "Perdido";
+  if (s.includes("planej")) return "Contato";
+  return "Qualificação";
+}
+
+function mapTaskStatusToPrioridade(status: string): CrmLead["prioridade"] {
+  const s = status.toLowerCase();
+  if (s.includes("atras")) return "Alta";
+  if (s.includes("conclu")) return "Baixa";
+  return "Média";
+}
+
+export async function listCrmLeadsFromTasks(): Promise<CrmLead[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("obras_tarefas")
+    .select("id, empresa_id, nome, status, inicio, fim, created_at, obra_id, obras(nome, cliente)")
+    .eq("empresa_id", empresaId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Erro ao listar tarefas para CRM: ${error.message}`);
+  }
+
+  return (data ?? []).map((item) => {
+    const status = String(item.status ?? "planejado");
+    const obra = (item.obras as { nome?: string; cliente?: string } | null) ?? null;
+    const atividade = String(item.fim ?? item.inicio ?? item.created_at ?? new Date().toISOString()).slice(0, 10);
+    const createdAt = String(item.created_at ?? new Date().toISOString());
+    return {
+      id: String(item.id),
+      empresa_id: String(item.empresa_id),
+      nome: String(item.nome ?? "Tarefa sem nome"),
+      contato: String(obra?.cliente ?? ""),
+      cargo: "Cliente da obra",
+      email: "",
+      telefone: "",
+      valor: 0,
+      etapa: mapTaskStatusToEtapa(status),
+      origem: "Tarefa da obra",
+      obra: String(obra?.nome ?? ""),
+      prioridade: mapTaskStatusToPrioridade(status),
+      ultima_atividade: atividade,
+      notas: `Status real da tarefa: ${status}`,
+      created_at: createdAt,
+      updated_at: createdAt,
+    } as CrmLead;
+  });
+}
+
 export async function upsertCrmLead(input: UpsertCrmLeadInput) {
   const [empresaId, user] = await Promise.all([getEmpresaIdFromProfile(), getCurrentUser()]);
   const supabase = await createServerClient();

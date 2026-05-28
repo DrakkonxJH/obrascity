@@ -18,18 +18,6 @@ const C = {
   blue:    "#3B82F6",
 };
 
-// ─── Dados mockados ──────────────────────────────────────────────────
-const INITIAL_LEADS = [
-  { id: 1,  nome: "Construtora Horizonte LTDA",   contato: "Eduardo Lima",    cargo: "Diretor de Obras",  email: "eduardo@horizonte.com.br", telefone: "(11) 99234-5678", valor: 280000, etapa: "Proposta",     origem: "Indicação",  obra: "Residencial 8 andares",       prioridade: "Alta",  ultima_atividade: "2025-06-12", notas: "Cliente interessado no plano Enterprise. Reunião marcada para semana que vem." },
-  { id: 2,  nome: "Grupo Vértice Engenharia",      contato: "Fernanda Rocha",  cargo: "CEO",               email: "fernanda@vertice.eng.br",  telefone: "(21) 98765-4321", valor: 159000, etapa: "Negociação",   origem: "LinkedIn",   obra: "Condomínio fechado 40 unid.", prioridade: "Alta",  ultima_atividade: "2025-06-10", notas: "Comparando com concorrente. Precisamos demonstrar diferencial no módulo financeiro." },
-  { id: 3,  nome: "MBO Construtora",               contato: "Marcelo Braga",   cargo: "Gerente TI",        email: "marcelo@mbo.com.br",       telefone: "(31) 97654-3210", valor: 69000,  etapa: "Qualificação", origem: "Site",       obra: "Reforma industrial",          prioridade: "Média", ultima_atividade: "2025-06-08", notas: "Empresa menor, plano Starter. Avaliar potencial de crescimento." },
-  { id: 4,  nome: "Incorporadora Planalto",        contato: "Sônia Carvalho",  cargo: "Diretora",          email: "sonia@planalto.com.br",    telefone: "(61) 96543-2109", valor: 549000, etapa: "Fechado",      origem: "Evento",     obra: "3 torres residenciais",       prioridade: "Alta",  ultima_atividade: "2025-06-01", notas: "Contrato assinado. Onboarding agendado para 20/06." },
-  { id: 5,  nome: "Construtora Almeida & Filhos",  contato: "Roberto Almeida", cargo: "Sócio",             email: "roberto@almeida.eng.br",   telefone: "(85) 95432-1098", valor: 159000, etapa: "Contato",      origem: "Indicação",  obra: "Galpão logístico",            prioridade: "Baixa", ultima_atividade: "2025-06-05", notas: "Primeiro contato realizado. Aguardando retorno." },
-  { id: 6,  nome: "Engenharia Progresso SA",       contato: "Tatiane Melo",    cargo: "Coord. Projetos",   email: "tatiane@progresso.com.br", telefone: "(51) 94321-0987", valor: 280000, etapa: "Qualificação", origem: "Google Ads", obra: "Escola pública - licitação",  prioridade: "Média", ultima_atividade: "2025-06-11", notas: "Obra de licitação pública, prazo curto." },
-  { id: 7,  nome: "RV Obras Especiais",            contato: "Rodrigo Viana",   cargo: "Engenheiro Chefe",  email: "rodrigo@rvobras.com.br",   telefone: "(41) 93210-9876", valor: 159000, etapa: "Proposta",     origem: "WhatsApp",   obra: "Ponte viária",                prioridade: "Alta",  ultima_atividade: "2025-06-09", notas: "Enviada proposta Pro anual. Aguardando aprovação da diretoria." },
-  { id: 8,  nome: "Terranova Empreendimentos",     contato: "Camila Nunes",    cargo: "Gestora",           email: "camila@terranova.com.br",  telefone: "(71) 92109-8765", valor: 549000, etapa: "Perdido",      origem: "Feira",      obra: "Resort 200 unid.",            prioridade: "Alta",  ultima_atividade: "2025-05-28", notas: "Escolheu concorrente por integração com ERP próprio." },
-];
-
 const ETAPAS = ["Contato", "Qualificação", "Proposta", "Negociação", "Fechado", "Perdido"];
 
 const EC = {
@@ -389,7 +377,6 @@ export default function CrmPage() {
   const [fEtapa, setFEtapa] = useState("");
   const [fPrio, setFPrio]   = useState("");
   const [selected, setSelected] = useState(null);
-  const [modal, setModal]   = useState(null); // { lead|null, isNew, etapaInicial? }
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState("");
 
@@ -419,16 +406,16 @@ export default function CrmPage() {
         const data = await res.json();
         if (!active) return;
         if (!res.ok || !data?.ok) {
-          setLeads(INITIAL_LEADS);
-          setSyncError(data?.message || "CRM em modo local até aplicar migration do banco.");
+          setLeads([]);
+          setSyncError(data?.message || "Falha ao carregar tarefas reais para o CRM.");
         } else {
           setLeads(Array.isArray(data.leads) ? data.leads : []);
           setSyncError("");
         }
       } catch {
         if (!active) return;
-        setLeads(INITIAL_LEADS);
-        setSyncError("Falha de conectividade com API CRM. Modo local ativado.");
+        setLeads([]);
+        setSyncError("Falha de conectividade com API CRM.");
       } finally {
         if (active) setLoading(false);
       }
@@ -439,98 +426,10 @@ export default function CrmPage() {
     };
   }, []);
 
-  const persistLead = useCallback(async (lead) => {
-    const isUpdate = Boolean(lead?.id);
-    const url = isUpdate ? `/api/crm/leads/${lead.id}` : "/api/crm/leads";
-    const method = isUpdate ? "PATCH" : "POST";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(lead),
-    });
-    const data = await res.json();
-    if (!res.ok || !data?.ok || !data?.lead) {
-      throw new Error(data?.message || "Erro ao salvar lead.");
-    }
-    return data.lead;
-  }, []);
-
-  const persistDelete = useCallback(async (id) => {
-    const res = await fetch(`/api/crm/leads/${id}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok || !data?.ok) {
-      throw new Error(data?.message || "Erro ao remover lead.");
-    }
-  }, []);
-
-  const persistStage = useCallback(async (id, etapa) => {
-    const res = await fetch(`/api/crm/leads/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ etapa }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data?.ok || !data?.lead) {
-      throw new Error(data?.message || "Erro ao mover lead.");
-    }
-    return data.lead;
-  }, []);
-
-  const handleDrop = useCallback(etapa => {
-    const id = draggingId.current;
-    if (!id) return;
-    const current = leads.find(l => l.id === id);
-    if (!current) return;
-    const optimistic = { ...current, etapa, ultima_atividade: today() };
-    setLeads(ls => ls.map(l => l.id === id ? optimistic : l));
-    setSelected(sel => sel?.id === id ? optimistic : sel);
-    persistStage(id, etapa)
-      .then((saved) => {
-        setLeads(ls => ls.map(l => l.id === id ? saved : l));
-        setSelected(sel => sel?.id === id ? saved : sel);
-        setSyncError("");
-      })
-      .catch((err) => {
-        setLeads(ls => ls.map(l => l.id === id ? current : l));
-        setSelected(sel => sel?.id === id ? current : sel);
-        setSyncError(err instanceof Error ? err.message : "Erro ao mover lead");
-      });
+  const handleDrop = useCallback(() => {
     setDragState({ draggingId: null, overCol: null });
-  }, [leads, persistStage]);
-
-  // ── CRUD ──
-  const saveLead  = useCallback(async (lead) => {
-    try {
-      const saved = await persistLead(lead);
-      setLeads(ls => ls.find(l => l.id === saved.id) ? ls.map(l => l.id === saved.id ? saved : l) : [...ls, saved]);
-      setSelected(saved);
-      setModal(null);
-      setSyncError("");
-    } catch (err) {
-      setSyncError(err instanceof Error ? err.message : "Erro ao salvar lead");
-    }
-  }, [persistLead]);
-  const deleteLead = useCallback(async (id) => {
-    const prev = leads;
-    setLeads(ls => ls.filter(l => l.id !== id));
-    try {
-      await persistDelete(id);
-      setSyncError("");
-    } catch (err) {
-      setLeads(prev);
-      setSyncError(err instanceof Error ? err.message : "Erro ao remover lead");
-    }
-  }, [leads, persistDelete]);
-  const addCard    = useCallback(async (lead) => {
-    try {
-      const saved = await persistLead(lead);
-      setLeads(ls => [...ls, saved]);
-      setSelected(saved);
-      setSyncError("");
-    } catch (err) {
-      setSyncError(err instanceof Error ? err.message : "Erro ao adicionar lead");
-    }
-  }, [persistLead]);
+    setSyncError("Movimentação manual desativada. O CRM reflete o status real das tarefas.");
+  }, []);
 
   // ── Filtered ──
   const filtered = useMemo(() => leads.filter(l => {
@@ -569,10 +468,7 @@ export default function CrmPage() {
             <span style={{ fontSize: 18, fontWeight: 800, color: C.orange, letterSpacing: "-0.02em" }}>🏗 CRM</span>
             <span style={{ color: C.muted, fontSize: 13 }}>/ Pipeline de clientes</span>
           </div>
-          <button onClick={() => setModal({ lead: null, isNew: true })}
-            style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 7, padding: "8px 16px", cursor: "pointer", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-            {Ico.plus} Novo lead
-          </button>
+          <span style={{ color: C.muted, fontSize: 12 }}>Dados sincronizados por tarefas da obra</span>
         </div>
       </div>
       {loading && (
@@ -636,7 +532,7 @@ export default function CrmPage() {
                   etapa={etapa}
                   leads={filtered.filter(l => l.etapa === etapa)}
                   onCardClick={setSelected}
-                  onAddCard={addCard}
+                  onAddCard={() => setSyncError("Criação manual desativada no CRM sincronizado por tarefas.")}
                   dragState={dragState}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
@@ -682,8 +578,8 @@ export default function CrmPage() {
                         <td style={{ padding: "11px 14px", fontSize: 12, color: C.muted }}>{fmtDate(lead.ultima_atividade)}</td>
                         <td style={{ padding: "11px 14px" }}>
                           <div style={{ display: "flex", gap: 6 }} onClick={e => e.stopPropagation()}>
-                            <button onClick={() => setModal({ lead, isNew: false })} style={{ background: C.faint, border: `1px solid ${C.border}`, color: C.muted, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.edit}</button>
-                            <button onClick={() => deleteLead(lead.id)} style={{ background: "#1A0F0F", border: "1px solid #2A1515", color: C.red, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.trash}</button>
+                            <button onClick={() => setSyncError("Edição manual desativada no CRM sincronizado por tarefas.")} style={{ background: C.faint, border: `1px solid ${C.border}`, color: C.muted, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.edit}</button>
+                            <button onClick={() => setSyncError("Remoção manual desativada no CRM sincronizado por tarefas.")} style={{ background: "#1A0F0F", border: "1px solid #2A1515", color: C.red, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.trash}</button>
                           </div>
                         </td>
                       </tr>
@@ -703,22 +599,11 @@ export default function CrmPage() {
           <DetailPanel
             lead={selected}
             onClose={() => setSelected(null)}
-            onEdit={lead => setModal({ lead, isNew: false })}
-            onDelete={id => { deleteLead(id); setSelected(null); }}
+            onEdit={() => setSyncError("Edição manual desativada no CRM sincronizado por tarefas.")}
+            onDelete={() => setSyncError("Remoção manual desativada no CRM sincronizado por tarefas.")}
           />
         )}
       </div>
-
-      {/* Modal */}
-      {modal && (
-        <LeadModal
-          lead={modal.lead}
-          isNew={modal.isNew}
-          etapaInicial={modal.etapaInicial}
-          onClose={() => setModal(null)}
-          onSave={saveLead}
-        />
-      )}
     </div>
   );
 }
