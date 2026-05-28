@@ -138,7 +138,7 @@ export async function CronogramaContent() {
             ))}
           </select>
           <input name="motivo" required className="of-input" placeholder="Motivo do replanejamento" />
-          <div className="of-form-grid md:grid-cols-2">
+          <div className="of-inline-grid-2">
             <input
               name="impacto_prazo_dias"
               type="number"

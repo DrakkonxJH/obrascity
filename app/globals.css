@@ -1220,6 +1220,23 @@ a {
   border-radius: 14px;
   background: var(--of-bg-2);
   padding: 16px;
+  align-items: start;
+  grid-auto-rows: min-content;
+}
+
+.of-form-grid > input,
+.of-form-grid > select,
+.of-form-grid > textarea,
+.of-form-grid > .of-input,
+.of-form-grid > .of-select,
+.of-form-grid > .of-textarea {
+  align-self: start;
+}
+
+.of-inline-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 @media (max-width: 1200px) {
@@ -2157,6 +2174,9 @@ a {
   .of-gantt-head-extended,
   .of-gantt-row-extended {
     min-width: 760px;
+  }
+  .of-inline-grid-2 {
+    grid-template-columns: 1fr;
   }
   .of-bar-row {
     grid-template-columns: 1fr;
