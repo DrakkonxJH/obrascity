@@ -6,6 +6,25 @@ import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isProfileRole } from "@/lib/auth/roles";
 import { createApprovalRequest } from "@/lib/db/approvals";
 import { requiresApprovalForAmount, resolveRequiredRoleByAmount } from "@/lib/approvals/policy";
+import { createServerClient } from "@/lib/supabase/server";
+import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+
+function mapTaskStatusToEtapa(status: string): "Contato" | "Qualificação" | "Proposta" | "Negociação" | "Fechado" | "Perdido" {
+  const s = status.toLowerCase();
+  if (s.includes("conclu")) return "Fechado";
+  if (s.includes("atras")) return "Negociação";
+  if (s.includes("andamento") || s.includes("execucao") || s.includes("execução")) return "Proposta";
+  if (s.includes("cancel")) return "Perdido";
+  if (s.includes("planej")) return "Qualificação";
+  return "Contato";
+}
+
+function mapTaskStatusToPrioridade(status: string): "Alta" | "Média" | "Baixa" {
+  const s = status.toLowerCase();
+  if (s.includes("atras")) return "Alta";
+  if (s.includes("conclu")) return "Baixa";
+  return "Média";
+}
 
 export async function createCronogramaAction(formData: FormData) {
   const obra_id = String(formData.get("obra_id") ?? "").trim();
@@ -19,7 +38,41 @@ export async function createCronogramaAction(formData: FormData) {
   }
 
   await createCronogramaItem({ obra_id, nome, inicio, fim, status });
+
+  const [empresaId, supabase] = await Promise.all([getEmpresaIdFromProfile(), createServerClient()]);
+  const obraRes = await supabase
+    .from("obras")
+    .select("nome, cliente")
+    .eq("empresa_id", empresaId)
+    .eq("id", obra_id)
+    .single<{ nome: string; cliente: string | null }>();
+  if (obraRes.error) {
+    throw new Error(`Erro ao sincronizar tarefa com CRM (obra): ${obraRes.error.message}`);
+  }
+
+  const etapa = mapTaskStatusToEtapa(status);
+  const prioridade = mapTaskStatusToPrioridade(status);
+  const syncInsert = await supabase.from("crm_leads").insert({
+    empresa_id: empresaId,
+    nome: nome,
+    contato: obraRes.data.cliente ?? "",
+    cargo: "Gestão da obra",
+    email: "",
+    telefone: "",
+    valor: 0,
+    etapa,
+    origem: "Cronograma",
+    obra: obraRes.data.nome,
+    prioridade,
+    ultima_atividade: fim,
+    notas: `Card gerado automaticamente a partir da tarefa do cronograma (${inicio} → ${fim}).`,
+  });
+  if (syncInsert.error) {
+    throw new Error(`Erro ao sincronizar tarefa com CRM (card): ${syncInsert.error.message}`);
+  }
+
   revalidatePath("/cronograma");
+  revalidatePath("/crm");
 }
 
 export async function createDependenciaAction(formData: FormData) {

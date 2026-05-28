@@ -1553,6 +1553,55 @@ a {
   background: var(--of-bg-2);
 }
 
+.of-gantt-head-extended,
+.of-gantt-row-extended {
+  min-width: 1040px;
+}
+
+.of-gantt-months {
+  display: grid;
+  min-width: 0;
+}
+
+.of-gantt-month-cell {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--of-text-2);
+  border-left: 1px solid var(--of-border);
+  text-transform: uppercase;
+}
+
+.of-gantt-month-cell.current {
+  color: var(--of-text);
+  background: rgba(59, 130, 246, 0.14);
+}
+
+.of-gantt-timeline-cell {
+  border-left: 1px solid var(--of-border);
+  min-width: 0;
+}
+
+.of-gantt-grid-cols {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  pointer-events: none;
+}
+
+.of-gantt-col-line {
+  border-left: 1px solid var(--of-border);
+}
+
+.of-gantt-col-line.current {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.of-gantt-bar-inner {
+  top: 10px;
+}
+
 .of-gantt-head,
 .of-gantt-row {
   display: grid;
@@ -2104,6 +2153,10 @@ a {
   .of-gantt-head,
   .of-gantt-row {
     grid-template-columns: 1fr;
+  }
+  .of-gantt-head-extended,
+  .of-gantt-row-extended {
+    min-width: 760px;
   }
   .of-bar-row {
     grid-template-columns: 1fr;
