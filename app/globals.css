@@ -623,35 +623,92 @@ a {
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .of-btn-primary {
   background: var(--of-blue);
   color: #fff;
-  padding: 7px 14px;
+  padding: 8px 16px;
 }
 
-.of-btn-primary:hover {
-  filter: brightness(1.08);
+.of-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--of-blue), #ff7a2c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 26, 0.3);
+}
+
+.of-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.of-btn-primary:focus-visible {
+  outline: 2px solid var(--of-blue);
+  outline-offset: 2px;
+}
+
+.of-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .of-btn-ghost {
   background: var(--of-bg-3);
   border-color: var(--of-border);
   color: var(--of-text-2);
-  padding: 7px 14px;
+  padding: 8px 16px;
 }
 
-.of-btn-ghost:hover {
+.of-btn-ghost:hover:not(:disabled) {
+  background: var(--of-bg-4);
   color: var(--of-text);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.of-btn-ghost:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.of-btn-ghost:focus-visible {
+  outline: 2px solid var(--of-text-2);
+  outline-offset: 2px;
+}
+
+.of-btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .of-btn-icon {
   position: relative;
-  padding: 7px 11px;
+  padding: 8px 12px;
   background: var(--of-bg-3);
   border-color: var(--of-border);
   color: var(--of-text);
+}
+
+.of-btn-icon:hover:not(:disabled) {
+  background: var(--of-bg-4);
+  color: var(--of-blue);
+  transform: translateY(-1px);
+}
+
+.of-btn-icon:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.of-btn-icon:focus-visible {
+  outline: 2px solid var(--of-text-2);
+  outline-offset: 2px;
+}
+
+.of-btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .of-btn-notif-count {
@@ -917,6 +974,12 @@ a {
   background: var(--of-bg-2);
   border-radius: 14px;
   padding: 22px;
+  transition: all 0.2s ease;
+}
+
+.of-card:hover {
+  border-color: rgba(255, 107, 26, 0.3);
+  background: var(--of-bg-3);
 }
 
 .of-card-title {
@@ -1204,8 +1267,57 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: var(--of-bg-3);
   color: var(--of-text);
-  padding: 9px 12px;
+  padding: 10px 12px;
   font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.of-input:hover:not(:disabled):not(.error):not(.success),
+.of-select:hover:not(:disabled):not(.error):not(.success),
+.of-textarea:hover:not(:disabled):not(.error):not(.success) {
+  background: var(--of-bg-4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.of-input:focus,
+.of-select:focus,
+.of-textarea:focus {
+  outline: none;
+  border-color: var(--of-blue);
+  background: var(--of-bg-3);
+  box-shadow: 0 0 0 2px rgba(255, 107, 26, 0.2);
+}
+
+.of-input:disabled,
+.of-select:disabled,
+.of-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--of-bg-2);
+}
+
+.of-input.error,
+.of-select.error,
+.of-textarea.error {
+  border-color: var(--of-red);
+}
+
+.of-input.error:focus,
+.of-select.error:focus,
+.of-textarea.error:focus {
+  box-shadow: 0 0 0 2px rgba(255, 64, 96, 0.2);
+}
+
+.of-input.success,
+.of-select.success,
+.of-textarea.success {
+  border-color: var(--of-green);
+}
+
+.of-input.success:focus,
+.of-select.success:focus,
+.of-textarea.success:focus {
+  box-shadow: 0 0 0 2px rgba(31, 208, 122, 0.2);
 }
 
 .of-input::placeholder,
@@ -1236,6 +1348,26 @@ a {
 .of-form-grid > .of-select,
 .of-form-grid > .of-textarea {
   align-self: start;
+}
+
+.of-error-text,
+.of-success-text,
+.of-hint-text {
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.of-error-text {
+  color: var(--of-red);
+}
+
+.of-success-text {
+  color: var(--of-green);
+}
+
+.of-hint-text {
+  color: var(--of-text-3);
 }
 
 .of-inline-grid-2 {
@@ -2134,6 +2266,14 @@ a {
   padding: 12px 14px;
   font-size: 0.84rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.of-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.of-table tbody tr:hover {
+  background-color: rgba(255, 107, 26, 0.06);
 }
 
 .of-table tr:last-child td {
