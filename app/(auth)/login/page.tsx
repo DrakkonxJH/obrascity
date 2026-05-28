@@ -1,4 +1,9 @@
 import { LoginForm } from "./login-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Entrar — ObrasCitY",
+};
 
 type LoginPageProps = {
   searchParams: Promise<{ next?: string }>;

@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { SignupForm } from "./signup-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Criar conta — ObrasCitY",
+};
 
 export default function CadastroPage() {
   return (

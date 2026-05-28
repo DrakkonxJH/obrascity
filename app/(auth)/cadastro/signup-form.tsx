@@ -15,6 +15,8 @@ export function SignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (state.ok && !state.needsLogin) {
@@ -22,6 +24,19 @@ export function SignupForm() {
       router.refresh();
     }
   }, [state, router]);
+
+  const checks = {
+    minLength: password.length >= 10,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    symbol: /[^A-Za-z0-9]/.test(password),
+  };
+
+  const score = Object.values(checks).filter(Boolean).length;
+  const strength =
+    score <= 2 ? "fraca" : score <= 4 ? "média" : "forte";
+  const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
 
   return (
     <>
@@ -84,7 +99,8 @@ export function SignupForm() {
               className="of-login-v2-input"
               placeholder="Mínimo 10 caracteres"
               autoComplete="off"
-              defaultValue=""
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
             <button
               type="button"
@@ -107,6 +123,26 @@ export function SignupForm() {
               )}
             </button>
           </div>
+          <div style={{ marginTop: 10, fontSize: ".82rem", color: "#9AA7C2" }}>
+            <div>
+              Força da senha:{" "}
+              <strong
+                style={{
+                  color: strength === "forte" ? "#1FD07A" : strength === "média" ? "#FFD166" : "#FF6B6B",
+                }}
+              >
+                {strength.toUpperCase()}
+              </strong>
+            </div>
+            <div style={{ marginTop: 4 }}>A senha deve conter:</div>
+            <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
+              <li style={{ color: checks.minLength ? "#1FD07A" : "#9AA7C2" }}>mínimo de 10 caracteres</li>
+              <li style={{ color: checks.uppercase ? "#1FD07A" : "#9AA7C2" }}>ao menos 1 letra maiúscula</li>
+              <li style={{ color: checks.lowercase ? "#1FD07A" : "#9AA7C2" }}>ao menos 1 letra minúscula</li>
+              <li style={{ color: checks.number ? "#1FD07A" : "#9AA7C2" }}>ao menos 1 número</li>
+              <li style={{ color: checks.symbol ? "#1FD07A" : "#9AA7C2" }}>ao menos 1 caractere especial</li>
+            </ul>
+          </div>
         </div>
 
         <div className="of-login-v2-field">
@@ -123,7 +159,8 @@ export function SignupForm() {
               className="of-login-v2-input"
               placeholder="Repita a senha"
               autoComplete="off"
-              defaultValue=""
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
             />
             <button
               type="button"
@@ -146,6 +183,11 @@ export function SignupForm() {
               )}
             </button>
           </div>
+          {confirmPassword.length > 0 ? (
+            <p style={{ marginTop: 8, fontSize: ".82rem", color: passwordsMatch ? "#1FD07A" : "#FF6B6B" }}>
+              {passwordsMatch ? "As senhas coincidem." : "As senhas não coincidem."}
+            </p>
+          ) : null}
         </div>
 
         <label className="of-login-v2-check of-login-v2-check-start">
@@ -182,7 +224,7 @@ export function SignupForm() {
         ) : (
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || !passwordsMatch || score < 5}
             className="of-login-v2-submit"
           >
             {pending ? "Criando conta..." : "Começar trial gratuito"}

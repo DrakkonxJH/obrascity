@@ -1,12 +1,41 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { LegalPageShell } from "@/components/legal/legal-page-shell";
 
+export const metadata: Metadata = {
+  title: "Política de privacidade — ObrasCitY",
+  description:
+    "Conheça como a ObrasCitY coleta, usa e protege dados pessoais em conformidade com a LGPD.",
+  alternates: {
+    canonical: "/privacidade",
+  },
+};
+
 export default function PrivacidadePage() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Política de privacidade — ObrasCitY",
+    url: "https://obrascity.com.br/privacidade",
+    inLanguage: "pt-BR",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "ObrasCitY",
+      url: "https://obrascity.com.br",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "ObrasCitY",
+      url: "https://obrascity.com.br",
+    },
+  };
+
   return (
     <LegalPageShell
       title="Política de Privacidade"
       subtitle="Última atualização: 26 de maio de 2026 · Versão 3.0 · Adequada à LGPD (Lei nº 13.709/2018) · Leitura estimada: 30 minutos"
     >
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <div className="highlight-box">
         <strong>🔒 Sua privacidade é levada muito a sério aqui.</strong><br />
         Esta Política de Privacidade explica, em linguagem clara e acessível, absolutamente tudo
@@ -50,12 +79,16 @@ export default function PrivacidadePage() {
         </li>
       </ul>
       <div className="info-box">
+        <strong>Identificação do controlador:</strong><br />
+        Marca: ObrasCitY.<br />
+        Razão social e CNPJ: sob responsabilidade do titular da conta empresarial e publicados no canal oficial de contato jurídico do site.<br />
+        Contato jurídico e privacidade: <strong>privacidade@obrascity.com.br</strong>.<br /><br />
         <strong>Encarregado de Dados (DPO):</strong><br />
         O ObrasCitY designou um Encarregado pelo Tratamento de Dados Pessoais (Data Protection
         Officer — DPO), responsável por receber comunicações dos titulares de dados e das
         autoridades, e por garantir a conformidade com a LGPD.<br /><br />
-        Para contato com o DPO: acesse Configurações → Segurança e LGPD → Contatar DPO, ou
-        utilize o canal de suporte da plataforma com o assunto "Privacidade — DPO".
+        Para contato com o DPO: envie e-mail para <strong>dpo@obrascity.com.br</strong>, ou
+        acesse Configurações → Segurança e LGPD → Contatar DPO.
       </div>
 
       {/* 2 */}
@@ -475,9 +508,9 @@ export default function PrivacidadePage() {
       <h3>7.1 Onde Seus Dados são Armazenados</h3>
       <p>
         Seus dados são armazenados em servidores seguros hospedados em infraestrutura de nuvem
-        profissional. Trabalhamos com provedores que possuem certificações de segurança
-        reconhecidas internacionalmente. Os dados são preferencialmente armazenados em território
-        brasileiro ou em países com grau de proteção adequado à LGPD.
+        profissional. Trabalhamos com provedores que adotam controles técnicos e contratuais
+        de segurança aderentes às exigências legais aplicáveis. Os dados são preferencialmente
+        armazenados em território brasileiro ou em países com grau de proteção adequado à LGPD.
       </p>
       <p>
         Todos os dados são armazenados de forma <strong>criptografada</strong>. Backups são
@@ -756,9 +789,9 @@ export default function PrivacidadePage() {
           contratuais padrão para transferências internacionais;
         </li>
         <li>
-          <strong>Provedores de nuvem:</strong> Nossos provedores de infraestrutura possuem
-          certificações internacionais de segurança (ISO 27001, SOC 2, etc.) e estão sujeitos
-          a acordos de processamento de dados com cláusulas de proteção adequadas.
+          <strong>Provedores de nuvem:</strong> Nossos provedores de infraestrutura estão sujeitos
+          a acordos de processamento de dados com cláusulas de proteção adequadas e controles
+          técnicos compatíveis com requisitos de segurança e privacidade.
         </li>
       </ul>
 

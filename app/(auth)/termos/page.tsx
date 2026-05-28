@@ -1,12 +1,41 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { LegalPageShell } from "@/components/legal/legal-page-shell";
 
+export const metadata: Metadata = {
+  title: "Termos de uso — ObrasCitY",
+  description:
+    "Leia os Termos de Uso da ObrasCitY: regras de contratação, responsabilidades, pagamentos e uso da plataforma.",
+  alternates: {
+    canonical: "/termos",
+  },
+};
+
 export default function TermosPage() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Termos de uso — ObrasCitY",
+    url: "https://obrascity.com.br/termos",
+    inLanguage: "pt-BR",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "ObrasCitY",
+      url: "https://obrascity.com.br",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "ObrasCitY",
+      url: "https://obrascity.com.br",
+    },
+  };
+
   return (
     <LegalPageShell
       title="Termos de Uso"
       subtitle="Última atualização: 26 de maio de 2026 · Versão 3.0 · Leitura estimada: 25 minutos"
     >
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <div className="highlight-box">
         <strong>📋 Por que você precisa ler isso?</strong><br />
         Estes Termos de Uso formam um contrato legal entre você (ou a empresa que você representa)
@@ -32,6 +61,12 @@ export default function TermosPage() {
         seus titulares legais, doravante denominados simplesmente "<strong>ObrasCitY</strong>",
         "<strong>nós</strong>", "<strong>nos</strong>" ou "<strong>nosso</strong>".
       </p>
+      <div className="info-box">
+        <strong>Identificação legal e contato:</strong><br />
+        Marca: ObrasCitY.<br />
+        Razão social e CNPJ: sob responsabilidade do titular da conta empresarial e publicados no canal oficial de contato jurídico do site.<br />
+        Contato jurídico: <strong>juridico@obrascity.com.br</strong>.
+      </div>
       <p>
         A plataforma é acessível exclusivamente por meio do domínio oficial do ObrasCitY na internet,
         e por aplicativos ou integrações devidamente autorizados e divulgados em nosso site. Qualquer
@@ -64,7 +99,7 @@ export default function TermosPage() {
         <li>
           <strong>Plataforma:</strong> O sistema ObrasCitY como um todo — incluindo a interface web
           acessível pelo navegador, os painéis de controle, todos os módulos de funcionalidades
-          (diário de obra, CRM, relatórios, financeiro, etc.), as APIs de integração e qualquer
+          (diário de obra, relatórios, financeiro, etc.), as APIs de integração e qualquer
           outra ferramenta disponibilizada pelo ObrasCitY, seja ela gratuita ou paga.
         </li>
         <li>
@@ -485,7 +520,7 @@ export default function TermosPage() {
         <li>Criar e acompanhar cronogramas, marcos e prazos de obras;</li>
         <li>Gerenciar materiais, estoque, requisições e pedidos a fornecedores;</li>
         <li>Elaborar e controlar orçamentos, medições e custos de obras;</li>
-        <li>Registrar clientes, contratos e oportunidades de negócio (módulo CRM);</li>
+        <li>Registrar contratos e oportunidades de negócio dentro dos módulos ativos da plataforma;</li>
         <li>Gerar, visualizar e exportar relatórios em diferentes formatos (PDF, Excel, DOCX, etc.);</li>
         <li>Comunicar-se com membros da equipe por meio das integrações disponíveis;</li>
         <li>Armazenar e organizar fotos, plantas, documentos técnicos e outros arquivos relacionados às obras;</li>
