@@ -63,6 +63,62 @@ export async function listGarantiaChamados(): Promise<GarantiaChamadoItem[]> {
   }));
 }
 
+export async function escalateGarantiaSlaBreaches() {
+  const [empresaId, profile] = await Promise.all([getEmpresaIdFromProfile(), getCurrentProfile()]);
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("garantia_chamados")
+    .select("id, titulo, status, criticidade, prazo_resposta_em, prazo_solucao_em")
+    .eq("empresa_id", empresaId)
+    .neq("status", "resolvido")
+    .limit(400);
+
+  if (error) {
+    if (isMissingRelation(error.message)) return 0;
+    throw new Error(`Erro ao escalar SLA da garantia: ${error.message}`);
+  }
+
+  const now = Date.now();
+  const overdue = (data ?? []).filter((row) => {
+    const prazoRaw = String(row.prazo_solucao_em ?? row.prazo_resposta_em ?? "");
+    if (!prazoRaw) return false;
+    const dueAt = new Date(prazoRaw).getTime();
+    return Number.isFinite(dueAt) && dueAt < now;
+  });
+
+  if (overdue.length === 0) return 0;
+
+  for (const item of overdue) {
+    const patch: Record<string, unknown> = {};
+    if (String(item.criticidade ?? "media") !== "critica") patch.criticidade = "critica";
+    if (String(item.status ?? "aberto") === "aberto") patch.status = "em_atendimento";
+    if (Object.keys(patch).length > 0) {
+      const updated = await supabase.from("garantia_chamados").update(patch).eq("empresa_id", empresaId).eq("id", item.id);
+      if (updated.error && !isMissingRelation(updated.error.message)) {
+        throw new Error(`Erro ao atualizar chamado escalado: ${updated.error.message}`);
+      }
+    }
+
+    const eventMessage = `SLA excedido no chamado "${String(item.titulo ?? "")}". Escalonamento automático aplicado.`;
+    const eventInsert = await supabase.from("tenant_observability_events").insert({
+      empresa_id: empresaId,
+      source: "garantia-sla",
+      event_type: "sla_breach_escalated",
+      severity: "warning",
+      message: eventMessage,
+      metadata: {
+        chamado_id: item.id,
+        escalated_by: profile?.id ?? null,
+      },
+    });
+    if (eventInsert.error && !isMissingRelation(eventInsert.error.message)) {
+      throw new Error(`Erro ao registrar evento de escalonamento SLA: ${eventInsert.error.message}`);
+    }
+  }
+
+  return overdue.length;
+}
+
 export async function createGarantiaChamado(input: {
   obraId: string;
   unidade: string;

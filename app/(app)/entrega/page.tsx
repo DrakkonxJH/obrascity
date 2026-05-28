@@ -86,6 +86,9 @@ export default async function EntregaPage() {
 
           <form action={saveEntregaAction} className="of-card of-form-grid">
             <div className="of-card-title">Entrega formal e aceite</div>
+            <p className="of-empty-text" style={{ marginTop: -4 }}>
+              Gate ativo: status <b>Entregue</b> só é permitido com comissionamento sem itens pendentes/reprovados.
+            </p>
             <select name="obra_id" className="of-input" defaultValue="" required>
               <option value="" disabled>
                 Obra

@@ -1,6 +1,6 @@
 import { listApprovalRequests } from "@/lib/db/approvals";
-import { getTenantRetentionPolicy, listRecentAuditLogs, listTenantObservabilityEvents } from "@/lib/db/governanca";
-import { approveRequestAction, rejectRequestAction, saveRetentionPolicyAction } from "./actions";
+import { getTenantRetentionPolicy, listExecutiveAlerts, listRecentAuditLogs, listTenantObservabilityEvents } from "@/lib/db/governanca";
+import { approveRequestAction, rejectRequestAction, requestExternalSyncAction, saveRetentionPolicyAction } from "./actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -28,12 +28,13 @@ function entityLabel(entityType: string) {
 }
 
 export default async function GovernancaPage() {
-  const [pendingResult, recentResult, retentionResult, auditResult, observabilityResult] = await Promise.allSettled([
+  const [pendingResult, recentResult, retentionResult, auditResult, observabilityResult, alertsResult] = await Promise.allSettled([
     listApprovalRequests({ status: "pending", limit: 30 }),
     listApprovalRequests({ limit: 30 }),
     getTenantRetentionPolicy(),
     listRecentAuditLogs(30),
     listTenantObservabilityEvents(30),
+    listExecutiveAlerts(10),
   ]);
 
   const loadWarnings: string[] = [];
@@ -72,6 +73,13 @@ export default async function GovernancaPage() {
           `Observabilidade indisponível: ${observabilityResult.reason instanceof Error ? observabilityResult.reason.message : "erro desconhecido"}`,
         ),
         []);
+  const executiveAlerts =
+    alertsResult.status === "fulfilled"
+      ? alertsResult.value
+      : (loadWarnings.push(
+          `Alertas executivos indisponíveis: ${alertsResult.reason instanceof Error ? alertsResult.reason.message : "erro desconhecido"}`,
+        ),
+        []);
 
   const retention = retentionPolicy ?? {
     auditRetentionDays: 365,
@@ -86,6 +94,45 @@ export default async function GovernancaPage() {
         <p className="of-empty-text">
           Central operacional de aprovações por alçada, auditoria imutável com diff e política de retenção por tenant.
         </p>
+      </article>
+
+      <article className="of-card" style={{ marginBottom: 16 }}>
+        <div className="of-card-title">Alertas executivos proativos</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Severidade</th>
+                <th>Alerta</th>
+                <th>Detalhe</th>
+                <th>Ação recomendada</th>
+              </tr>
+            </thead>
+            <tbody>
+              {executiveAlerts.map((alert) => (
+                <tr key={alert.id}>
+                  <td>
+                    <span
+                      className={`of-badge ${alert.severity === "error" ? "of-badge-red" : alert.severity === "warning" ? "of-badge-yellow" : "of-badge-blue"}`}
+                    >
+                      {alert.severity}
+                    </span>
+                  </td>
+                  <td>{alert.title}</td>
+                  <td>{alert.details}</td>
+                  <td>{alert.recommendedAction}</td>
+                </tr>
+              ))}
+              {executiveAlerts.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="of-empty-text">
+                    Sem alertas críticos no momento.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </article>
       {loadWarnings.length > 0 ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
@@ -209,6 +256,24 @@ export default async function GovernancaPage() {
           </div>
           <button type="submit" className="of-btn-primary" style={{ alignSelf: "end", minHeight: 48 }}>
             Salvar política
+          </button>
+        </form>
+      </article>
+
+      <article className="of-card" style={{ marginBottom: 16 }}>
+        <div className="of-card-title">Integrações externas (ERP / Fiscal / Bancário)</div>
+        <p className="of-empty-text" style={{ marginBottom: 12 }}>
+          Dispara solicitações de sincronização e registra trilha operacional em observabilidade.
+        </p>
+        <form action={requestExternalSyncAction} className="of-form-grid md:grid-cols-4">
+          <select name="provider" className="of-input" defaultValue="erp">
+            <option value="erp">ERP</option>
+            <option value="fiscal">Fiscal</option>
+            <option value="bancario">Bancário</option>
+          </select>
+          <input name="scope" className="of-input md:col-span-2" placeholder="Escopo (ex: contas a pagar, notas fiscais, extrato diário)" />
+          <button type="submit" className="of-btn-primary">
+            Solicitar sync
           </button>
         </form>
       </article>

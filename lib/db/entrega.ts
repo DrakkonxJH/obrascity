@@ -117,6 +117,25 @@ export async function upsertEntrega(input: {
 }) {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
+
+  if (input.status === "entregue") {
+    const pendingComissionamento = await supabase
+      .from("comissionamento_itens")
+      .select("id", { count: "exact", head: true })
+      .eq("empresa_id", empresaId)
+      .eq("obra_id", input.obraId)
+      .in("status", ["pendente", "reprovado"]);
+    if (pendingComissionamento.error && !isMissingRelation(pendingComissionamento.error.message)) {
+      throw new Error(`Erro ao validar gate de comissionamento: ${pendingComissionamento.error.message}`);
+    }
+    const pendentes = Number(pendingComissionamento.count ?? 0);
+    if (pendentes > 0) {
+      throw new Error(
+        `Entrega bloqueada: existem ${pendentes} itens de comissionamento pendentes/reprovados. Finalize o checklist antes de concluir a entrega.`,
+      );
+    }
+  }
+
   const { error } = await supabase.from("entregas_obra").upsert(
     {
       empresa_id: empresaId,
@@ -139,4 +158,3 @@ export async function upsertEntrega(input: {
     throw new Error(`Erro ao salvar entrega da obra: ${error.message}`);
   }
 }
-

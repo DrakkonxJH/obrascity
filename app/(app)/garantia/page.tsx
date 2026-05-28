@@ -1,6 +1,6 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listObras } from "@/lib/db/obras";
-import { listGarantiaChamados, listGarantiaInteracoes } from "@/lib/db/garantia";
+import { escalateGarantiaSlaBreaches, listGarantiaChamados, listGarantiaInteracoes } from "@/lib/db/garantia";
 import {
   createGarantiaChamadoAction,
   createGarantiaInteracaoAction,
@@ -8,7 +8,11 @@ import {
 } from "./actions";
 
 export default async function GarantiaPage() {
-  const [obrasResult, chamadosResult] = await Promise.allSettled([listObras(), listGarantiaChamados()]);
+  const [obrasResult, chamadosResult, escalonamentoResult] = await Promise.allSettled([
+    listObras(),
+    listGarantiaChamados(),
+    escalateGarantiaSlaBreaches(),
+  ]);
   const warnings: string[] = [];
   const obras =
     obrasResult.status === "fulfilled"
@@ -18,6 +22,10 @@ export default async function GarantiaPage() {
     chamadosResult.status === "fulfilled"
       ? chamadosResult.value
       : (warnings.push("Falha ao carregar chamados de garantia (verifique migrations)."), []);
+  const escaladosAutomaticamente =
+    escalonamentoResult.status === "fulfilled"
+      ? escalonamentoResult.value
+      : (warnings.push("Falha ao aplicar escalonamento automático de SLA."), 0);
   const chamadoPrincipal = chamados[0];
   const interacoesResult = chamadoPrincipal ? await Promise.allSettled([listGarantiaInteracoes(chamadoPrincipal.id)]) : null;
   const interacoes =
@@ -67,6 +75,10 @@ export default async function GarantiaPage() {
           <article className="of-stat-card">
             <div className="of-stat-value">{resolvidos}</div>
             <div className="of-stat-label">Resolvidos</div>
+          </article>
+          <article className="of-stat-card">
+            <div className="of-stat-value">{escaladosAutomaticamente}</div>
+            <div className="of-stat-label">Escalonados automático</div>
           </article>
         </div>
 

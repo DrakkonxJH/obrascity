@@ -372,6 +372,7 @@ function DetailPanel({ lead, onClose, onEdit, onDelete }) {
 // ─── Componente principal ─────────────────────────────────────────────
 export default function CrmPage() {
   const [leads, setLeads]   = useState([]);
+  const [deals, setDeals]   = useState([]);
   const [view, setView]     = useState("kanban");
   const [search, setSearch] = useState("");
   const [fEtapa, setFEtapa] = useState("");
@@ -381,6 +382,18 @@ export default function CrmPage() {
   const [syncError, setSyncError] = useState("");
   const [editingLead, setEditingLead] = useState(null);   // { lead } = editar | { etapaInicial } = novo
   const [saving, setSaving] = useState(false);
+
+  const refreshDeals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/crm/deals", { method: "GET", headers: { Accept: "application/json" } });
+      const data = await res.json();
+      if (res.ok && data?.ok && Array.isArray(data.deals)) {
+        setDeals(data.deals);
+      }
+    } catch {
+      // noop: painel de deals é complementar
+    }
+  }, []);
 
   // ── Drag state ──
   const [dragState, setDragState] = useState({ draggingId: null, overCol: null });
@@ -404,19 +417,26 @@ export default function CrmPage() {
     let active = true;
     const load = async () => {
       try {
-        const res = await fetch("/api/crm/leads", { method: "GET", headers: { Accept: "application/json" } });
-        const data = await res.json();
+        const [leadsRes, dealsRes] = await Promise.all([
+          fetch("/api/crm/leads", { method: "GET", headers: { Accept: "application/json" } }),
+          fetch("/api/crm/deals", { method: "GET", headers: { Accept: "application/json" } }),
+        ]);
+        const data = await leadsRes.json();
+        const dealsData = await dealsRes.json();
         if (!active) return;
-        if (!res.ok || !data?.ok) {
+        if (!leadsRes.ok || !data?.ok) {
           setLeads([]);
+          setDeals([]);
           setSyncError(data?.message || "Falha ao carregar tarefas reais para o CRM.");
         } else {
           setLeads(Array.isArray(data.leads) ? data.leads : []);
+          setDeals(dealsRes.ok && dealsData?.ok && Array.isArray(dealsData.deals) ? dealsData.deals : []);
           setSyncError("");
         }
       } catch {
         if (!active) return;
         setLeads([]);
+        setDeals([]);
         setSyncError("Falha de conectividade com API CRM.");
       } finally {
         if (active) setLoading(false);
@@ -445,6 +465,7 @@ export default function CrmPage() {
       const data = await res.json();
       if (res.ok && data?.ok) {
         setLeads(prev => prev.map(l => l.id === lead.id ? data.lead : l));
+        refreshDeals();
         setSyncError("");
       } else {
         setLeads(prev => prev.map(l => l.id === lead.id ? lead : l));
@@ -454,7 +475,7 @@ export default function CrmPage() {
       setLeads(prev => prev.map(l => l.id === lead.id ? lead : l));
       setSyncError("Erro de conexão ao mover lead.");
     }
-  }, [leads]);
+  }, [leads, refreshDeals]);
 
   // ── Filtered ──
   const filtered = useMemo(() => leads.filter(l => {
@@ -491,6 +512,7 @@ export default function CrmPage() {
         } else {
           setLeads(prev => [...prev, data.lead]);
         }
+        refreshDeals();
         setEditingLead(null);
       } else {
         setSyncError(data?.message || "Erro ao salvar lead.");
@@ -500,7 +522,7 @@ export default function CrmPage() {
     } finally {
       setSaving(false);
     }
-  }, [selected]);
+  }, [selected, refreshDeals]);
 
   const handleDeleteLead = useCallback(async (id) => {
     if (!confirm("Remover este lead do CRM?")) return;
@@ -510,6 +532,7 @@ export default function CrmPage() {
       if (res.ok && data?.ok) {
         setLeads(prev => prev.filter(l => l.id !== id));
         setSelected(s => s?.id === id ? null : s);
+        refreshDeals();
         setSyncError("");
       } else {
         setSyncError(data?.message || "Erro ao remover lead.");
@@ -517,7 +540,7 @@ export default function CrmPage() {
     } catch {
       setSyncError("Erro de conexão ao remover lead.");
     }
-  }, []);
+  }, [refreshDeals]);
 
   const btnToggle = (active) => ({
     background: active ? C.orange : "none",
@@ -587,6 +610,31 @@ export default function CrmPage() {
           <button onClick={() => setView("list")}   style={btnToggle(view === "list")}>{Ico.list} Lista</button>
         </div>
       </div>
+
+      {/* ── Negócios enterprise (deals + atividades) ── */}
+      {deals.length > 0 && (
+        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "10px 24px" }}>
+          <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
+            Negócios enterprise vinculados
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 10 }}>
+            {deals.slice(0, 6).map((deal) => (
+              <div key={deal.id} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px", background: C.faint }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {deal.nome}
+                </div>
+                <div style={{ marginTop: 4, fontSize: 12, color: C.muted }}>
+                  {deal.company_name || "Empresa não vinculada"} {deal.contact_name ? `• ${deal.contact_name}` : ""}
+                </div>
+                <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                  <span style={{ color: C.muted }}>Etapa: <b style={{ color: C.text }}>{deal.stage}</b></span>
+                  <span style={{ color: C.muted }}>Abertas: <b style={{ color: C.orange }}>{deal.activities_open}</b></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Content ── */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>

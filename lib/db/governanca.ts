@@ -27,6 +27,14 @@ export type TenantObservabilityEventItem = {
   createdAt: string;
 };
 
+export type ExecutiveAlertItem = {
+  id: string;
+  severity: "info" | "warning" | "error";
+  title: string;
+  details: string;
+  recommendedAction: string;
+};
+
 
 export async function getTenantRetentionPolicy(): Promise<TenantRetentionPolicy | null> {
   const empresaId = await getEmpresaIdFromProfile();
@@ -130,4 +138,122 @@ export async function listTenantObservabilityEvents(limit = 30): Promise<TenantO
     message: String(row.message ?? ""),
     createdAt: String(row.created_at ?? ""),
   }));
+}
+
+export async function registerExternalSyncEvent(input: {
+  provider: "erp" | "fiscal" | "bancario";
+  scope: string;
+}) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("tenant_observability_events").insert({
+    empresa_id: empresaId,
+    source: "integracao-externa",
+    event_type: `${input.provider}_sync_requested`,
+    severity: "info",
+    message: `Sync ${input.provider.toUpperCase()} solicitado para escopo "${input.scope}".`,
+    metadata: {
+      provider: input.provider,
+      scope: input.scope,
+      requested_at: new Date().toISOString(),
+    },
+  });
+  if (error) {
+    if (isMissingRelation(error.message)) return;
+    throw new Error(`Erro ao registrar solicitação de sync externo: ${error.message}`);
+  }
+}
+
+export async function listExecutiveAlerts(limit = 8): Promise<ExecutiveAlertItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const [ncRes, approvalsRes, financeiroRes, garantiaRes, entregaRes] = await Promise.all([
+    supabase.from("nao_conformidades").select("id", { count: "exact", head: true }).eq("empresa_id", empresaId).in("status", ["aberta", "em_tratamento"]),
+    supabase.from("approval_requests").select("id", { count: "exact", head: true }).eq("empresa_id", empresaId).eq("status", "pending"),
+    supabase
+      .from("financeiro_titulos")
+      .select("id", { count: "exact", head: true })
+      .eq("empresa_id", empresaId)
+      .in("status", ["previsto", "aprovado"])
+      .lt("vencimento", new Date().toISOString().slice(0, 10)),
+    supabase
+      .from("garantia_chamados")
+      .select("id, prazo_solucao_em, prazo_resposta_em, status")
+      .eq("empresa_id", empresaId)
+      .neq("status", "resolvido")
+      .limit(300),
+    supabase
+      .from("comissionamento_itens")
+      .select("id", { count: "exact", head: true })
+      .eq("empresa_id", empresaId)
+      .in("status", ["pendente", "reprovado"]),
+  ]);
+
+  const alerts: ExecutiveAlertItem[] = [];
+
+  const ncOpen = Number(ncRes.count ?? 0);
+  if (ncOpen > 0) {
+    alerts.push({
+      id: "nc-open",
+      severity: ncOpen > 8 ? "error" : "warning",
+      title: "Não conformidades abertas",
+      details: `${ncOpen} NCs sem encerramento.`,
+      recommendedAction: "Priorizar plano de ação das NCs críticas e vincular responsáveis com prazo.",
+    });
+  }
+
+  const approvalsPending = Number(approvalsRes.count ?? 0);
+  if (approvalsPending > 0) {
+    alerts.push({
+      id: "approvals-pending",
+      severity: approvalsPending > 10 ? "error" : "warning",
+      title: "Aprovações pendentes",
+      details: `${approvalsPending} solicitações aguardando alçada.`,
+      recommendedAction: "Executar rodada de aprovação/rejeição para evitar bloqueio de operação.",
+    });
+  }
+
+  const financeiroAtrasado = Number(financeiroRes.count ?? 0);
+  if (financeiroAtrasado > 0) {
+    alerts.push({
+      id: "finance-overdue",
+      severity: financeiroAtrasado > 5 ? "error" : "warning",
+      title: "Títulos financeiros vencidos",
+      details: `${financeiroAtrasado} títulos previstos/aprovados já vencidos.`,
+      recommendedAction: "Replanejar caixa e liquidar/renegociar títulos críticos.",
+    });
+  }
+
+  if (!garantiaRes.error) {
+    const now = Date.now();
+    const garantiaOverdue = (garantiaRes.data ?? []).filter((row) => {
+      const prazo = String(row.prazo_solucao_em ?? row.prazo_resposta_em ?? "");
+      if (!prazo) return false;
+      const t = new Date(prazo).getTime();
+      return Number.isFinite(t) && t < now;
+    }).length;
+    if (garantiaOverdue > 0) {
+      alerts.push({
+        id: "garantia-overdue",
+        severity: garantiaOverdue > 3 ? "error" : "warning",
+        title: "SLA de garantia em risco",
+        details: `${garantiaOverdue} chamados já ultrapassaram prazo.`,
+        recommendedAction: "Escalonar atendimento e atualizar comunicação com cliente.",
+      });
+    }
+  }
+
+  const comissionamentoPendente = Number(entregaRes.count ?? 0);
+  if (comissionamentoPendente > 0) {
+    alerts.push({
+      id: "comissionamento-pendente",
+      severity: comissionamentoPendente > 4 ? "warning" : "info",
+      title: "Comissionamento pendente",
+      details: `${comissionamentoPendente} itens ainda pendentes/reprovados.`,
+      recommendedAction: "Fechar checklist por sistema antes de concluir novas entregas.",
+    });
+  }
+
+  return alerts.slice(0, Math.max(1, limit));
 }

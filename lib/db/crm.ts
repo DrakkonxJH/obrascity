@@ -21,6 +21,21 @@ export type CrmLead = {
   updated_at: string;
 };
 
+export type CrmDealSummary = {
+  id: string;
+  nome: string;
+  stage: string;
+  status: string;
+  priority: string;
+  valor: number;
+  company_name: string;
+  contact_name: string;
+  last_activity_at: string | null;
+  next_activity_at: string | null;
+  activities_total: number;
+  activities_open: number;
+};
+
 type UpsertCrmLeadInput = {
   id?: string;
   nome: string;
@@ -295,6 +310,66 @@ export async function listCrmLeads(): Promise<CrmLead[]> {
   if (error) throw new Error(`Erro ao listar leads do CRM: ${error.message}`);
 
   return (data ?? []) as CrmLead[];
+}
+
+export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const dealsRes = await supabase
+    .from("crm_deals")
+    .select(
+      "id, nome, stage, status, priority, valor, last_activity_at, next_activity_at, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome)",
+    )
+    .eq("empresa_id", empresaId)
+    .order("updated_at", { ascending: false })
+    .limit(80);
+
+  if (dealsRes.error) {
+    throw new Error(`Erro ao listar negócios CRM: ${dealsRes.error.message}`);
+  }
+
+  const dealRows = (dealsRes.data ?? []) as Array<Record<string, unknown>>;
+  if (dealRows.length === 0) return [];
+  const dealIds = dealRows.map((row) => String(row.id ?? "")).filter(Boolean);
+
+  const activitiesRes = await supabase
+    .from("crm_activities")
+    .select("deal_id, done")
+    .eq("empresa_id", empresaId)
+    .in("deal_id", dealIds)
+    .limit(1000);
+  if (activitiesRes.error) {
+    throw new Error(`Erro ao listar atividades dos negócios CRM: ${activitiesRes.error.message}`);
+  }
+
+  const byDeal = new Map<string, { total: number; open: number }>();
+  for (const row of (activitiesRes.data ?? []) as Array<Record<string, unknown>>) {
+    const dealId = String(row.deal_id ?? "");
+    if (!dealId) continue;
+    const slot = byDeal.get(dealId) ?? { total: 0, open: 0 };
+    slot.total += 1;
+    if (!Boolean(row.done)) slot.open += 1;
+    byDeal.set(dealId, slot);
+  }
+
+  return dealRows.map((row) => {
+    const dealId = String(row.id ?? "");
+    const counts = byDeal.get(dealId) ?? { total: 0, open: 0 };
+    return {
+      id: dealId,
+      nome: String(row.nome ?? ""),
+      stage: String(row.stage ?? ""),
+      status: String(row.status ?? ""),
+      priority: String(row.priority ?? ""),
+      valor: Number(row.valor ?? 0),
+      company_name: String((row.company as { nome?: string } | null)?.nome ?? ""),
+      contact_name: String((row.contact as { nome?: string } | null)?.nome ?? ""),
+      last_activity_at: row.last_activity_at ? String(row.last_activity_at) : null,
+      next_activity_at: row.next_activity_at ? String(row.next_activity_at) : null,
+      activities_total: counts.total,
+      activities_open: counts.open,
+    } satisfies CrmDealSummary;
+  });
 }
 
 function mapTaskStatusToEtapa(status: string): CrmLead["etapa"] {

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { approveRequest, rejectRequest } from "@/lib/db/approvals";
-import { upsertTenantRetentionPolicy } from "@/lib/db/governanca";
+import { registerExternalSyncEvent, upsertTenantRetentionPolicy } from "@/lib/db/governanca";
 
 function parseRetentionDays(value: FormDataEntryValue | null, label: string) {
   const parsed = Number(value ?? 0);
@@ -49,5 +49,18 @@ export async function saveRetentionPolicyAction(formData: FormData) {
     logRetentionDays,
   });
 
+  revalidatePath("/governanca");
+}
+
+export async function requestExternalSyncAction(formData: FormData) {
+  const provider = String(formData.get("provider") ?? "").trim() as "erp" | "fiscal" | "bancario";
+  const scope = String(formData.get("scope") ?? "geral").trim();
+  if (!["erp", "fiscal", "bancario"].includes(provider)) {
+    throw new Error("Provedor de integração inválido.");
+  }
+  await registerExternalSyncEvent({
+    provider,
+    scope: scope || "geral",
+  });
   revalidatePath("/governanca");
 }
