@@ -244,7 +244,7 @@ function KanbanColumn({ etapa, leads, onCardClick, onAddCard, dragState, onDragS
 }
 
 // ─── Modal completo ───────────────────────────────────────────────────
-function LeadModal({ lead, isNew, etapaInicial, onClose, onSave }) {
+function LeadModal({ lead, isNew, etapaInicial, onClose, onSave, saving }) {
   const empty = { nome: "", contato: "", cargo: "", email: "", telefone: "", valor: "", etapa: etapaInicial || "Contato", origem: "Site", obra: "", prioridade: "Média", notas: "" };
   const [form, setForm] = useState(lead ? { ...lead } : empty);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -302,8 +302,8 @@ function LeadModal({ lead, isNew, etapaInicial, onClose, onSave }) {
 
         <div style={{ padding: "14px 24px", borderTop: `1px solid ${C.border}`, display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, borderRadius: 7, padding: "8px 18px", cursor: "pointer", fontSize: 13 }}>Cancelar</button>
-          <button onClick={save} style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 7, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
-            {isNew ? "Criar lead" : "Salvar alterações"}
+          <button onClick={save} disabled={saving} style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 7, padding: "8px 20px", cursor: saving ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, opacity: saving ? 0.7 : 1 }}>
+            {saving ? "Salvando..." : isNew ? "Criar lead" : "Salvar alterações"}
           </button>
         </div>
       </div>
@@ -379,6 +379,8 @@ export default function CrmPage() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState("");
+  const [editingLead, setEditingLead] = useState(null);   // { lead } = editar | { etapaInicial } = novo
+  const [saving, setSaving] = useState(false);
 
   // ── Drag state ──
   const [dragState, setDragState] = useState({ draggingId: null, overCol: null });
@@ -426,10 +428,33 @@ export default function CrmPage() {
     };
   }, []);
 
-  const handleDrop = useCallback(() => {
+  const handleDrop = useCallback(async (targetEtapa) => {
+    const id = draggingId.current;
     setDragState({ draggingId: null, overCol: null });
-    setSyncError("Movimentação manual desativada. O CRM reflete o status real das tarefas.");
-  }, []);
+    if (!id) return;
+    const lead = leads.find(l => String(l.id) === String(id));
+    if (!lead || lead.etapa === targetEtapa) return;
+    // Optimistic update
+    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, etapa: targetEtapa } : l));
+    try {
+      const res = await fetch(`/api/crm/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ etapa: targetEtapa }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        setLeads(prev => prev.map(l => l.id === lead.id ? data.lead : l));
+        setSyncError("");
+      } else {
+        setLeads(prev => prev.map(l => l.id === lead.id ? lead : l));
+        setSyncError(data?.message || "Erro ao mover lead.");
+      }
+    } catch {
+      setLeads(prev => prev.map(l => l.id === lead.id ? lead : l));
+      setSyncError("Erro de conexão ao mover lead.");
+    }
+  }, [leads]);
 
   // ── Filtered ──
   const filtered = useMemo(() => leads.filter(l => {
@@ -440,10 +465,59 @@ export default function CrmPage() {
   }), [leads, search, fEtapa, fPrio]);
 
   // ── Métricas ──
-  const totalVal  = filtered.reduce((a, l) => a + l.valor, 0);
   const fechados  = filtered.filter(l => l.etapa === "Fechado");
   const abertos   = filtered.filter(l => !["Fechado", "Perdido"].includes(l.etapa));
+  const totalVal  = abertos.reduce((a, l) => a + l.valor, 0);   // pipeline ativo
   const taxa      = filtered.length ? Math.round(fechados.length / filtered.length * 100) : 0;
+
+  // ── Handlers CRUD ──
+  const handleSaveLead = useCallback(async (formData) => {
+    setSaving(true);
+    setSyncError("");
+    const isEdit = !!formData.id && !String(formData.id).match(/^\d{13}$/); // real uuid vs Date.now()
+    try {
+      const url = isEdit ? `/api/crm/leads/${formData.id}` : "/api/crm/leads";
+      const method = isEdit ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        if (isEdit) {
+          setLeads(prev => prev.map(l => l.id === data.lead.id ? data.lead : l));
+          if (selected?.id === data.lead.id) setSelected(data.lead);
+        } else {
+          setLeads(prev => [...prev, data.lead]);
+        }
+        setEditingLead(null);
+      } else {
+        setSyncError(data?.message || "Erro ao salvar lead.");
+      }
+    } catch {
+      setSyncError("Erro de conexão ao salvar lead.");
+    } finally {
+      setSaving(false);
+    }
+  }, [selected]);
+
+  const handleDeleteLead = useCallback(async (id) => {
+    if (!confirm("Remover este lead do CRM?")) return;
+    try {
+      const res = await fetch(`/api/crm/leads/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        setLeads(prev => prev.filter(l => l.id !== id));
+        setSelected(s => s?.id === id ? null : s);
+        setSyncError("");
+      } else {
+        setSyncError(data?.message || "Erro ao remover lead.");
+      }
+    } catch {
+      setSyncError("Erro de conexão ao remover lead.");
+    }
+  }, []);
 
   const btnToggle = (active) => ({
     background: active ? C.orange : "none",
@@ -474,8 +548,8 @@ export default function CrmPage() {
       {/* ── Métricas ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 1, background: C.border }}>
         {[
-          { label: "Total no funil",    value: fmt(totalVal),   sub: `${filtered.length} leads`,          accent: true },
-          { label: "Em aberto",         value: abertos.length,  sub: fmt(abertos.reduce((a,l)=>a+l.valor,0)) + " potencial" },
+          { label: "Pipeline ativo",    value: fmt(totalVal),   sub: `${abertos.length} leads em aberto`,  accent: true },
+          { label: "Em negociação",     value: abertos.length,  sub: fmt(totalVal) + " potencial" },
           { label: "Fechados",          value: fechados.length, sub: fmt(fechados.reduce((a,l)=>a+l.valor,0)) + " convertidos" },
           { label: "Taxa conversão",    value: `${taxa}%`,      sub: "leads → clientes" },
         ].map((m, i) => (
@@ -503,6 +577,12 @@ export default function CrmPage() {
           {["Alta", "Média", "Baixa"].map(p => <option key={p} value={p}>{p}</option>)}
         </select>
         <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+          <button
+            onClick={() => setEditingLead({ etapaInicial: "Contato" })}
+            style={{ ...btnToggle(false), background: C.orange, borderColor: C.orange, color: "#fff" }}
+          >
+            {Ico.plus} Novo lead
+          </button>
           <button onClick={() => setView("kanban")} style={btnToggle(view === "kanban")}>{Ico.kanban} Kanban</button>
           <button onClick={() => setView("list")}   style={btnToggle(view === "list")}>{Ico.list} Lista</button>
         </div>
@@ -522,7 +602,7 @@ export default function CrmPage() {
                     etapa={etapa}
                     leads={filtered.filter(l => l.etapa === etapa)}
                     onCardClick={setSelected}
-                    onAddCard={() => setSyncError("Criação manual desativada no CRM sincronizado por tarefas.")}
+                    onAddCard={card => handleSaveLead({ ...card, id: undefined })}
                     dragState={dragState}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
@@ -569,8 +649,8 @@ export default function CrmPage() {
                         <td style={{ padding: "11px 14px", fontSize: 12, color: C.muted }}>{fmtDate(lead.ultima_atividade)}</td>
                         <td style={{ padding: "11px 14px" }}>
                           <div style={{ display: "flex", gap: 6 }} onClick={e => e.stopPropagation()}>
-                            <button onClick={() => setSyncError("Edição manual desativada no CRM sincronizado por tarefas.")} style={{ background: C.faint, border: `1px solid ${C.border}`, color: C.muted, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.edit}</button>
-                            <button onClick={() => setSyncError("Remoção manual desativada no CRM sincronizado por tarefas.")} style={{ background: "#1A0F0F", border: "1px solid #2A1515", color: C.red, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.trash}</button>
+                            <button onClick={() => setEditingLead({ lead })} style={{ background: C.faint, border: `1px solid ${C.border}`, color: C.muted, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.edit}</button>
+                            <button onClick={() => handleDeleteLead(lead.id)} style={{ background: "#1A0F0F", border: "1px solid #2A1515", color: C.red, borderRadius: 5, padding: "5px 8px", cursor: "pointer" }}>{Ico.trash}</button>
                           </div>
                         </td>
                       </tr>
@@ -590,11 +670,23 @@ export default function CrmPage() {
           <DetailPanel
             lead={selected}
             onClose={() => setSelected(null)}
-            onEdit={() => setSyncError("Edição manual desativada no CRM sincronizado por tarefas.")}
-            onDelete={() => setSyncError("Remoção manual desativada no CRM sincronizado por tarefas.")}
+            onEdit={lead => setEditingLead({ lead })}
+            onDelete={handleDeleteLead}
           />
         )}
       </div>
+
+      {/* Modal de criação / edição */}
+      {editingLead && (
+        <LeadModal
+          lead={editingLead.lead ?? null}
+          isNew={!editingLead.lead}
+          etapaInicial={editingLead.etapaInicial}
+          onClose={() => setEditingLead(null)}
+          onSave={handleSaveLead}
+          saving={saving}
+        />
+      )}
     </div>
   );
 }
