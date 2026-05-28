@@ -4,14 +4,14 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 
 // ─── Paleta ObrasCitY ────────────────────────────────────────────────
 const C = {
-  bg:      "#0A0A0A",
-  surface: "#111111",
-  card:    "#161616",
-  border:  "#222222",
-  orange:  "#FF6B1A",
-  text:    "#F0EDE8",
-  muted:   "#7A7672",
-  faint:   "#2A2826",
+  bg:      "var(--of-bg)",
+  surface: "var(--of-bg-2)",
+  card:    "var(--of-bg-3)",
+  border:  "var(--of-border)",
+  orange:  "var(--of-blue)",
+  text:    "var(--of-text)",
+  muted:   "var(--of-text-2)",
+  faint:   "var(--of-bg-4)",
   green:   "#22C55E",
   red:     "#EF4444",
   yellow:  "#F59E0B",
@@ -459,7 +459,7 @@ export default function CrmPage() {
   };
 
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "'IBM Plex Sans', system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
+    <div style={{ background: "transparent", minHeight: "100%", color: C.text, fontFamily: "'IBM Plex Sans', system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
 
       {/* ── Header ── */}
       <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px" }}>
