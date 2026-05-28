@@ -214,15 +214,9 @@ export default function ComoFuncionaPage() {
         </div>
       </section>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,.08)", background: "#070d1b" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 20px 24px" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
-              gap: 20,
-            }}
-          >
+      <footer className="lp-footer">
+        <div className="lp-container">
+          <div className="lp-footer-grid">
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                 <div
@@ -241,74 +235,62 @@ export default function ComoFuncionaPage() {
                   OBRAS<span style={{ color: "#FF6B1A" }}>CITY</span>
                 </div>
               </div>
-              <p style={{ color: "#95A4C3", margin: 0, lineHeight: 1.6 }}>
+              <p className="lp-footer-brand-desc">
                 A plataforma de gestão de obras para construtoras que levam seus projetos a sério. Do planejamento à
                 entrega.
               </p>
             </div>
 
             <div>
-              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700, fontSize: ".9rem", textTransform: "uppercase", letterSpacing: ".06em" }}>Produto</p>
-              <div style={{ display: "grid", gap: 7 }}>
-                <Link href="/como-funciona" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Como funciona</Link>
-                <Link href="/como-funciona" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Resultados</Link>
-                <Link href="/como-funciona" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Módulos</Link>
-                <Link href="/planos" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Planos e preços</Link>
+              <div className="lp-footer-col-title">Produto</div>
+              <div className="lp-footer-links">
+                <Link href="/como-funciona" className="lp-footer-link">Como funciona</Link>
+                <Link href="/como-funciona" className="lp-footer-link">Resultados</Link>
+                <Link href="/como-funciona" className="lp-footer-link">Módulos</Link>
+                <Link href="/planos" className="lp-footer-link">Planos e preços</Link>
               </div>
             </div>
 
             <div>
-              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700, fontSize: ".9rem", textTransform: "uppercase", letterSpacing: ".06em" }}>Empresa</p>
-              <div style={{ display: "grid", gap: 7 }}>
-                <Link href="/sobre" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Sobre nós</Link>
-                <Link href="/como-funciona" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Clientes</Link>
-                <Link href="/contato" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Contato</Link>
+              <div className="lp-footer-col-title">Empresa</div>
+              <div className="lp-footer-links">
+                <Link href="/sobre" className="lp-footer-link">Sobre nós</Link>
+                <Link href="/como-funciona" className="lp-footer-link">Clientes</Link>
+                <Link href="/contato" className="lp-footer-link">Contato</Link>
               </div>
             </div>
 
             <div>
-              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700, fontSize: ".9rem", textTransform: "uppercase", letterSpacing: ".06em" }}>Suporte</p>
-              <div style={{ display: "grid", gap: 7 }}>
-                <Link href="/como-funciona" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Perguntas frequentes</Link>
-                <Link href="/privacidade" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Política de privacidade</Link>
-                <Link href="/termos" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Termos de uso</Link>
-                <Link href="/politica-de-cookies" style={{ color: "#95A4C3", fontSize: ".92rem" }}>Política de cookies</Link>
+              <div className="lp-footer-col-title">Suporte</div>
+              <div className="lp-footer-links">
+                <Link href="/como-funciona" className="lp-footer-link">Perguntas frequentes</Link>
+                <Link href="/privacidade" className="lp-footer-link">Política de privacidade</Link>
+                <Link href="/termos" className="lp-footer-link">Termos de uso</Link>
+                <Link href="/politica-de-cookies" className="lp-footer-link">Política de cookies</Link>
               </div>
             </div>
 
             <div>
-              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700, fontSize: ".9rem", textTransform: "uppercase", letterSpacing: ".06em" }}>Comunidade</p>
-              <div style={{ display: "grid", gap: 7 }}>
-                <a href="https://www.instagram.com/obrascity" style={{ color: "#95A4C3", fontSize: ".92rem" }} target="_blank" rel="noopener noreferrer">
+              <div className="lp-footer-col-title">Comunidade</div>
+              <div className="lp-footer-links">
+                <a href="https://www.instagram.com/obrascity" className="lp-footer-link" target="_blank" rel="noopener noreferrer">
                   Instagram
                 </a>
-                <a href="https://www.linkedin.com/company/obrascity" style={{ color: "#95A4C3", fontSize: ".92rem" }} target="_blank" rel="noopener noreferrer">
+                <a href="https://www.linkedin.com/company/obrascity" className="lp-footer-link" target="_blank" rel="noopener noreferrer">
                   LinkedIn
                 </a>
-                <Link href="/contato" style={{ color: "#95A4C3", fontSize: ".92rem" }}>WhatsApp</Link>
+                <Link href="/contato" className="lp-footer-link">WhatsApp</Link>
               </div>
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop: 18,
-              paddingTop: 14,
-              borderTop: "1px solid rgba(255,255,255,.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-              flexWrap: "wrap",
-              color: "#95A4C3",
-            }}
-          >
-            <span style={{ fontSize: ".9rem" }}>© {new Date().getFullYear()} ObrasCitY. Plataforma SaaS de gestão de obras. Informações legais e comerciais disponíveis no site.</span>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "4px 9px", fontSize: ".78rem" }}>🔒 SSL</span>
-              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "4px 9px", fontSize: ".78rem" }}>✓ LGPD</span>
-              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "4px 9px", fontSize: ".78rem" }}>🛡 Segurança AES-256 + LGPD</span>
-              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "4px 9px", fontSize: ".78rem" }}>~ 99.9% Uptime</span>
+          <div className="lp-footer-bottom">
+            <span>© {new Date().getFullYear()} ObrasCitY. Plataforma SaaS de gestão de obras. Informações legais e comerciais disponíveis no site.</span>
+            <div className="lp-footer-badges">
+              <span className="lp-fbadge">🔒 SSL</span>
+              <span className="lp-fbadge">✓ LGPD</span>
+              <span className="lp-fbadge">🛡 Segurança AES-256 + LGPD</span>
+              <span className="lp-fbadge">☁ 99.9% Uptime</span>
             </div>
           </div>
         </div>

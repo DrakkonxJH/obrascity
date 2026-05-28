@@ -791,6 +791,110 @@ a {
     linear-gradient(165deg, #121a2a, #0a0f18);
 }
 
+/* Landing footer replica for public pages */
+.lp-footer {
+  background: #050911;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 60px 0 32px;
+}
+
+.lp-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.lp-footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+
+.lp-footer-brand-desc {
+  font-size: 0.85rem;
+  color: #8896b3;
+  line-height: 1.7;
+  margin-top: 14px;
+  max-width: 240px;
+}
+
+.lp-footer-col-title {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f0f4ff;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+}
+
+.lp-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lp-footer-link {
+  font-size: 0.83rem;
+  color: #8896b3;
+  transition: color 0.2s;
+}
+
+.lp-footer-link:hover {
+  color: #ff6b1a;
+}
+
+.lp-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.lp-footer-bottom > span {
+  font-size: 0.84rem;
+  color: #8896b3;
+}
+
+.lp-footer-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lp-fbadge {
+  font-size: 0.68rem;
+  font-family: "JetBrains Mono", monospace;
+  color: #9ca8c0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+@media (max-width: 1024px) {
+  .lp-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-container {
+    padding: 0 20px;
+  }
+  .lp-footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .lp-footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
 /* Reusable visual primitives */
 .of-page {
   display: flex;
