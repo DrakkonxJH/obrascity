@@ -213,6 +213,89 @@ export default function ComoFuncionaPage() {
           ))}
         </div>
       </section>
+
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,.08)", background: "#070d1b" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 20px 24px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+              gap: 20,
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    background: "linear-gradient(135deg,#ff8a2d,#ff6200)",
+                    display: "grid",
+                    placeItems: "center",
+                  }}
+                >
+                  🏗
+                </div>
+                <div style={{ fontFamily: "Barlow Condensed, sans-serif", fontSize: "1.5rem", fontWeight: 700 }}>
+                  OBRAS<span style={{ color: "#FF6B1A" }}>CITY</span>
+                </div>
+              </div>
+              <p style={{ color: "#95A4C3", margin: 0, lineHeight: 1.6 }}>
+                A plataforma de gestão de obras para construtoras que levam seus projetos a sério.
+              </p>
+            </div>
+
+            <div>
+              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700 }}>Produto</p>
+              <div style={{ display: "grid", gap: 7 }}>
+                <Link href="/como-funciona" style={{ color: "#95A4C3" }}>Como funciona</Link>
+                <Link href="/como-funciona" style={{ color: "#95A4C3" }}>Resultados</Link>
+                <Link href="/como-funciona" style={{ color: "#95A4C3" }}>Módulos</Link>
+                <Link href="/planos" style={{ color: "#95A4C3" }}>Planos e preços</Link>
+              </div>
+            </div>
+
+            <div>
+              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700 }}>Empresa</p>
+              <div style={{ display: "grid", gap: 7 }}>
+                <Link href="/sobre" style={{ color: "#95A4C3" }}>Sobre nós</Link>
+                <Link href="/contato" style={{ color: "#95A4C3" }}>Contato</Link>
+              </div>
+            </div>
+
+            <div>
+              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700 }}>Suporte</p>
+              <div style={{ display: "grid", gap: 7 }}>
+                <Link href="/privacidade" style={{ color: "#95A4C3" }}>Política de privacidade</Link>
+                <Link href="/termos" style={{ color: "#95A4C3" }}>Termos de uso</Link>
+                <Link href="/politica-de-cookies" style={{ color: "#95A4C3" }}>Política de cookies</Link>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 18,
+              paddingTop: 14,
+              borderTop: "1px solid rgba(255,255,255,.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              flexWrap: "wrap",
+              color: "#95A4C3",
+            }}
+          >
+            <span>© {new Date().getFullYear()} ObrasCitY. Plataforma SaaS de gestão de obras.</span>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>🔒 SSL</span>
+              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>✓ LGPD</span>
+              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>🛡 Segurança AES-256</span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
