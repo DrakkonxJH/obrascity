@@ -1570,6 +1570,12 @@ a {
   background: var(--of-bg-2);
 }
 
+.of-gantt-scroll-area {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 .of-gantt-head-extended,
 .of-gantt-row-extended {
   min-width: 1040px;
