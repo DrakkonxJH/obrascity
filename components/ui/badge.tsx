@@ -1,10 +1,11 @@
 type BadgeProps = {
   label: string;
+  variant?: "default" | "success" | "warning" | "error" | "info";
 };
 
-export function Badge({ label }: BadgeProps) {
+export function Badge({ label, variant = "default" }: BadgeProps) {
   return (
-    <span className="inline-flex rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700">
+    <span className={`of-badge of-badge-${variant}`}>
       {label}
     </span>
   );

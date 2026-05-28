@@ -1380,11 +1380,37 @@ a {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   font-size: 0.7rem;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.08);
   color: var(--of-text-2);
+  white-space: nowrap;
+}
+
+.of-badge-default {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--of-text-2);
+}
+
+.of-badge-success {
+  background: rgba(31, 208, 122, 0.16);
+  color: var(--of-green);
+}
+
+.of-badge-warning {
+  background: rgba(245, 166, 35, 0.16);
+  color: var(--of-yellow);
+}
+
+.of-badge-error {
+  background: rgba(255, 64, 96, 0.16);
+  color: var(--of-red);
+}
+
+.of-badge-info {
+  background: rgba(255, 107, 26, 0.16);
+  color: #ffb27a;
 }
 
 .of-badge-blue {
@@ -2333,12 +2359,29 @@ a {
 }
 
 .of-toggle {
-  width: 38px;
-  height: 22px;
+  width: 44px;
+  height: 24px;
   border: 0;
   border-radius: 999px;
   position: relative;
+  background: var(--of-bg-3);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0;
+}
+
+.of-toggle:hover {
   background: var(--of-bg-4);
+}
+
+.of-toggle:focus-visible {
+  outline: 2px solid var(--of-blue);
+  outline-offset: 2px;
+}
+
+.of-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .of-toggle::after {
@@ -2346,14 +2389,19 @@ a {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #fff;
+  transition: left 0.2s ease;
 }
 
 .of-toggle.on {
   background: var(--of-blue);
+}
+
+.of-toggle.on:hover {
+  background: linear-gradient(135deg, var(--of-blue), #ff7a2c);
 }
 
 .of-toggle.on::after {
