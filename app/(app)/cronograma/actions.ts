@@ -1,30 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createCronogramaItem, createDependenciaCronograma, createReplanejamento, snapshotBaseline } from "@/lib/db/cronograma";
+import {
+  createCronogramaItem,
+  createDependenciaCronograma,
+  createReplanejamento,
+  deleteCronogramaItem,
+  snapshotBaseline,
+  updateCronogramaItem,
+} from "@/lib/db/cronograma";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isProfileRole } from "@/lib/auth/roles";
 import { createApprovalRequest } from "@/lib/db/approvals";
 import { requiresApprovalForAmount, resolveRequiredRoleByAmount } from "@/lib/approvals/policy";
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
-
-function mapTaskStatusToEtapa(status: string): "Contato" | "Qualificação" | "Proposta" | "Negociação" | "Fechado" | "Perdido" {
-  const s = status.toLowerCase();
-  if (s.includes("conclu")) return "Fechado";
-  if (s.includes("atras")) return "Negociação";
-  if (s.includes("andamento") || s.includes("execucao") || s.includes("execução")) return "Proposta";
-  if (s.includes("cancel")) return "Perdido";
-  if (s.includes("planej")) return "Qualificação";
-  return "Contato";
-}
-
-function mapTaskStatusToPrioridade(status: string): "Alta" | "Média" | "Baixa" {
-  const s = status.toLowerCase();
-  if (s.includes("atras")) return "Alta";
-  if (s.includes("conclu")) return "Baixa";
-  return "Média";
-}
+import { deleteCrmLeadFromCronogramaTask, upsertCrmLeadFromCronogramaTask } from "@/lib/db/crm";
 
 export async function createCronogramaAction(formData: FormData) {
   const obra_id = String(formData.get("obra_id") ?? "").trim();
@@ -37,7 +28,7 @@ export async function createCronogramaAction(formData: FormData) {
     throw new Error("Campos obrigatorios do cronograma ausentes");
   }
 
-  await createCronogramaItem({ obra_id, nome, inicio, fim, status });
+  const tarefaId = await createCronogramaItem({ obra_id, nome, inicio, fim, status });
 
   const [empresaId, supabase] = await Promise.all([getEmpresaIdFromProfile(), createServerClient()]);
   const obraRes = await supabase
@@ -50,26 +41,73 @@ export async function createCronogramaAction(formData: FormData) {
     throw new Error(`Erro ao sincronizar tarefa com CRM (obra): ${obraRes.error.message}`);
   }
 
-  const etapa = mapTaskStatusToEtapa(status);
-  const prioridade = mapTaskStatusToPrioridade(status);
-  const syncInsert = await supabase.from("crm_leads").insert({
-    empresa_id: empresaId,
-    nome: nome,
-    contato: obraRes.data.cliente ?? "",
-    cargo: "Gestão da obra",
-    email: "",
-    telefone: "",
-    valor: 0,
-    etapa,
-    origem: "Cronograma",
-    obra: obraRes.data.nome,
-    prioridade,
-    ultima_atividade: fim,
-    notas: `Card gerado automaticamente a partir da tarefa do cronograma (${inicio} → ${fim}).`,
+  await upsertCrmLeadFromCronogramaTask({
+    taskId: tarefaId,
+    nome,
+    status,
+    inicio,
+    fim,
+    obraNome: obraRes.data.nome,
+    clienteNome: obraRes.data.cliente ?? "",
   });
-  if (syncInsert.error) {
-    throw new Error(`Erro ao sincronizar tarefa com CRM (card): ${syncInsert.error.message}`);
+
+  revalidatePath("/cronograma");
+  revalidatePath("/crm");
+}
+
+export async function updateCronogramaAction(formData: FormData) {
+  const tarefa_id = String(formData.get("tarefa_id") ?? "").trim();
+  const nome = String(formData.get("nome") ?? "").trim();
+  const inicio = String(formData.get("inicio") ?? "").trim();
+  const fim = String(formData.get("fim") ?? "").trim();
+  const status = String(formData.get("status") ?? "planejado").trim();
+
+  if (!tarefa_id || !nome || !inicio || !fim) {
+    throw new Error("Campos obrigatórios para atualização da tarefa estão ausentes");
   }
+
+  const updated = await updateCronogramaItem({
+    id: tarefa_id,
+    nome,
+    inicio,
+    fim,
+    status,
+  });
+
+  const [empresaId, supabase] = await Promise.all([getEmpresaIdFromProfile(), createServerClient()]);
+  const obraRes = await supabase
+    .from("obras")
+    .select("nome, cliente")
+    .eq("empresa_id", empresaId)
+    .eq("id", updated.obra_id)
+    .single<{ nome: string; cliente: string | null }>();
+
+  if (obraRes.error) {
+    throw new Error(`Erro ao sincronizar atualização da tarefa com CRM: ${obraRes.error.message}`);
+  }
+
+  await upsertCrmLeadFromCronogramaTask({
+    taskId: tarefa_id,
+    nome,
+    status,
+    inicio,
+    fim,
+    obraNome: obraRes.data.nome,
+    clienteNome: obraRes.data.cliente ?? "",
+  });
+
+  revalidatePath("/cronograma");
+  revalidatePath("/crm");
+}
+
+export async function deleteCronogramaAction(formData: FormData) {
+  const tarefa_id = String(formData.get("tarefa_id") ?? "").trim();
+  if (!tarefa_id) {
+    throw new Error("ID da tarefa é obrigatório para remoção");
+  }
+
+  await deleteCronogramaItem(tarefa_id);
+  await deleteCrmLeadFromCronogramaTask(tarefa_id);
 
   revalidatePath("/cronograma");
   revalidatePath("/crm");

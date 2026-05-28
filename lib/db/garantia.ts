@@ -99,20 +99,36 @@ export async function escalateGarantiaSlaBreaches() {
       }
     }
 
-    const eventMessage = `SLA excedido no chamado "${String(item.titulo ?? "")}". Escalonamento automático aplicado.`;
-    const eventInsert = await supabase.from("tenant_observability_events").insert({
-      empresa_id: empresaId,
-      source: "garantia-sla",
-      event_type: "sla_breach_escalated",
-      severity: "warning",
-      message: eventMessage,
-      metadata: {
-        chamado_id: item.id,
-        escalated_by: profile?.id ?? null,
-      },
-    });
-    if (eventInsert.error && !isMissingRelation(eventInsert.error.message)) {
-      throw new Error(`Erro ao registrar evento de escalonamento SLA: ${eventInsert.error.message}`);
+    const alreadyLogged = await supabase
+      .from("tenant_observability_events")
+      .select("id")
+      .eq("empresa_id", empresaId)
+      .eq("source", "garantia-sla")
+      .eq("event_type", "sla_breach_escalated")
+      .contains("metadata", { chamado_id: item.id })
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+
+    if (alreadyLogged.error && !isMissingRelation(alreadyLogged.error.message)) {
+      throw new Error(`Erro ao verificar evento de escalonamento existente: ${alreadyLogged.error.message}`);
+    }
+
+    if (!alreadyLogged.data?.id) {
+      const eventMessage = `SLA excedido no chamado "${String(item.titulo ?? "")}". Escalonamento automático aplicado.`;
+      const eventInsert = await supabase.from("tenant_observability_events").insert({
+        empresa_id: empresaId,
+        source: "garantia-sla",
+        event_type: "sla_breach_escalated",
+        severity: "warning",
+        message: eventMessage,
+        metadata: {
+          chamado_id: item.id,
+          escalated_by: profile?.id ?? null,
+        },
+      });
+      if (eventInsert.error && !isMissingRelation(eventInsert.error.message)) {
+        throw new Error(`Erro ao registrar evento de escalonamento SLA: ${eventInsert.error.message}`);
+      }
     }
   }
 

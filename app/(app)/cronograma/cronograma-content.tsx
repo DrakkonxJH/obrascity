@@ -1,6 +1,13 @@
 import { GanttView } from "@/components/cronograma/gantt-view";
 import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/cronograma/gantt-utils";
-import { createCronogramaAction, createDependenciaAction, createReplanejamentoAction, gerarBaselineAction } from "./actions";
+import {
+  createCronogramaAction,
+  createDependenciaAction,
+  createReplanejamentoAction,
+  deleteCronogramaAction,
+  gerarBaselineAction,
+  updateCronogramaAction,
+} from "./actions";
 import { listCaminhoCritico, listCronograma, listDependenciasCronograma, listReplanejamentos } from "@/lib/db/cronograma";
 import { listObras } from "@/lib/db/obras";
 
@@ -90,6 +97,69 @@ export async function CronogramaContent() {
       </div>
 
       <GanttView items={ganttItems} months={months} currentMonthIndex={monthIndex} />
+
+      <article className="of-card">
+        <div className="of-card-title">Tarefas do cronograma (edição rápida)</div>
+        <div className="of-table-wrap" style={{ border: 0 }}>
+          <table className="of-table">
+            <thead>
+              <tr>
+                <th>Obra</th>
+                <th>Tarefa</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.obra_nome}</td>
+                  <td>
+                    <form action={updateCronogramaAction} style={{ display: "grid", gap: 8 }}>
+                      <input type="hidden" name="tarefa_id" value={item.id} />
+                      <input name="nome" defaultValue={item.nome} className="of-input" />
+                      <input name="inicio" type="date" defaultValue={item.inicio} className="of-input" />
+                      <input name="fim" type="date" defaultValue={item.fim} className="of-input" />
+                      <select name="status" defaultValue={item.status} className="of-input">
+                        <option value="planejado">Planejado</option>
+                        <option value="andamento">Andamento</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="atrasado">Atrasado</option>
+                        <option value="cancelado">Cancelado</option>
+                      </select>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button type="submit" className="of-btn-primary">
+                          Salvar
+                        </button>
+                      </div>
+                    </form>
+                  </td>
+                  <td className="of-mono">{item.inicio}</td>
+                  <td className="of-mono">{item.fim}</td>
+                  <td>{item.status}</td>
+                  <td>
+                    <form action={deleteCronogramaAction}>
+                      <input type="hidden" name="tarefa_id" value={item.id} />
+                      <button type="submit" className="of-btn-ghost">
+                        Excluir
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="of-empty-text">
+                    Nenhuma tarefa cadastrada.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </article>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <article className="of-card">

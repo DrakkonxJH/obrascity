@@ -52,6 +52,16 @@ type UpsertCrmLeadInput = {
   notas?: string;
 };
 
+type CronogramaTaskSyncInput = {
+  taskId: string;
+  nome: string;
+  status: string;
+  inicio: string;
+  fim: string;
+  obraNome: string;
+  clienteNome?: string | null;
+};
+
 const CRM_SELECT =
   "id, empresa_id, nome, contato, cargo, email, telefone, valor, etapa, origem, obra, prioridade, ultima_atividade, notas, created_at, updated_at";
 
@@ -387,6 +397,56 @@ function mapTaskStatusToPrioridade(status: string): CrmLead["prioridade"] {
   if (s.includes("atras")) return "Alta";
   if (s.includes("conclu")) return "Baixa";
   return "Média";
+}
+
+function buildCronogramaTaskMarker(taskId: string) {
+  return `[cronograma_task_id:${taskId}]`;
+}
+
+async function findLeadIdByCronogramaTaskId(supabase: SupabaseClient, empresaId: string, taskId: string) {
+  const marker = buildCronogramaTaskMarker(taskId);
+  const search = await supabase
+    .from("crm_leads")
+    .select("id")
+    .eq("empresa_id", empresaId)
+    .eq("origem", "Cronograma")
+    .ilike("notas", `%${marker}%`)
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (search.error) {
+    throw new Error(`Erro ao localizar card CRM da tarefa: ${search.error.message}`);
+  }
+  return search.data?.id ?? null;
+}
+
+export async function upsertCrmLeadFromCronogramaTask(input: CronogramaTaskSyncInput) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const existingId = await findLeadIdByCronogramaTaskId(supabase, empresaId, input.taskId);
+  const marker = buildCronogramaTaskMarker(input.taskId);
+  await upsertCrmLead({
+    ...(existingId ? { id: existingId } : {}),
+    nome: input.nome,
+    contato: input.clienteNome ?? "",
+    cargo: "Gestão da obra",
+    email: "",
+    telefone: "",
+    valor: 0,
+    etapa: mapTaskStatusToEtapa(input.status),
+    origem: "Cronograma",
+    obra: input.obraNome,
+    prioridade: mapTaskStatusToPrioridade(input.status),
+    ultima_atividade: input.fim,
+    notas: `${marker} Card gerado automaticamente a partir da tarefa do cronograma (${input.inicio} → ${input.fim}).`,
+  });
+}
+
+export async function deleteCrmLeadFromCronogramaTask(taskId: string) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const leadId = await findLeadIdByCronogramaTaskId(supabase, empresaId, taskId);
+  if (!leadId) return;
+  await deleteCrmLead(leadId);
 }
 
 export async function listCrmLeadsFromTasks(): Promise<CrmLead[]> {

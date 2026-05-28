@@ -79,17 +79,61 @@ export async function createCronogramaItem(input: {
   const supabase = await createServerClient();
   await ensureObraAtiva(input.obra_id);
 
-  const { error } = await supabase.from("obras_tarefas").insert({
-    empresa_id: empresaId,
-    obra_id: input.obra_id,
-    nome: input.nome,
-    inicio: input.inicio,
-    fim: input.fim,
-    status: input.status ?? "planejado",
-  });
+  const { data, error } = await supabase
+    .from("obras_tarefas")
+    .insert({
+      empresa_id: empresaId,
+      obra_id: input.obra_id,
+      nome: input.nome,
+      inicio: input.inicio,
+      fim: input.fim,
+      status: input.status ?? "planejado",
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (error || !data?.id) {
+    throw new Error(`Erro ao criar tarefa: ${error?.message ?? "falha desconhecida"}`);
+  }
+  return data.id;
+}
+
+export async function updateCronogramaItem(input: {
+  id: string;
+  nome: string;
+  inicio: string;
+  fim: string;
+  status: string;
+}) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("obras_tarefas")
+    .update({
+      nome: input.nome,
+      inicio: input.inicio,
+      fim: input.fim,
+      status: input.status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("empresa_id", empresaId)
+    .eq("id", input.id)
+    .select("id, obra_id")
+    .single<{ id: string; obra_id: string }>();
+
+  if (error || !data?.id) {
+    throw new Error(`Erro ao atualizar tarefa: ${error?.message ?? "tarefa não encontrada"}`);
+  }
+  return data;
+}
+
+export async function deleteCronogramaItem(id: string) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("obras_tarefas").delete().eq("empresa_id", empresaId).eq("id", id);
 
   if (error) {
-    throw new Error(`Erro ao criar tarefa: ${error.message}`);
+    throw new Error(`Erro ao remover tarefa: ${error.message}`);
   }
 }
 

@@ -9,9 +9,9 @@ export default function ContatoPage() {
   return (
     <main style={{ background: "#060810", color: "#F0F4FF", minHeight: "100vh", fontFamily: "Barlow, sans-serif" }}>
       <nav style={{ background: "#0C1018", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 5%", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "#FFF", fontWeight: 700, fontSize: "1.1rem" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "#FFF", fontWeight: 700, fontSize: "1.1rem" }}>
           <span style={{ fontSize: "1.4rem" }}>🏗</span> OBRAS<em style={{ color: "#FF6B1A", fontStyle: "normal" }}>CITY</em>
-        </a>
+        </Link>
         <Link href="/cadastro" style={{ background: "#FF6B1A", color: "#FFF", padding: "10px 24px", borderRadius: 8, fontWeight: 600, fontSize: "0.9rem", textDecoration: "none" }}>Começar grátis →</Link>
       </nav>
 
