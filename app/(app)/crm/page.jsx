@@ -171,7 +171,7 @@ function KanbanColumn({ etapa, leads, onCardClick, onAddCard, dragState, onDragS
 
   return (
     <div
-      style={{ width: 262, flexShrink: 0, display: "flex", flexDirection: "column" }}
+      style={{ width: "100%", minWidth: 0, display: "flex", flexDirection: "column" }}
       onDragOver={e => { e.preventDefault(); onDragOver(etapa); }}
       onDrop={e => { e.preventDefault(); onDrop(etapa); }}
     >
@@ -525,7 +525,15 @@ export default function CrmPage() {
 
           {/* Kanban */}
           {view === "kanban" && (
-            <div style={{ display: "flex", gap: 14, padding: "20px 20px 40px", alignItems: "flex-start", minWidth: "max-content" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: 14,
+                padding: "20px 20px 40px",
+                alignItems: "start",
+              }}
+            >
               {ETAPAS.map(etapa => (
                 <KanbanColumn
                   key={etapa}
