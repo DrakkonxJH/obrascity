@@ -385,6 +385,118 @@ a {
   color: #ffb37f;
 }
 
+/* Animations and keyframes */
+@keyframes of-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes of-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes of-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes of-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes of-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes of-skeleton-loading {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Animation utility classes */
+.of-animate-fade-in {
+  animation: of-fade-in 0.3s ease-out;
+}
+
+.of-animate-slide-up {
+  animation: of-slide-up 0.3s ease-out;
+}
+
+.of-animate-slide-down {
+  animation: of-slide-down 0.3s ease-out;
+}
+
+.of-animate-scale-in {
+  animation: of-scale-in 0.3s ease-out;
+}
+
+.of-animate-pulse {
+  animation: of-pulse 2s ease-in-out infinite;
+}
+
+/* Modal animations */
+.of-modal {
+  animation: of-scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.of-modal-backdrop {
+  animation: of-fade-in 0.25s ease-out;
+}
+
+/* Toast animations */
+.of-toast {
+  animation: of-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Loading skeleton */
+.of-skeleton {
+  background: linear-gradient(90deg, var(--of-bg-3) 25%, var(--of-bg-4) 50%, var(--of-bg-3) 75%);
+  background-size: 1000px 100%;
+  animation: of-skeleton-loading 2s infinite;
+}
+
+/* Page transitions */
+.of-page-enter {
+  animation: of-fade-in 0.3s ease-out;
+}
+
+.of-page-exit {
+  animation: of-fade-in 0.3s ease-out reverse;
+}
+
 @media (max-width: 1080px) {
   .of-login-v2-layout {
     grid-template-columns: 1fr;
