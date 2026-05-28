@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 
 // ─── Paleta ObrasCitY ────────────────────────────────────────────────
 const C = {
@@ -383,13 +383,15 @@ function DetailPanel({ lead, onClose, onEdit, onDelete }) {
 
 // ─── Componente principal ─────────────────────────────────────────────
 export default function CrmPage() {
-  const [leads, setLeads]   = useState(INITIAL_LEADS);
+  const [leads, setLeads]   = useState([]);
   const [view, setView]     = useState("kanban");
   const [search, setSearch] = useState("");
   const [fEtapa, setFEtapa] = useState("");
   const [fPrio, setFPrio]   = useState("");
   const [selected, setSelected] = useState(null);
   const [modal, setModal]   = useState(null); // { lead|null, isNew, etapaInicial? }
+  const [loading, setLoading] = useState(true);
+  const [syncError, setSyncError] = useState("");
 
   // ── Drag state ──
   const [dragState, setDragState] = useState({ draggingId: null, overCol: null });
@@ -409,22 +411,126 @@ export default function CrmPage() {
     setDragState(s => s.overCol === etapa ? s : { ...s, overCol: etapa });
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/crm/leads", { method: "GET", headers: { Accept: "application/json" } });
+        const data = await res.json();
+        if (!active) return;
+        if (!res.ok || !data?.ok) {
+          setLeads(INITIAL_LEADS);
+          setSyncError(data?.message || "CRM em modo local até aplicar migration do banco.");
+        } else {
+          setLeads(Array.isArray(data.leads) ? data.leads : []);
+          setSyncError("");
+        }
+      } catch {
+        if (!active) return;
+        setLeads(INITIAL_LEADS);
+        setSyncError("Falha de conectividade com API CRM. Modo local ativado.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const persistLead = useCallback(async (lead) => {
+    const isUpdate = Boolean(lead?.id);
+    const url = isUpdate ? `/api/crm/leads/${lead.id}` : "/api/crm/leads";
+    const method = isUpdate ? "PATCH" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(lead),
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.ok || !data?.lead) {
+      throw new Error(data?.message || "Erro ao salvar lead.");
+    }
+    return data.lead;
+  }, []);
+
+  const persistDelete = useCallback(async (id) => {
+    const res = await fetch(`/api/crm/leads/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok || !data?.ok) {
+      throw new Error(data?.message || "Erro ao remover lead.");
+    }
+  }, []);
+
+  const persistStage = useCallback(async (id, etapa) => {
+    const res = await fetch(`/api/crm/leads/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ etapa }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.ok || !data?.lead) {
+      throw new Error(data?.message || "Erro ao mover lead.");
+    }
+    return data.lead;
+  }, []);
+
   const handleDrop = useCallback(etapa => {
     const id = draggingId.current;
     if (!id) return;
-    setLeads(ls => ls.map(l => l.id === id ? { ...l, etapa, ultima_atividade: today() } : l));
-    setSelected(sel => sel?.id === id ? { ...sel, etapa } : sel);
+    const current = leads.find(l => l.id === id);
+    if (!current) return;
+    const optimistic = { ...current, etapa, ultima_atividade: today() };
+    setLeads(ls => ls.map(l => l.id === id ? optimistic : l));
+    setSelected(sel => sel?.id === id ? optimistic : sel);
+    persistStage(id, etapa)
+      .then((saved) => {
+        setLeads(ls => ls.map(l => l.id === id ? saved : l));
+        setSelected(sel => sel?.id === id ? saved : sel);
+        setSyncError("");
+      })
+      .catch((err) => {
+        setLeads(ls => ls.map(l => l.id === id ? current : l));
+        setSelected(sel => sel?.id === id ? current : sel);
+        setSyncError(err instanceof Error ? err.message : "Erro ao mover lead");
+      });
     setDragState({ draggingId: null, overCol: null });
-  }, []);
+  }, [leads, persistStage]);
 
   // ── CRUD ──
-  const saveLead  = useCallback(lead => {
-    setLeads(ls => ls.find(l => l.id === lead.id) ? ls.map(l => l.id === lead.id ? lead : l) : [...ls, lead]);
-    setSelected(lead);
-    setModal(null);
-  }, []);
-  const deleteLead = useCallback(id => setLeads(ls => ls.filter(l => l.id !== id)), []);
-  const addCard    = useCallback(lead => { setLeads(ls => [...ls, lead]); setSelected(lead); }, []);
+  const saveLead  = useCallback(async (lead) => {
+    try {
+      const saved = await persistLead(lead);
+      setLeads(ls => ls.find(l => l.id === saved.id) ? ls.map(l => l.id === saved.id ? saved : l) : [...ls, saved]);
+      setSelected(saved);
+      setModal(null);
+      setSyncError("");
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Erro ao salvar lead");
+    }
+  }, [persistLead]);
+  const deleteLead = useCallback(async (id) => {
+    const prev = leads;
+    setLeads(ls => ls.filter(l => l.id !== id));
+    try {
+      await persistDelete(id);
+      setSyncError("");
+    } catch (err) {
+      setLeads(prev);
+      setSyncError(err instanceof Error ? err.message : "Erro ao remover lead");
+    }
+  }, [leads, persistDelete]);
+  const addCard    = useCallback(async (lead) => {
+    try {
+      const saved = await persistLead(lead);
+      setLeads(ls => [...ls, saved]);
+      setSelected(saved);
+      setSyncError("");
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : "Erro ao adicionar lead");
+    }
+  }, [persistLead]);
 
   // ── Filtered ──
   const filtered = useMemo(() => leads.filter(l => {
@@ -469,6 +575,16 @@ export default function CrmPage() {
           </button>
         </div>
       </div>
+      {loading && (
+        <div style={{ background: C.surface, color: C.muted, fontSize: 12, padding: "8px 24px", borderBottom: `1px solid ${C.border}` }}>
+          Carregando leads do CRM...
+        </div>
+      )}
+      {!loading && syncError && (
+        <div style={{ background: "#2A1A0A", color: "#FFB37F", fontSize: 12, padding: "8px 24px", borderBottom: `1px solid ${C.border}` }}>
+          {syncError}
+        </div>
+      )}
 
       {/* ── Métricas ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 1, background: C.border }}>

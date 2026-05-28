@@ -1,0 +1,126 @@
+import { getCurrentUser } from "@/lib/auth/session";
+import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { createServerClient } from "@/lib/supabase/server";
+
+export type CrmLead = {
+  id: string;
+  empresa_id: string;
+  nome: string;
+  contato: string;
+  cargo: string;
+  email: string;
+  telefone: string;
+  valor: number;
+  etapa: "Contato" | "Qualificação" | "Proposta" | "Negociação" | "Fechado" | "Perdido";
+  origem: string;
+  obra: string;
+  prioridade: "Alta" | "Média" | "Baixa";
+  ultima_atividade: string;
+  notas: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type UpsertCrmLeadInput = {
+  id?: string;
+  nome: string;
+  contato?: string;
+  cargo?: string;
+  email?: string;
+  telefone?: string;
+  valor?: number;
+  etapa?: CrmLead["etapa"];
+  origem?: string;
+  obra?: string;
+  prioridade?: CrmLead["prioridade"];
+  ultima_atividade?: string;
+  notas?: string;
+};
+
+const CRM_SELECT =
+  "id, empresa_id, nome, contato, cargo, email, telefone, valor, etapa, origem, obra, prioridade, ultima_atividade, notas, created_at, updated_at";
+
+export async function listCrmLeads() {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("crm_leads")
+    .select(CRM_SELECT)
+    .eq("empresa_id", empresaId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Erro ao listar leads do CRM: ${error.message}`);
+  }
+
+  return (data ?? []) as CrmLead[];
+}
+
+export async function upsertCrmLead(input: UpsertCrmLeadInput) {
+  const [empresaId, user] = await Promise.all([getEmpresaIdFromProfile(), getCurrentUser()]);
+  const supabase = await createServerClient();
+
+  const payload = {
+    ...(input.id ? { id: input.id } : {}),
+    empresa_id: empresaId,
+    nome: input.nome,
+    contato: input.contato ?? "",
+    cargo: input.cargo ?? "",
+    email: input.email ?? "",
+    telefone: input.telefone ?? "",
+    valor: input.valor ?? 0,
+    etapa: input.etapa ?? "Contato",
+    origem: input.origem ?? "Manual",
+    obra: input.obra ?? "",
+    prioridade: input.prioridade ?? "Média",
+    ultima_atividade: input.ultima_atividade ?? new Date().toISOString().slice(0, 10),
+    notas: input.notas ?? "",
+    updated_by: user?.id ?? null,
+    ...(input.id ? {} : { created_by: user?.id ?? null }),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("crm_leads")
+    .upsert(payload, { onConflict: "id" })
+    .select(CRM_SELECT)
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Erro ao salvar lead no CRM: ${error?.message ?? "falha desconhecida"}`);
+  }
+
+  return data as CrmLead;
+}
+
+export async function updateCrmLeadStage(id: string, etapa: CrmLead["etapa"]) {
+  const [empresaId, user] = await Promise.all([getEmpresaIdFromProfile(), getCurrentUser()]);
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("crm_leads")
+    .update({
+      etapa,
+      ultima_atividade: new Date().toISOString().slice(0, 10),
+      updated_by: user?.id ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("empresa_id", empresaId)
+    .eq("id", id)
+    .select(CRM_SELECT)
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Erro ao atualizar etapa do lead: ${error?.message ?? "lead não encontrado"}`);
+  }
+
+  return data as CrmLead;
+}
+
+export async function deleteCrmLead(id: string) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("crm_leads").delete().eq("empresa_id", empresaId).eq("id", id);
+  if (error) {
+    throw new Error(`Erro ao remover lead do CRM: ${error.message}`);
+  }
+}
