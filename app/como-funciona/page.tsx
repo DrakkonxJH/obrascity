@@ -219,7 +219,7 @@ export default function ComoFuncionaPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
               gap: 20,
             }}
           >
@@ -242,7 +242,8 @@ export default function ComoFuncionaPage() {
                 </div>
               </div>
               <p style={{ color: "#95A4C3", margin: 0, lineHeight: 1.6 }}>
-                A plataforma de gestão de obras para construtoras que levam seus projetos a sério.
+                A plataforma de gestão de obras para construtoras que levam seus projetos a sério. Do planejamento à
+                entrega.
               </p>
             </div>
 
@@ -260,6 +261,7 @@ export default function ComoFuncionaPage() {
               <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700 }}>Empresa</p>
               <div style={{ display: "grid", gap: 7 }}>
                 <Link href="/sobre" style={{ color: "#95A4C3" }}>Sobre nós</Link>
+                <Link href="/como-funciona" style={{ color: "#95A4C3" }}>Clientes</Link>
                 <Link href="/contato" style={{ color: "#95A4C3" }}>Contato</Link>
               </div>
             </div>
@@ -267,9 +269,23 @@ export default function ComoFuncionaPage() {
             <div>
               <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700 }}>Suporte</p>
               <div style={{ display: "grid", gap: 7 }}>
+                <Link href="/como-funciona" style={{ color: "#95A4C3" }}>Perguntas frequentes</Link>
                 <Link href="/privacidade" style={{ color: "#95A4C3" }}>Política de privacidade</Link>
                 <Link href="/termos" style={{ color: "#95A4C3" }}>Termos de uso</Link>
                 <Link href="/politica-de-cookies" style={{ color: "#95A4C3" }}>Política de cookies</Link>
+              </div>
+            </div>
+
+            <div>
+              <p style={{ margin: "0 0 10px", color: "#D6DEEF", fontWeight: 700 }}>Comunidade</p>
+              <div style={{ display: "grid", gap: 7 }}>
+                <a href="https://www.instagram.com/obrascity" style={{ color: "#95A4C3" }} target="_blank" rel="noopener noreferrer">
+                  Instagram
+                </a>
+                <a href="https://www.linkedin.com/company/obrascity" style={{ color: "#95A4C3" }} target="_blank" rel="noopener noreferrer">
+                  LinkedIn
+                </a>
+                <Link href="/contato" style={{ color: "#95A4C3" }}>WhatsApp</Link>
               </div>
             </div>
           </div>
@@ -287,11 +303,12 @@ export default function ComoFuncionaPage() {
               color: "#95A4C3",
             }}
           >
-            <span>© {new Date().getFullYear()} ObrasCitY. Plataforma SaaS de gestão de obras.</span>
+            <span>© {new Date().getFullYear()} ObrasCitY. Plataforma SaaS de gestão de obras. Informações legais e comerciais disponíveis no site.</span>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>🔒 SSL</span>
               <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>✓ LGPD</span>
-              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>🛡 Segurança AES-256</span>
+              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>🛡 Segurança AES-256 + LGPD</span>
+              <span style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 999, padding: "5px 10px" }}>~ 99.9% Uptime</span>
             </div>
           </div>
         </div>
