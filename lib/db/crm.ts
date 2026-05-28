@@ -62,8 +62,8 @@ function mapTaskStatusToEtapa(status: string): CrmLead["etapa"] {
   if (s.includes("atras")) return "Negociação";
   if (s.includes("andamento") || s.includes("execucao") || s.includes("execução")) return "Proposta";
   if (s.includes("cancel")) return "Perdido";
-  if (s.includes("planej")) return "Contato";
-  return "Qualificação";
+  if (s.includes("planej")) return "Qualificação";
+  return "Contato";
 }
 
 function mapTaskStatusToPrioridade(status: string): CrmLead["prioridade"] {
