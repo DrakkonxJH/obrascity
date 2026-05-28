@@ -11,6 +11,24 @@ import {
 import { listCaminhoCritico, listCronograma, listDependenciasCronograma, listReplanejamentos } from "@/lib/db/cronograma";
 import { listObras } from "@/lib/db/obras";
 
+function cronogramaStatusLabel(status: string) {
+  const value = status.trim().toLowerCase();
+  if (value === "concluido") return "Concluído";
+  if (value === "andamento") return "Em andamento";
+  if (value === "atrasado") return "Atrasado";
+  if (value === "cancelado") return "Cancelado";
+  return "Planejado";
+}
+
+function cronogramaStatusTone(status: string) {
+  const value = status.trim().toLowerCase();
+  if (value === "concluido") return "done";
+  if (value === "andamento") return "active";
+  if (value === "atrasado") return "warning";
+  if (value === "cancelado") return "muted";
+  return "planned";
+}
+
 export async function CronogramaContent() {
   const [items, obras, dependencias, caminhoCritico, replanejamentos] = await Promise.all([
     listCronograma(),
@@ -100,64 +118,65 @@ export async function CronogramaContent() {
 
       <article className="of-card">
         <div className="of-card-title">Tarefas do cronograma (edição rápida)</div>
-        <div className="of-table-wrap" style={{ border: 0 }}>
-          <table className="of-table">
-            <thead>
-              <tr>
-                <th>Obra</th>
-                <th>Tarefa</th>
-                <th>Início</th>
-                <th>Fim</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.obra_nome}</td>
-                  <td>
-                    <form action={updateCronogramaAction} style={{ display: "grid", gap: 8 }}>
-                      <input type="hidden" name="tarefa_id" value={item.id} />
-                      <input name="nome" defaultValue={item.nome} className="of-input" />
-                      <input name="inicio" type="date" defaultValue={item.inicio} className="of-input" />
-                      <input name="fim" type="date" defaultValue={item.fim} className="of-input" />
-                      <select name="status" defaultValue={item.status} className="of-input">
-                        <option value="planejado">Planejado</option>
-                        <option value="andamento">Andamento</option>
-                        <option value="concluido">Concluído</option>
-                        <option value="atrasado">Atrasado</option>
-                        <option value="cancelado">Cancelado</option>
-                      </select>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button type="submit" className="of-btn-primary">
-                          Salvar
-                        </button>
-                      </div>
-                    </form>
-                  </td>
-                  <td className="of-mono">{item.inicio}</td>
-                  <td className="of-mono">{item.fim}</td>
-                  <td>{item.status}</td>
-                  <td>
-                    <form action={deleteCronogramaAction}>
-                      <input type="hidden" name="tarefa_id" value={item.id} />
-                      <button type="submit" className="of-btn-ghost">
-                        Excluir
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="of-empty-text">
-                    Nenhuma tarefa cadastrada.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="of-crono-edit-list">
+          {items.map((item) => (
+            <div className="of-crono-edit-item" key={item.id}>
+              <div className="of-crono-edit-head">
+                <p className="of-crono-edit-obra">{item.obra_nome}</p>
+                <span className={`of-crono-status-badge ${cronogramaStatusTone(item.status)}`}>
+                  {cronogramaStatusLabel(item.status)}
+                </span>
+              </div>
+
+              <form action={updateCronogramaAction} className="of-crono-edit-form">
+                <input type="hidden" name="tarefa_id" value={item.id} />
+                <div className="of-crono-edit-grid">
+                  <div className="of-crono-field">
+                    <label className="of-crono-field-label">Tarefa</label>
+                    <input name="nome" defaultValue={item.nome} className="of-input" />
+                  </div>
+                  <div className="of-crono-field">
+                    <label className="of-crono-field-label">Início</label>
+                    <input name="inicio" type="date" defaultValue={item.inicio} className="of-input" />
+                  </div>
+                  <div className="of-crono-field">
+                    <label className="of-crono-field-label">Fim</label>
+                    <input name="fim" type="date" defaultValue={item.fim} className="of-input" />
+                  </div>
+                  <div className="of-crono-field">
+                    <label className="of-crono-field-label">Status</label>
+                    <select name="status" defaultValue={item.status} className="of-input">
+                      <option value="planejado">Planejado</option>
+                      <option value="andamento">Andamento</option>
+                      <option value="concluido">Concluído</option>
+                      <option value="atrasado">Atrasado</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="of-crono-edit-actions">
+                  <button type="submit" className="of-btn-primary">
+                    Salvar alterações
+                  </button>
+                  <span className="of-mono">
+                    {item.inicio} → {item.fim}
+                  </span>
+                </div>
+              </form>
+
+              <form action={deleteCronogramaAction} className="of-crono-delete-form">
+                <input type="hidden" name="tarefa_id" value={item.id} />
+                <button type="submit" className="of-btn-ghost">
+                  Excluir tarefa
+                </button>
+              </form>
+            </div>
+          ))}
+          {items.length === 0 ? (
+            <p className="of-empty-text" style={{ margin: 0 }}>
+              Nenhuma tarefa cadastrada.
+            </p>
+          ) : null}
         </div>
       </article>
 
