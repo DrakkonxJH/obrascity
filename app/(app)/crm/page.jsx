@@ -520,26 +520,28 @@ export default function CrmPage() {
       </div>
 
       {/* ── Content ── */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <div style={{ flex: 1, overflow: "auto" }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
+        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minWidth: 0 }}>
 
           {/* Kanban */}
           {view === "kanban" && (
-            <div style={{ display: "flex", gap: 14, padding: "20px 20px 40px", alignItems: "flex-start", minWidth: "max-content" }}>
-              {ETAPAS.map(etapa => (
-                <KanbanColumn
-                  key={etapa}
-                  etapa={etapa}
-                  leads={filtered.filter(l => l.etapa === etapa)}
-                  onCardClick={setSelected}
-                  onAddCard={() => setSyncError("Criação manual desativada no CRM sincronizado por tarefas.")}
-                  dragState={dragState}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                />
-              ))}
+            <div style={{ overflowX: "auto", overflowY: "hidden", paddingBottom: 8 }}>
+              <div style={{ display: "flex", gap: 14, padding: "20px 20px 40px", alignItems: "flex-start", minWidth: "max-content" }}>
+                {ETAPAS.map(etapa => (
+                  <KanbanColumn
+                    key={etapa}
+                    etapa={etapa}
+                    leads={filtered.filter(l => l.etapa === etapa)}
+                    onCardClick={setSelected}
+                    onAddCard={() => setSyncError("Criação manual desativada no CRM sincronizado por tarefas.")}
+                    dragState={dragState}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
