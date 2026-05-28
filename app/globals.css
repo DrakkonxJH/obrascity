@@ -469,6 +469,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
 }
 
 .of-sidebar-brand-text {
@@ -524,8 +525,12 @@ a {
 }
 
 .of-nav-icon {
-  width: 18px;
-  text-align: center;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .of-nav-badge {

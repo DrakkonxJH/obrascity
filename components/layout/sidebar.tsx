@@ -5,8 +5,44 @@ import { usePathname } from "next/navigation";
 import type { LayoutSummary } from "@/lib/db/layout-summary";
 import { signOut } from "@/lib/auth/actions";
 import { useAppUi } from "@/components/shell/app-ui-provider";
+import {
+  LayoutDashboard,
+  Building2,
+  Calendar,
+  Search,
+  Users,
+  FileText,
+  BarChart3,
+  Users2,
+  Package,
+  RefreshCw,
+  BookOpen,
+  ShieldCheck,
+  CheckSquare,
+  Key,
+  Wrench,
+  ClipboardList,
+  Star,
+  Globe,
+  HelpCircle,
+  ScrollText,
+  Lock,
+  Smartphone,
+  Settings,
+  Building,
+  UserCog,
+  CreditCard,
+  TrendingUp,
+  Zap,
+  Plug,
+  Rocket,
+  AlertCircle,
+  BookMarked,
+  Monitor,
+  type LucideIcon,
+} from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: string; badge?: number };
+type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number };
 type NavSection = { title: string; items: NavItem[] };
 
 function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: boolean): NavSection[] {
@@ -15,22 +51,22 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
       {
         title: "SaaS",
         items: [
-          { href: "/contas?tab=empresas", label: "Clientes (Empresas)", icon: "🏢" },
-          { href: "/contas?tab=usuarios", label: "Usuários da Plataforma", icon: "👥" },
-          { href: "/contas?tab=faturamento", label: "Faturamento e Planos", icon: "💳" },
+          { href: "/contas?tab=empresas", label: "Clientes (Empresas)", icon: Building },
+          { href: "/contas?tab=usuarios", label: "Usuários da Plataforma", icon: Users },
+          { href: "/contas?tab=faturamento", label: "Faturamento e Planos", icon: CreditCard },
         ],
       },
       {
         title: "Operacao",
         items: [
-          { href: "/contas?tab=operacao", label: "Operação e SLO", icon: "📈" },
-          { href: "/contas?tab=suporte", label: "Suporte e SLA", icon: "🆘" },
-          { href: "/contas?tab=integracoes", label: "Integrações", icon: "🔌" },
-          { href: "/contas?tab=deploy", label: "Deploy e Domínio", icon: "🚀" },
-          { href: "/contas?tab=seguranca", label: "Segurança", icon: "🔒" },
-          { href: "/contas?tab=auditoria", label: "Auditoria", icon: "🧾" },
-          { href: "/contas?tab=runbooks", label: "Runbooks", icon: "📚" },
-          { href: "/contas?tab=terminal", label: "Terminal TI", icon: "🖥️" },
+          { href: "/contas?tab=operacao", label: "Operação e SLO", icon: TrendingUp },
+          { href: "/contas?tab=suporte", label: "Suporte e SLA", icon: AlertCircle },
+          { href: "/contas?tab=integracoes", label: "Integrações", icon: Plug },
+          { href: "/contas?tab=deploy", label: "Deploy e Domínio", icon: Rocket },
+          { href: "/contas?tab=seguranca", label: "Segurança", icon: Lock },
+          { href: "/contas?tab=auditoria", label: "Auditoria", icon: ScrollText },
+          { href: "/contas?tab=runbooks", label: "Runbooks", icon: BookMarked },
+          { href: "/contas?tab=terminal", label: "Terminal TI", icon: Monitor },
         ],
       },
     ];
@@ -40,26 +76,26 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
     {
       title: "Principal",
       items: [
-        { href: "/dashboard", label: "Dashboard", icon: "📊" },
-        { href: "/obras", label: "Obras", icon: "🏗️" },
-        { href: "/cronograma", label: "Cronograma", icon: "📅" },
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/obras", label: "Obras", icon: Building2 },
+        { href: "/cronograma", label: "Cronograma", icon: Calendar },
       ],
     },
     {
       title: "Gestão",
       items: [
-        { href: "/viabilidade", label: "Viabilidade", icon: "🔎" },
-        { href: "/crm", label: "CRM", icon: "🤝" },
-        { href: "/projetos", label: "Projetos", icon: "📐" },
-        { href: "/financeiro", label: "Financeiro", icon: "💰" },
-        { href: "/equipes", label: "Equipes", icon: "👥" },
-        { href: "/materiais", label: "Materiais", icon: "📦" },
-        { href: "/mudancas", label: "Mudanças", icon: "🔁" },
-        { href: "/diario", label: "Diário", icon: "📝" },
-        { href: "/qualidade", label: "Qualidade", icon: "🛡️" },
-        { href: "/entrega", label: "Entrega", icon: "🗝️" },
-        { href: "/garantia", label: "Garantia", icon: "🛠️" },
-        { href: "/relatorios", label: "Relatórios", icon: "📋" },
+        { href: "/viabilidade", label: "Viabilidade", icon: Search },
+        { href: "/crm", label: "CRM", icon: Users2 },
+        { href: "/projetos", label: "Projetos", icon: FileText },
+        { href: "/financeiro", label: "Financeiro", icon: BarChart3 },
+        { href: "/equipes", label: "Equipes", icon: Users2 },
+        { href: "/materiais", label: "Materiais", icon: Package },
+        { href: "/mudancas", label: "Mudanças", icon: RefreshCw },
+        { href: "/diario", label: "Diário", icon: BookOpen },
+        { href: "/qualidade", label: "Qualidade", icon: ShieldCheck },
+        { href: "/entrega", label: "Entrega", icon: Key },
+        { href: "/garantia", label: "Garantia", icon: Wrench },
+        { href: "/relatorios", label: "Relatórios", icon: ClipboardList },
       ],
     },
   ];
@@ -68,7 +104,7 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
     sections.push({
       title: "Gestão de Contas",
       items: [
-        { href: "/contas", label: "Todas as Contas", icon: "🏢" },
+        { href: "/contas", label: "Todas as Contas", icon: Building },
       ],
     });
   }
@@ -76,13 +112,13 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
   sections.push({
     title: "Sistema",
     items: [
-      { href: "/planos", label: "Planos", icon: "⭐" },
-      { href: "/portal", label: "Portal do Cliente", icon: "🌐" },
-      { href: "/suporte", label: "SAC e Guia", icon: "🆘" },
-      { href: "/governanca", label: "Governança", icon: "🧾" },
-      { href: "/seguranca-corporativa", label: "Segurança Corporativa", icon: "🔒" },
-      { href: "/mobile-campo", label: "Mobile Campo", icon: "📱" },
-      { href: "/configuracoes", label: "Configurações", icon: "⚙️" },
+      { href: "/planos", label: "Planos", icon: Star },
+      { href: "/portal", label: "Portal do Cliente", icon: Globe },
+      { href: "/suporte", label: "SAC e Guia", icon: HelpCircle },
+      { href: "/governanca", label: "Governança", icon: ScrollText },
+      { href: "/seguranca-corporativa", label: "Segurança Corporativa", icon: Lock },
+      { href: "/mobile-campo", label: "Mobile Campo", icon: Smartphone },
+      { href: "/configuracoes", label: "Configurações", icon: Settings },
     ],
   });
 
@@ -120,7 +156,9 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
         <div className="of-sidebar-header">
           <div className="of-sidebar-header-row" style={{ width: "100%" }}>
             <div className="of-sidebar-brand">
-              <div className="of-sidebar-brand-icon">🏗</div>
+              <div className="of-sidebar-brand-icon">
+                <Building2 size={24} />
+              </div>
               <div className="of-sidebar-brand-text of-sidebar-logo-text">
                 Obras<span>CitY</span>
               </div>
@@ -145,6 +183,7 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
                 const badge =
                   item.href === "/materiais" ? materiaisBadge : item.badge;
                 const active = isActive(pathname, item.href);
+                const IconComponent = item.icon;
                 return (
                   <Link
                     key={item.href}
@@ -153,7 +192,7 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
                     onClick={closeMobileSidebar}
                   >
                     <span className="of-nav-icon" aria-hidden>
-                      {item.icon}
+                      <IconComponent size={20} />
                     </span>
                     <span className="of-nav-label">{item.label}</span>
                     {badge ? <span className="of-nav-badge">{badge}</span> : null}
