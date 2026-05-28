@@ -431,6 +431,11 @@ a {
   padding: 24px 28px;
 }
 
+/* Full-bleed pages (e.g. CRM) that need to break out of main-content padding */
+.of-crm-fullbleed {
+  margin: -24px -28px;
+}
+
 /* Sidebar */
 .of-sidebar {
   width: 248px;
@@ -1240,6 +1245,9 @@ a {
   .of-main-content {
     padding: 16px;
   }
+  .of-crm-fullbleed {
+    margin: -16px;
+  }
   .of-topbar {
     padding: 0 14px;
   }
@@ -1320,6 +1328,9 @@ a {
 @media (max-width: 480px) {
   .of-main-content {
     padding: 12px;
+  }
+  .of-crm-fullbleed {
+    margin: -12px;
   }
 
   .of-topbar {

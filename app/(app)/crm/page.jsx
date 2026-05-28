@@ -459,18 +459,7 @@ export default function CrmPage() {
   };
 
   return (
-    <div style={{ background: "transparent", minHeight: "100%", color: C.text, fontFamily: "'IBM Plex Sans', system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
-
-      {/* ── Header ── */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 54 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: C.orange, letterSpacing: "-0.02em" }}>🏗 CRM</span>
-            <span style={{ color: C.muted, fontSize: 13 }}>/ Pipeline de clientes</span>
-          </div>
-          <span style={{ color: C.muted, fontSize: 12 }}>Dados sincronizados por tarefas da obra</span>
-        </div>
-      </div>
+    <div className="of-crm-fullbleed" style={{ background: "transparent", minHeight: "100%", color: C.text, fontFamily: "'IBM Plex Sans', system-ui, sans-serif", display: "flex", flexDirection: "column" }}>
       {loading && (
         <div style={{ background: C.surface, color: C.muted, fontSize: 12, padding: "8px 24px", borderBottom: `1px solid ${C.border}` }}>
           Carregando leads do CRM...
