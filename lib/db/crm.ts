@@ -877,11 +877,14 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
     if (potentialMaster && potentialMaster.length > 0) {
       const masterId = potentialMaster[0].id;
       // Try to mark it (this will fail silently if RLS blocks it, but that's OK)
-      await supabase
-        .from("companies")
-        .update({ is_master: true })
-        .eq("id", masterId)
-        .catch(() => {}); // Ignore errors
+      try {
+        await supabase
+          .from("companies")
+          .update({ is_master: true })
+          .eq("id", masterId);
+      } catch {
+        // Ignore errors - filtering will still work
+      }
       
       masterCompanies = [{ id: masterId }];
     } else {
@@ -895,11 +898,14 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
       if (oldestCompany && oldestCompany.length > 0) {
         const masterId = oldestCompany[0].id;
         // Try to mark it as master
-        await supabase
-          .from("companies")
-          .update({ is_master: true })
-          .eq("id", masterId)
-          .catch(() => {}); // Ignore errors
+        try {
+          await supabase
+            .from("companies")
+            .update({ is_master: true })
+            .eq("id", masterId);
+        } catch {
+          // Ignore errors - filtering will still work
+        }
         
         masterCompanies = [{ id: masterId }];
       }
