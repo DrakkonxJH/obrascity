@@ -1,6 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
-import { getEmpresaIdFromProfile } from "@/lib/db";
-import { listCrmWorkspaces, createCrmWorkspace, updateCrmWorkspace, deleteCrmWorkspace } from "@/lib/db/crm";
+import { listCrmWorkspaces, createCrmWorkspace } from "@/lib/db/crm";
 
 export const dynamic = "force-dynamic";
 

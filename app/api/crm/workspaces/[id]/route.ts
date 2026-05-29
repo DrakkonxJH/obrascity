@@ -1,25 +1,32 @@
 import { updateCrmWorkspace, deleteCrmWorkspace } from "@/lib/db/crm";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     const workspace = await updateCrmWorkspace(id, body);
-    return Response.json({ success: true, data: workspace });
+    return NextResponse.json({ success: true, data: workspace });
   } catch (error) {
-    return Response.json({ success: false, error: (error as Error).message }, { status: 400 });
+    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 400 });
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     await deleteCrmWorkspace(id);
-    return Response.json({ success: true });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return Response.json({ success: false, error: (error as Error).message }, { status: 400 });
+    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 400 });
   }
 }

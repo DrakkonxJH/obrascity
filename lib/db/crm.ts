@@ -1252,8 +1252,12 @@ export async function listCrmDealsByWorkspace(workspaceId?: string): Promise<Crm
 
   let query = supabase
     .from("crm_deals")
-    .select(DEAL_SELECT)
-    .eq("company_id", empresaId);
+    .select(
+      "id, nome, stage, status, priority, probability, valor, last_activity_at, next_activity_at, tags, owner_profile_id, loss_reason, custom_fields, playbook_items, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome), owner:profiles!crm_deals_owner_profile_id_fkey(nome)",
+    )
+    .eq("empresa_id", empresaId)
+    .order("updated_at", { ascending: false })
+    .limit(120);
 
   if (workspaceId) {
     query = query.eq("workspace_id", workspaceId);
@@ -1268,7 +1272,65 @@ export async function listCrmDealsByWorkspace(workspaceId?: string): Promise<Crm
     return [];
   }
 
-  return (data || []) as CrmDealSummary[];
+  const dealRows = (data ?? []) as Array<Record<string, unknown>>;
+  if (dealRows.length === 0) return [];
+  const dealIds = dealRows.map((row) => String(row.id ?? "")).filter(Boolean);
+
+  const activitiesRes = await supabase
+    .from("crm_activities")
+    .select("deal_id, done")
+    .eq("empresa_id", empresaId)
+    .in("deal_id", dealIds)
+    .limit(1500);
+
+  if (activitiesRes.error) {
+    throw new Error(`Erro ao listar atividades dos deals por workspace: ${activitiesRes.error.message}`);
+  }
+
+  const byDeal = new Map<string, { total: number; open: number }>();
+  for (const row of (activitiesRes.data ?? []) as Array<Record<string, unknown>>) {
+    const dealId = String(row.deal_id ?? "");
+    if (!dealId) continue;
+    const slot = byDeal.get(dealId) ?? { total: 0, open: 0 };
+    slot.total += 1;
+    if (!Boolean(row.done)) slot.open += 1;
+    byDeal.set(dealId, slot);
+  }
+
+  return dealRows.map((row) => {
+    const dealId = String(row.id ?? "");
+    const activity = byDeal.get(dealId) ?? { total: 0, open: 0 };
+    const company = row.company as { nome?: string } | null;
+    const contact = row.contact as { nome?: string } | null;
+    const owner = row.owner as { nome?: string } | null;
+    return {
+      id: dealId,
+      nome: String(row.nome ?? "Negócio sem nome"),
+      stage: normalizeDealStage(String(row.stage ?? "novos")),
+      status: String(row.status ?? "aberto"),
+      priority: normalizeDealPriority(String(row.priority ?? "media")),
+      probability: Number(row.probability ?? 0),
+      valor: Number(row.valor ?? 0),
+      company_name: company?.nome ?? "Empresa",
+      contact_name: contact?.nome ?? "Contato",
+      owner_profile_id: row.owner_profile_id ? String(row.owner_profile_id) : null,
+      owner_name: owner?.nome ?? "Sem responsável",
+      last_activity_at: row.last_activity_at ? String(row.last_activity_at) : null,
+      next_activity_at: row.next_activity_at ? String(row.next_activity_at) : null,
+      activities_total: activity.total,
+      activities_open: activity.open,
+      tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)) : [],
+      loss_reason: String(row.loss_reason ?? ""),
+      custom_fields:
+        row.custom_fields && typeof row.custom_fields === "object"
+          ? (row.custom_fields as Record<string, string>)
+          : {},
+      playbook_items:
+        Array.isArray(row.playbook_items)
+          ? (row.playbook_items as CrmDealSummary["playbook_items"])
+          : [],
+    };
+  });
 }
 
 // ────────────────────────────────────────────────────────
