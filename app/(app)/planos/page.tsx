@@ -1,6 +1,6 @@
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import type { PlanFeature, PlanId } from "@/lib/billing/plans";
-import { planIncludes } from "@/lib/billing/plans";
+import { getProfileLimitByPlan, planIncludes } from "@/lib/billing/plans";
 import Link from "next/link";
 import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 
@@ -54,6 +54,51 @@ const planFeatureOrder: PlanFeature[] = [
   "comunicação_integrada",
   "segurança_enterprise",
   "api_access",
+];
+
+const commercialSplit: Array<{
+  id: Exclude<PlanId, "trial">;
+  label: string;
+  focus: string[];
+  description: string;
+}> = [
+  {
+    id: "starter",
+    label: "Starter",
+    focus: ["Obras", "Cronograma", "Equipes", "Materiais", "Viabilidade"],
+    description: "Conta da empresa com rotina e poucos perfis.",
+  },
+  {
+    id: "pro",
+    label: "Pro",
+    focus: [
+      "CRM",
+      "Projetos",
+      "Financeiro",
+      "Relatórios",
+      "Mudanças",
+      "Diário",
+      "Qualidade",
+      "Entrega",
+      "Garantia",
+      "Portal do Cliente",
+    ],
+    description: "Operação completa com mais times e mais perfis.",
+  },
+  {
+    id: "enterprise",
+    label: "Enterprise",
+    focus: ["Mobile Campo", "API", "Automações", "Integrações", "Governança", "Segurança corporativa"],
+    description: "Escala corporativa, governança e integrações avançadas.",
+  },
+];
+
+const sharedBaseCapabilities = [
+  "Conta da empresa",
+  "Perfis de usuarios internos",
+  "Compartilhamento entre perfis",
+  "Permissões por cargo",
+  "Limite de perfis por plano",
 ];
 
 function planLabel(plano: string) {
@@ -117,6 +162,7 @@ export default async function PlanosPage({
     annual: number;
     blurb: string;
     audience: string;
+    profileLimit: number;
     highlight?: boolean;
   }> = [
     {
@@ -124,16 +170,19 @@ export default async function PlanosPage({
       name: "Starter",
       monthly: 129,
       annual: 90,
-      blurb: "Base essencial para controlar obras com rapidez.",
-      audience: "Ideal para equipes iniciando digitalizacao.",
+      blurb: "Base para organizar a obra e a rotina da operação.",
+      audience: "Melhor encaixe: Obras, Cronograma, Equipes, Materiais e Viabilidade.",
+      profileLimit: getProfileLimitByPlan("starter"),
     },
     {
       id: "pro",
       name: "Pro",
       monthly: 229,
       annual: 159,
-      blurb: "Mais controle financeiro e produtividade de gestão.",
-      audience: "Ideal para operacao em crescimento.",
+      blurb: "Central de gestão para escalar a operação.",
+      audience:
+        "Melhor encaixe: CRM, Projetos, Financeiro, Relatórios, Mudanças, Diário, Qualidade, Entrega, Garantia e Portal do Cliente.",
+      profileLimit: getProfileLimitByPlan("pro"),
       highlight: true,
     },
     {
@@ -141,8 +190,10 @@ export default async function PlanosPage({
       name: "Enterprise",
       monthly: 799,
       annual: 549,
-      blurb: "Escalabilidade e integração para operacoes complexas.",
-      audience: "Ideal para multiplas obras e integrações.",
+      blurb: "Escala, integração e governança para operações complexas.",
+      audience:
+        "Melhor encaixe: Mobile Campo, API, automações, integrações, governança e segurança corporativa.",
+      profileLimit: getProfileLimitByPlan("enterprise"),
     },
   ];
 
@@ -222,6 +273,76 @@ export default async function PlanosPage({
               : "Somente administrador/gestor altera plano."}
           </p>
         </article>
+      </div>
+
+      <div className="of-card" style={{ marginBottom: 28 }}>
+        <div className="of-card-title">Base comum em todos os planos</div>
+        <p className="of-list-description" style={{ marginBottom: 14 }}>
+          Todo plano parte da conta da empresa. O que muda entre Starter, Pro e Enterprise é o
+          limite de perfis, a escala da operação e os controles avançados.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {sharedBaseCapabilities.map((item) => (
+            <span
+              key={item}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "6px 10px",
+                borderRadius: 999,
+                background: "rgba(255, 107, 26, 0.1)",
+                border: "1px solid rgba(255, 107, 26, 0.22)",
+                color: "var(--of-text-primary)",
+                fontSize: "0.8rem",
+              }}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="of-card" style={{ marginBottom: 28 }}>
+        <div className="of-card-title">Separação comercial sugerida</div>
+        <div className="of-dashboard-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 16 }}>
+          {commercialSplit.map((plan) => (
+            <article
+              key={plan.id}
+              style={{
+                border: "1px solid var(--of-border)",
+                borderRadius: 12,
+                padding: 18,
+                background: "var(--of-bg-3)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--of-blue)" }}>
+                  {plan.label}
+                </h3>
+                <span style={{ fontSize: "0.75rem", color: "var(--of-text-secondary)" }}>{plan.description}</span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {plan.focus.map((item) => (
+                  <span
+                    key={`${plan.id}-${item}`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      background: "rgba(255, 107, 26, 0.1)",
+                      border: "1px solid rgba(255, 107, 26, 0.22)",
+                      color: "var(--of-text-primary)",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
 
       <div style={{ marginBottom: 32 }}>
@@ -404,6 +525,9 @@ export default async function PlanosPage({
                   </p>
                   <p className="of-list-description" style={{ marginBottom: 4 }}>
                     {item.blurb}
+                  </p>
+                  <p className="of-list-description" style={{ marginBottom: 4 }}>
+                    Até {item.profileLimit} perfis por empresa.
                   </p>
                   <p className="of-list-description">{item.audience}</p>
                 </div>

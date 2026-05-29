@@ -7,6 +7,27 @@ import {
   resolveMobileSyncConflictAction,
 } from "./actions";
 
+function directionLabel(direction: string) {
+  if (direction === "upload") return "Campo → nuvem";
+  if (direction === "download") return "Nuvem → campo";
+  if (direction === "bi_direcional") return "Bi-direcional";
+  return direction;
+}
+
+function syncStatusLabel(status: string) {
+  if (status === "processado") return "Processado";
+  if (status === "pendente") return "Pendente";
+  if (status === "em_analise") return "Em análise";
+  return status;
+}
+
+function conflictStatusLabel(status: string) {
+  if (status === "resolvido") return "Resolvido";
+  if (status === "aberto") return "Aberto";
+  if (status === "em_analise") return "Em análise";
+  return status;
+}
+
 export default async function MobileCampoPage() {
   const [obrasResult, jobsResult, conflictsResult] = await Promise.allSettled([
     listObras(),
@@ -26,6 +47,12 @@ export default async function MobileCampoPage() {
     conflictsResult.status === "fulfilled"
       ? conflictsResult.value
       : (warnings.push("Falha ao carregar conflitos de sincronização."), []);
+  const openConflicts = conflicts.filter((conflict) => conflict.status !== "resolvido").length;
+  const resolvedConflicts = conflicts.filter((conflict) => conflict.status === "resolvido").length;
+  const totalPendencias = jobs.reduce(
+    (acc, job) => acc + job.pendentes_criar + job.pendentes_atualizar + job.pendentes_deletar,
+    0,
+  );
 
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
@@ -36,12 +63,43 @@ export default async function MobileCampoPage() {
             <p className="of-empty-text">{warnings.join(" ")}</p>
           </article>
         ) : null}
+
+        <article className="of-card" style={{ marginBottom: 20 }}>
+          <div className="of-card-title">O que esta área faz</div>
+          <p className="of-empty-text" style={{ marginBottom: 14 }}>
+            O mobile campo serve para acompanhar o que foi coletado fora do escritório, o que
+            ainda está pendente e onde surgiu diferença entre o dado local e o dado da nuvem.
+          </p>
+          <div className="of-stats-grid">
+            <article className="of-stat-card">
+              <div className="of-stat-value">{jobs.length}</div>
+              <div className="of-stat-label">Lotes registrados</div>
+            </article>
+            <article className="of-stat-card">
+              <div className="of-stat-value">{totalPendencias}</div>
+              <div className="of-stat-label">Pendências totais</div>
+            </article>
+            <article className="of-stat-card">
+              <div className="of-stat-value">{openConflicts}</div>
+              <div className="of-stat-label">Conflitos abertos</div>
+            </article>
+            <article className="of-stat-card">
+              <div className="of-stat-value">{resolvedConflicts}</div>
+              <div className="of-stat-label">Conflitos resolvidos</div>
+            </article>
+          </div>
+        </article>
+
         <div className="grid gap-4 lg:grid-cols-2">
           <form action={createMobileSyncJobAction} className="of-card of-form-grid">
-            <div className="of-card-title">Sincronização offline de campo</div>
+            <div className="of-card-title">Registrar sincronização do campo</div>
+            <p className="of-empty-text" style={{ marginBottom: 8 }}>
+              Use este bloco quando o app de campo enviar dados para a nuvem ou quando houver
+              retorno de atualização para o dispositivo.
+            </p>
             <select name="obra_id" className="of-input" defaultValue="" required>
               <option value="" disabled>
-                Obra
+                Selecione a obra
               </option>
               {obras.map((obra) => (
                 <option key={obra.id} value={obra.id}>
@@ -50,40 +108,50 @@ export default async function MobileCampoPage() {
               ))}
             </select>
             <select name="direction" className="of-input" defaultValue="upload">
-              <option value="upload">Upload do campo para nuvem</option>
-              <option value="download">Download da nuvem para campo</option>
+              <option value="upload">Campo → nuvem</option>
+              <option value="download">Nuvem → campo</option>
               <option value="bi_direcional">Bi-direcional</option>
             </select>
             <div className="of-form-grid md:grid-cols-2">
-              <input name="pendentes_criar" type="number" min={0} className="of-input" placeholder="Pendentes criar" />
-              <input name="pendentes_atualizar" type="number" min={0} className="of-input" placeholder="Pendentes atualizar" />
-              <input name="pendentes_deletar" type="number" min={0} className="of-input" placeholder="Pendentes deletar" />
-              <input name="conflitos" type="number" min={0} className="of-input" placeholder="Conflitos" />
+              <input name="pendentes_criar" type="number" min={0} className="of-input" placeholder="Itens para criar" />
+              <input
+                name="pendentes_atualizar"
+                type="number"
+                min={0}
+                className="of-input"
+                placeholder="Itens para atualizar"
+              />
+              <input name="pendentes_deletar" type="number" min={0} className="of-input" placeholder="Itens para excluir" />
+              <input name="conflitos" type="number" min={0} className="of-input" placeholder="Conflitos detectados" />
             </div>
             <button type="submit" className="of-btn-primary">
-              Registrar sync
+              Salvar lote de sync
             </button>
           </form>
 
           <form action={createMobileSyncConflictAction} className="of-card of-form-grid">
-            <div className="of-card-title">Conflitos de sincronização</div>
+            <div className="of-card-title">Registrar conflito de sincronização</div>
+            <p className="of-empty-text" style={{ marginBottom: 8 }}>
+              Use este bloco quando um valor do campo divergir do que está salvo na nuvem.
+            </p>
             <select name="sync_job_id" className="of-input" defaultValue="" required>
               <option value="" disabled>
-                Lote de sincronização
+                Selecione o lote
               </option>
               {jobs.map((job) => (
                 <option key={job.id} value={job.id}>
-                  {job.obra_nome} · {new Date(job.created_at).toLocaleString("pt-BR")}
+                  {job.obra_nome} · {directionLabel(job.direction)} ·{" "}
+                  {new Date(job.created_at).toLocaleString("pt-BR")}
                 </option>
               ))}
             </select>
-            <input name="entidade" className="of-input" placeholder="Entidade (diário, tarefa, medição...)" required />
-            <input name="campo" className="of-input" placeholder="Campo em conflito" required />
-            <input name="valor_local" className="of-input" placeholder="Valor local" />
-            <input name="valor_remoto" className="of-input" placeholder="Valor remoto" />
-            <input name="resolucao" className="of-input" placeholder="Resolução inicial" />
+            <input name="entidade" className="of-input" placeholder="Ex.: diário, tarefa, medição" required />
+            <input name="campo" className="of-input" placeholder="Campo divergente" required />
+            <input name="valor_local" className="of-input" placeholder="Valor do campo" />
+            <input name="valor_remoto" className="of-input" placeholder="Valor salvo na nuvem" />
+            <input name="resolucao" className="of-input" placeholder="Decisão inicial" />
             <button type="submit" className="of-btn-primary">
-              Registrar conflito
+              Salvar conflito
             </button>
           </form>
         </div>
@@ -95,8 +163,9 @@ export default async function MobileCampoPage() {
               <thead>
                 <tr>
                   <th>Obra</th>
+                  <th>Status</th>
                   <th>Direção</th>
-                  <th>Pendências</th>
+                  <th>Fila</th>
                   <th>Conflitos</th>
                   <th>Última sync</th>
                 </tr>
@@ -105,9 +174,14 @@ export default async function MobileCampoPage() {
                 {jobs.map((job) => (
                   <tr key={job.id}>
                     <td>{job.obra_nome}</td>
-                    <td>{job.direction}</td>
+                    <td>{syncStatusLabel(job.status)}</td>
+                    <td>{directionLabel(job.direction)}</td>
                     <td className="of-mono">
                       {job.pendentes_criar + job.pendentes_atualizar + job.pendentes_deletar}
+                      <div className="of-list-description" style={{ marginTop: 4 }}>
+                        Cria {job.pendentes_criar} · Atualiza {job.pendentes_atualizar} · Exclui{" "}
+                        {job.pendentes_deletar}
+                      </div>
                     </td>
                     <td className="of-mono">{job.conflitos}</td>
                     <td>{job.last_sync_at ? new Date(job.last_sync_at).toLocaleString("pt-BR") : "—"}</td>
@@ -115,7 +189,7 @@ export default async function MobileCampoPage() {
                 ))}
                 {jobs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="of-empty-text">
+                    <td colSpan={6} className="of-empty-text">
                       Sem sincronizações registradas.
                     </td>
                   </tr>
@@ -136,6 +210,7 @@ export default async function MobileCampoPage() {
                   <th>Local</th>
                   <th>Remoto</th>
                   <th>Status</th>
+                  <th>Resolução</th>
                   <th>Ação</th>
                 </tr>
               </thead>
@@ -146,7 +221,8 @@ export default async function MobileCampoPage() {
                     <td>{conflict.campo}</td>
                     <td>{conflict.valor_local || "—"}</td>
                     <td>{conflict.valor_remoto || "—"}</td>
-                    <td>{conflict.status}</td>
+                    <td>{conflictStatusLabel(conflict.status)}</td>
+                    <td>{conflict.resolucao || "—"}</td>
                     <td>
                       {conflict.status === "resolvido" ? null : (
                         <form action={resolveMobileSyncConflictAction} style={{ display: "flex", gap: 8 }}>
@@ -162,7 +238,7 @@ export default async function MobileCampoPage() {
                 ))}
                 {conflicts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="of-empty-text">
+                    <td colSpan={7} className="of-empty-text">
                       Sem conflitos pendentes.
                     </td>
                   </tr>
