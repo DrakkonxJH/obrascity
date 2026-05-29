@@ -175,7 +175,7 @@ function QuickAdd({ etapa, onAdd, onCancel }) {
   const [valor, setValor]   = useState("");
 
   const inp = {
-    background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6,
+    background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12,
     color: C.text, padding: "7px 10px", fontSize: 13, outline: "none",
     width: "100%", boxSizing: "border-box", marginBottom: 8,
   };
@@ -198,7 +198,7 @@ function QuickAdd({ etapa, onAdd, onCancel }) {
   };
 
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.orange}`, borderRadius: 8, padding: 12 }}>
+    <div style={{ background: C.card, border: `1px solid ${C.orange}`, borderRadius: 12, padding: 12 }}>
       <input autoFocus style={inp} placeholder="Nome da empresa *" value={nome} onChange={e => setNome(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onCancel(); }} />
       <input style={inp} placeholder="Contato principal" value={contato} onChange={e => setContato(e.target.value)}
@@ -206,10 +206,10 @@ function QuickAdd({ etapa, onAdd, onCancel }) {
       <input style={{ ...inp, marginBottom: 12 }} placeholder="Valor (R$)" type="number" value={valor} onChange={e => setValor(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onCancel(); }} />
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={handleAdd} style={{ flex: 1, background: C.orange, border: "none", color: "#fff", borderRadius: 6, padding: "7px 0", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+        <button onClick={handleAdd} style={{ flex: 1, background: C.orange, border: "none", color: "#fff", borderRadius: 12, padding: "7px 0", cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
           Adicionar card
         </button>
-        <button onClick={onCancel} style={{ background: C.faint, border: `1px solid ${C.border}`, color: C.muted, borderRadius: 6, padding: "7px 12px", cursor: "pointer", fontSize: 13 }}>
+        <button onClick={onCancel} style={{ background: C.faint, border: `1px solid ${C.border}`, color: C.muted, borderRadius: 12, padding: "7px 12px", cursor: "pointer", fontSize: 13 }}>
           {Ico.close}
         </button>
       </div>
@@ -229,7 +229,7 @@ function KanbanCard({ lead, onClick, onDragStart, onDragEnd, isDragging }) {
       style={{
         background: C.card,
         border: `1px solid ${isDragging ? C.orange : C.border}`,
-        borderRadius: 8, padding: 14, cursor: "grab",
+        borderRadius: 12, padding: 14, cursor: "grab",
         opacity: isDragging ? 0.4 : 1,
         transition: "border-color .15s, opacity .15s",
         userSelect: "none",
@@ -317,7 +317,7 @@ function KanbanColumn({ etapa, leads, onCardClick, onAddCard, dragState, onDragS
         {leads.length === 0 && !adding && (
           <div
             onClick={() => setAdding(true)}
-            style={{ border: `1px dashed ${C.border}`, borderRadius: 8, padding: "18px 14px", textAlign: "center", color: C.muted, fontSize: 12, cursor: "pointer", transition: "all .15s" }}
+            style={{ border: `1px dashed ${C.border}`, borderRadius: 12, padding: "18px 14px", textAlign: "center", color: C.muted, fontSize: 12, cursor: "pointer", transition: "all .15s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}
           >
@@ -344,7 +344,7 @@ function LeadModal({ lead, isNew, etapaInicial, onClose, onSave, saving }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const save = () => onSave({ ...form, id: form.id || Date.now(), ultima_atividade: today(), valor: Number(form.valor) || 0 });
 
-  const inp   = { background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" };
+  const inp   = { background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box" };
   const lbl   = { fontSize: 12, color: C.muted, marginBottom: 4, display: "block", fontWeight: 500 };
   const row2  = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 };
 
@@ -466,7 +466,7 @@ function DetailPanel({
           <Badge label={lead.prioridade} colors={pc} />
           <Badge label={lead.origem} colors={{ bg: C.faint, text: C.muted }} />
         </div>
-        <div style={{ background: C.faint, borderRadius: 8, padding: 12, marginBottom: 14 }}>
+        <div style={{ background: C.faint, borderRadius: 12, padding: 12, marginBottom: 14 }}>
           <div style={{ fontSize: 11, color: C.muted, marginBottom: 3, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Valor potencial</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: C.orange }}>{fmt(lead.valor)}</div>
         </div>
@@ -536,7 +536,7 @@ function DetailPanel({
                 value={deal.stage}
                 onChange={(e) => onPatchDeal({ stage: e.target.value })}
                 disabled={dealPatchSaving}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
               >
                 {DEAL_STAGES.map((stage) => (
                   <option key={stage} value={stage}>{formatDealStage(stage)}</option>
@@ -546,7 +546,7 @@ function DetailPanel({
                 value={deal.owner_profile_id || ""}
                 onChange={(e) => onPatchDeal({ owner_profile_id: e.target.value || null })}
                 disabled={dealPatchSaving}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
               >
                 <option value="">Sem responsável</option>
                 {profiles.map((profile) => (
@@ -560,7 +560,7 @@ function DetailPanel({
                 onChange={(e) => onPatchDeal({ loss_reason: e.target.value })}
                 placeholder="Motivo de perda (obrigatório)"
                 disabled={dealPatchSaving}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
               />
             ) : null}
           </div>
@@ -594,8 +594,8 @@ function DetailPanel({
             <div style={{ display: "grid", gap: 6 }}>
               {Object.entries(deal.custom_fields || {}).map(([key, value]) => (
                 <div key={key} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 6 }}>
-                  <input value={key} readOnly style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.muted, padding: "7px 10px", fontSize: 12, outline: "none" }} />
-                  <input value={value} readOnly style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                  <input value={key} readOnly style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.muted, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                  <input value={value} readOnly style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
                   <button
                     type="button"
                     onClick={() => {
@@ -604,15 +604,15 @@ function DetailPanel({
                       onPatchDeal({ custom_fields: next });
                     }}
                     disabled={dealPatchSaving}
-                    style={{ background: "#2A0F0F", border: "1px solid #3A1515", color: C.red, borderRadius: 8, padding: "0 10px", fontSize: 12, cursor: "pointer" }}
+                    style={{ background: "#2A0F0F", border: "1px solid #3A1515", color: C.red, borderRadius: 12, padding: "0 10px", fontSize: 12, cursor: "pointer" }}
                   >
                     x
                   </button>
                 </div>
               ))}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 6 }}>
-                <input value={customKey} onChange={(e) => setCustomKey(e.target.value)} placeholder="Campo" style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
-                <input value={customValue} onChange={(e) => setCustomValue(e.target.value)} placeholder="Valor" style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                <input value={customKey} onChange={(e) => setCustomKey(e.target.value)} placeholder="Campo" style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                <input value={customValue} onChange={(e) => setCustomValue(e.target.value)} placeholder="Valor" style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
                 <button
                   type="button"
                   onClick={() => {
@@ -622,7 +622,7 @@ function DetailPanel({
                     setCustomValue("");
                   }}
                   disabled={dealPatchSaving}
-                  style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 8, padding: "0 10px", fontSize: 12, cursor: "pointer" }}
+                  style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 12, padding: "0 10px", fontSize: 12, cursor: "pointer" }}
                 >
                   +
                 </button>
@@ -639,13 +639,13 @@ function DetailPanel({
                 value={activityDraft.subject}
                 onChange={(e) => onActivityDraftChange("subject", e.target.value)}
                 placeholder="Assunto do follow-up"
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
               />
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
                 <select
                   value={activityDraft.type}
                   onChange={(e) => onActivityDraftChange("type", e.target.value)}
-                  style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+                  style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
                 >
                   {ACTIVITY_TYPES.map((item) => (
                     <option key={item.value} value={item.value}>{item.label}</option>
@@ -654,7 +654,7 @@ function DetailPanel({
                 <select
                   value={activityDraft.channel}
                   onChange={(e) => onActivityDraftChange("channel", e.target.value)}
-                  style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+                  style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
                 >
                   {ACTIVITY_CHANNELS.map((item) => (
                     <option key={item.value} value={item.value}>{item.label}</option>
@@ -665,20 +665,20 @@ function DetailPanel({
                 type="datetime-local"
                 value={activityDraft.due_at}
                 onChange={(e) => onActivityDraftChange("due_at", e.target.value)}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
               />
               <textarea
                 value={activityDraft.body}
                 onChange={(e) => onActivityDraftChange("body", e.target.value)}
                 placeholder="Observações, próximos passos e contexto"
                 rows={3}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none", resize: "vertical" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none", resize: "vertical" }}
               />
               <button
                 type="button"
                 onClick={onCreateActivity}
                 disabled={activitySaving}
-                style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 8, padding: "10px 14px", cursor: activitySaving ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, opacity: activitySaving ? 0.75 : 1 }}
+                style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 12, padding: "10px 14px", cursor: activitySaving ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, opacity: activitySaving ? 0.75 : 1 }}
               >
                 {activitySaving ? "Salvando atividade..." : "Registrar follow-up"}
               </button>
@@ -695,7 +695,7 @@ function DetailPanel({
                     }
                   }}
                   disabled={activitySaving}
-                  style={{ flex: 1, background: "#103021", border: "1px solid #1F5130", color: "#22C55E", borderRadius: 8, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                  style={{ flex: 1, background: "#103021", border: "1px solid #1F5130", color: "#22C55E", borderRadius: 12, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
                 >
                   WhatsApp + log
                 </button>
@@ -711,7 +711,7 @@ function DetailPanel({
                     }
                   }}
                   disabled={activitySaving}
-                  style={{ flex: 1, background: "#1A2035", border: "1px solid #2A3A64", color: "#7DB6FF", borderRadius: 8, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                  style={{ flex: 1, background: "#1A2035", border: "1px solid #2A3A64", color: "#7DB6FF", borderRadius: 12, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
                 >
                   E-mail + log
                 </button>
@@ -727,7 +727,7 @@ function DetailPanel({
               <select
                 value={activityFilters.type}
                 onChange={(e) => onActivityFiltersChange("type", e.target.value)}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
               >
                 <option value="">Todos os tipos</option>
                 {ACTIVITY_TYPES.map((item) => (
@@ -737,7 +737,7 @@ function DetailPanel({
               <select
                 value={activityFilters.channel}
                 onChange={(e) => onActivityFiltersChange("channel", e.target.value)}
-                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
               >
                 <option value="">Todos os canais</option>
                 {ACTIVITY_CHANNELS.map((item) => (
@@ -1226,12 +1226,12 @@ export default function CrmPage() {
     background: active ? C.orange : "none",
     border: `1px solid ${active ? C.orange : C.border}`,
     color: active ? "#fff" : C.muted,
-    borderRadius: 6, padding: "7px 12px", cursor: "pointer",
+    borderRadius: 12, padding: "7px 12px", cursor: "pointer",
     fontSize: 13, display: "flex", alignItems: "center", gap: 6,
   });
 
   const selStyle = {
-    background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6,
+    background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12,
     color: C.text, padding: "7px 10px", fontSize: 13, cursor: "pointer", outline: "none",
   };
 
@@ -1305,7 +1305,7 @@ export default function CrmPage() {
                 value={newWorkspaceName}
                 onChange={e => setNewWorkspaceName(e.target.value)}
                 placeholder="Ex: Vendas, Operacional, Engenharia..."
-                style={{ width: "100%", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                style={{ width: "100%", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
               />
             </div>
             <div style={{ marginBottom: 16 }}>
@@ -1319,7 +1319,7 @@ export default function CrmPage() {
                       width: "100%",
                       aspectRatio: 1,
                       background: color,
-                      borderRadius: 6,
+                      borderRadius: 12,
                       cursor: "pointer",
                       border: newWorkspaceColor === color ? `2px solid ${C.text}` : `2px solid ${C.border}`,
                       transition: "all .15s",
@@ -1331,7 +1331,7 @@ export default function CrmPage() {
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 onClick={() => setShowNewWorkspace(false)}
-                style={{ padding: "8px 16px", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text, cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+                style={{ padding: "8px 16px", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, cursor: "pointer", fontSize: 13, fontWeight: 500 }}
               >
                 Cancelar
               </button>
@@ -1354,7 +1354,7 @@ export default function CrmPage() {
                     }
                   } catch {}
                 }}
-                style={{ padding: "8px 16px", background: C.orange, border: `1px solid ${C.orange}`, borderRadius: 6, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+                style={{ padding: "8px 16px", background: C.orange, border: `1px solid ${C.orange}`, borderRadius: 12, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 500 }}
               >
                 Criar aba
               </button>
@@ -1463,7 +1463,7 @@ export default function CrmPage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10 }}>
             {lossReasons.slice(0, 6).map((reason) => (
-              <div key={reason.reason} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px", background: C.faint }}>
+              <div key={reason.reason} style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 12px", background: C.faint }}>
                 <div style={{ fontSize: 13, color: C.text, fontWeight: 700 }}>{reason.reason}</div>
                 <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>{reason.total} negócios · {fmt(reason.value)}</div>
               </div>
@@ -1473,37 +1473,6 @@ export default function CrmPage() {
       )}
 
       {/* ── Negócios enterprise (deals + atividades) ── */}
-      {deals.length > 0 && (
-        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "10px 24px" }}>
-          <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
-            Negócios enterprise vinculados
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 10 }}>
-            {deals.slice(0, 6).map((deal) => (
-              <div key={deal.id} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px", background: C.faint }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {deal.nome}
-                </div>
-                <div style={{ marginTop: 4, fontSize: 12, color: C.muted }}>
-                  {deal.company_name || "Empresa não vinculada"} {deal.contact_name ? `• ${deal.contact_name}` : ""}
-                </div>
-                <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-                  <span style={{ color: C.muted }}>Etapa: <b style={{ color: C.text }}>{deal.stage}</b></span>
-                  <span style={{ color: C.muted }}>Abertas: <b style={{ color: C.orange }}>{deal.activities_open}</b></span>
-                </div>
-                <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>
-                  Próximo: <b style={{ color: deal.next_activity_at ? C.text : C.muted }}>{deal.next_activity_at ? fmtDateTime(deal.next_activity_at) : "Sem follow-up"}</b>
-                </div>
-                <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted }}>
-                  <span>Saúde: <b style={{ color: HEALTH_META[computeHealth(deal).level].text }}>{HEALTH_META[computeHealth(deal).level].label}</b></span>
-                  <span>Owner: <b style={{ color: C.text }}>{deal.owner_name || "—"}</b></span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ── Content ── */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
         <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minWidth: 0 }}>
