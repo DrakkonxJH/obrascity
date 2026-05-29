@@ -24,7 +24,7 @@ const PLANOS = [
     id: "starter" as const,
     nome: "Starter",
     monthly: 129,
-    annual: 129,
+    annual: 90,
     descricao: "Base essencial",
     cor: "blue",
   },

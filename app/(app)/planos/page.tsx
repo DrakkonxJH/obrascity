@@ -123,7 +123,7 @@ export default async function PlanosPage({
       id: "starter",
       name: "Starter",
       monthly: 129,
-      annual: 129,
+      annual: 90,
       blurb: "Base essencial para controlar obras com rapidez.",
       audience: "Ideal para equipes iniciando digitalizacao.",
     },
