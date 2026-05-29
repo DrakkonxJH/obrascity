@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAppUi } from "./app-ui-provider";
 
@@ -15,10 +16,33 @@ export type NotifDisplay = {
 
 type NotificationPanelProps = {
   items: NotifDisplay[];
+  onMarkAsRead?: (id: string) => Promise<void>;
+  onMarkAllAsRead?: () => Promise<void>;
 };
 
-export function NotificationPanel({ items }: NotificationPanelProps) {
+export function NotificationPanel({ items, onMarkAsRead, onMarkAllAsRead }: NotificationPanelProps) {
   const { notifOpen, closeNotif } = useAppUi();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleMarkAsRead = async (id: string) => {
+    if (!onMarkAsRead) return;
+    setIsLoading(true);
+    try {
+      await onMarkAsRead(id);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!onMarkAllAsRead) return;
+    setIsLoading(true);
+    try {
+      await onMarkAllAsRead();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!notifOpen) return null;
 
@@ -34,7 +58,15 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
       <div className="of-notif-panel" role="dialog" aria-label="Notificações">
         <div className="of-notif-panel-header">
           <span>Notificações</span>
-          <button type="button" className="of-notif-mark-read" onClick={closeNotif}>
+          <button 
+            type="button" 
+            className="of-notif-mark-read" 
+            onClick={async () => {
+              await handleMarkAllAsRead();
+              closeNotif();
+            }}
+            disabled={isLoading}
+          >
             Marcar todas lidas
           </button>
         </div>
@@ -62,7 +94,12 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
                   key={item.id}
                   href={item.href}
                   className={`of-notif-item ${item.unread ? "unread" : ""}`}
-                  onClick={closeNotif}
+                  onClick={async () => {
+                    if (item.unread && onMarkAsRead) {
+                      await handleMarkAsRead(item.id);
+                    }
+                    closeNotif();
+                  }}
                   title={item.destino ? `Abrir em ${item.destino}` : "Abrir notificação"}
                 >
                   {content}
@@ -70,9 +107,19 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
               );
             }
             return (
-              <div key={item.id} className={`of-notif-item ${item.unread ? "unread" : ""}`}>
+              <button
+                key={item.id}
+                type="button"
+                className={`of-notif-item ${item.unread ? "unread" : ""}`}
+                style={{ border: "none", background: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
+                onClick={async () => {
+                  if (item.unread && onMarkAsRead) {
+                    await handleMarkAsRead(item.id);
+                  }
+                }}
+              >
                 {content}
-              </div>
+              </button>
             );
           })}
         </div>

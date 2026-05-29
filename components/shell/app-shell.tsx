@@ -12,6 +12,7 @@ import { DetailPanel } from "./detail-panel";
 import { NotificationPanel, type NotifDisplay } from "./notification-panel";
 import { NovaObraModal } from "./nova-obra-modal";
 import { AddMemberModal } from "./add-member-modal";
+import { markNotificationAsReadAction, markAllNotificationsAsReadAction } from "@/app/actions";
 
 type AppShellProps = {
   summary: LayoutSummary;
@@ -43,6 +44,14 @@ export function AppShell({
 
   const blockedByAdminView = adminManagementOnly && !pathname.startsWith("/contas");
 
+  const handleMarkAsRead = async (id: string) => {
+    await markNotificationAsReadAction(id);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllNotificationsAsReadAction();
+  };
+
   return (
     <AppUiProvider trashEnabled={trashEnabled}>
       <div className="of-app-shell">
@@ -56,7 +65,11 @@ export function AppShell({
           <main className="of-main-content of-page-enter">{blockedByAdminView ? null : children}</main>
         </div>
       </div>
-      <NotificationPanel items={notifications} />
+      <NotificationPanel 
+        items={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+      />
       {!adminManagementOnly ? <NovaObraModal /> : null}
       {!adminManagementOnly ? <AddMemberModal equipes={equipes} /> : null}
       <DetailPanel />
