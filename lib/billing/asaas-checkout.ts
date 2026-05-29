@@ -9,7 +9,7 @@ import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const PLAN_PRICES: Record<Exclude<PlanId, "trial">, Record<BillingCycle, number>> = {
-  starter: { monthly: 99, annual: 828 },
+  starter: { monthly: 129, annual: 1548 },
   pro: { monthly: 229, annual: 1908 },
   enterprise: { monthly: 799, annual: 6588 },
 };

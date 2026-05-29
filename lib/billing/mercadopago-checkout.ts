@@ -9,7 +9,7 @@ import type { PlanId } from "@/lib/billing/plans";
 import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 
 const PLAN_PRICES: Record<Exclude<PlanId, "trial">, Record<BillingCycle, number>> = {
-  starter: { monthly: 9900, annual: 82800 },
+  starter: { monthly: 12900, annual: 154800 },
   pro: { monthly: 22900, annual: 190800 },
   enterprise: { monthly: 79900, annual: 658800 },
 };

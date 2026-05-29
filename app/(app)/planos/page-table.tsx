@@ -23,8 +23,8 @@ const PLANOS = [
   {
     id: "starter" as const,
     nome: "Starter",
-    monthly: 99,
-    annual: 69,
+    monthly: 129,
+    annual: 129,
     descricao: "Base essencial",
     cor: "blue",
   },
