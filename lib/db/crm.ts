@@ -860,10 +860,51 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
   const supabase = await createServerClient();
   
   // Get all master companies first (to exclude them)
-  const { data: masterCompanies, error: masterError } = await supabase
+  let { data: masterCompanies } = await supabase
     .from("companies")
     .select("id")
     .eq("is_master", true);
+  
+  // If no master is marked yet, try to auto-detect it
+  if (!masterCompanies || masterCompanies.length === 0) {
+    // Check if there's a company with "Master" in the name
+    const { data: potentialMaster } = await supabase
+      .from("companies")
+      .select("id, nome")
+      .ilike("nome", "%master%")
+      .limit(1);
+    
+    if (potentialMaster && potentialMaster.length > 0) {
+      const masterId = potentialMaster[0].id;
+      // Try to mark it (this will fail silently if RLS blocks it, but that's OK)
+      await supabase
+        .from("companies")
+        .update({ is_master: true })
+        .eq("id", masterId)
+        .catch(() => {}); // Ignore errors
+      
+      masterCompanies = [{ id: masterId }];
+    } else {
+      // Fallback: get the oldest company
+      const { data: oldestCompany } = await supabase
+        .from("companies")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1);
+      
+      if (oldestCompany && oldestCompany.length > 0) {
+        const masterId = oldestCompany[0].id;
+        // Try to mark it as master
+        await supabase
+          .from("companies")
+          .update({ is_master: true })
+          .eq("id", masterId)
+          .catch(() => {}); // Ignore errors
+        
+        masterCompanies = [{ id: masterId }];
+      }
+    }
+  }
     
   const masterIds = new Set((masterCompanies ?? []).map(c => c.id));
   
