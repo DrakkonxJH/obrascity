@@ -812,6 +812,11 @@ export default function CrmPage() {
   const [showNewWorkspace, setShowNewWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [newWorkspaceColor, setNewWorkspaceColor] = useState("#3B82F6");
+  const [customTabs, setCustomTabs] = useState([]);
+  const [selectedTab, setSelectedTab] = useState(null);
+  const [showNewTab, setShowNewTab] = useState(false);
+  const [newTabName, setNewTabName] = useState("");
+  const [newTabColor, setNewTabColor] = useState("#3B82F6");
   const [view, setView]     = useState("kanban");
   const [search, setSearch] = useState("");
   const [fEtapa, setFEtapa] = useState("");
@@ -855,6 +860,19 @@ export default function CrmPage() {
       const data = await res.json();
       if (res.ok && data?.ok && Array.isArray(data.reasons)) {
         setLossReasons(data.reasons);
+      }
+    } catch {
+      // noop
+    }
+  }, []);
+
+  const loadCustomTabs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/crm/tabs", { method: "GET", headers: { Accept: "application/json" } });
+      const data = await res.json();
+      if (res.ok && data?.ok && Array.isArray(data.tabs)) {
+        setCustomTabs(data.tabs);
+        setSelectedTab(null);
       }
     } catch {
       // noop
@@ -1005,6 +1023,12 @@ export default function CrmPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedWorkspace) {
+      loadCustomTabs();
+    }
+  }, [selectedWorkspace, loadCustomTabs]);
 
   const handleDrop = useCallback(async (targetEtapa) => {
     const id = draggingId.current;
@@ -1357,6 +1381,144 @@ export default function CrmPage() {
                 style={{ padding: "8px 16px", background: C.orange, border: `1px solid ${C.orange}`, borderRadius: 12, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 500 }}
               >
                 Criar aba
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Custom Tabs (Cards personalizados por filtros) ── */}
+      {selectedWorkspace && customTabs.length > 0 && (
+        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto" }}>
+          {customTabs.map((tab) => (
+            <div
+              key={tab.id}
+              onClick={() => {
+                setSelectedTab(tab.id === selectedTab ? null : tab.id);
+                if (tab.id !== selectedTab) {
+                  setFEtapa(tab.filter_etapa?.join(",") || "");
+                  setFPrio(tab.filter_prioridade?.join(",") || "");
+                  setFOrigem(tab.filter_origem?.join(",") || "");
+                  setFOwner(tab.filter_owner_id || "");
+                  setSearch(tab.search || "");
+                }
+              }}
+              style={{
+                padding: "8px 12px",
+                cursor: "pointer",
+                borderBottom: selectedTab === tab.id ? `2px solid ${tab.color || "#3B82F6"}` : `2px solid transparent`,
+                color: selectedTab === tab.id ? C.text : C.muted,
+                fontSize: 12,
+                fontWeight: selectedTab === tab.id ? 600 : 500,
+                transition: "all .15s",
+                whiteSpace: "nowrap",
+                userSelect: "none",
+                background: selectedTab === tab.id ? `${tab.color || "#3B82F6"}10` : "transparent",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = C.text; }}
+              onMouseLeave={e => { e.currentTarget.style.color = selectedTab === tab.id ? C.text : C.muted; }}
+            >
+              <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 2, background: tab.color || "#3B82F6", marginRight: 6, verticalAlign: "middle" }}></span>
+              {tab.name}
+            </div>
+          ))}
+          <button
+            onClick={() => setShowNewTab(true)}
+            style={{
+              padding: "8px 12px",
+              border: "none",
+              background: "transparent",
+              color: C.muted,
+              cursor: "pointer",
+              fontSize: 12,
+              marginLeft: "auto",
+              flexShrink: 0,
+              transition: "all .15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.orange; }}
+            onMouseLeave={e => { e.currentTarget.style.color = C.muted; }}
+          >
+            {Ico.plus} Nova tab
+          </button>
+        </div>
+      )}
+
+      {/* ── Modal: Criar nova custom tab ── */}
+      {showNewTab && selectedWorkspace && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowNewTab(false); }}>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, width: "100%", maxWidth: 400, padding: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Nova tab de filtros</div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.muted, display: "block", marginBottom: 4, fontWeight: 500 }}>Nome da tab *</label>
+              <input
+                value={newTabName}
+                onChange={e => setNewTabName(e.target.value)}
+                placeholder="Ex: Leads Quentes, Follow-ups Urgentes..."
+                style={{ width: "100%", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 12, color: C.muted, display: "block", marginBottom: 4, fontWeight: 500 }}>Cor</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                {["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#06B6D4", "#F97316"].map((color) => (
+                  <div
+                    key={color}
+                    onClick={() => setNewTabColor(color)}
+                    style={{
+                      width: "100%",
+                      aspectRatio: 1,
+                      background: color,
+                      borderRadius: 12,
+                      cursor: "pointer",
+                      border: newTabColor === color ? `2px solid ${C.text}` : `2px solid ${C.border}`,
+                      transition: "all .15s",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, padding: 10, background: C.faint, borderRadius: 8 }}>
+              Esta tab será criada com os filtros atuais (etapa, prioridade, origem, responsável).
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowNewTab(false)}
+                style={{ padding: "8px 16px", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newTabName.trim()) return;
+                  try {
+                    const res = await fetch("/api/crm/tabs", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name: newTabName,
+                        color: newTabColor,
+                        filter_etapa: fEtapa ? fEtapa.split(",") : [],
+                        filter_prioridade: fPrio ? fPrio.split(",") : [],
+                        filter_origem: fOrigem ? fOrigem.split(",") : [],
+                        filter_owner_id: fOwner,
+                        search: search,
+                        workspace_id: selectedWorkspace,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data?.success) {
+                      setCustomTabs([...customTabs, data.data]);
+                      setNewTabName("");
+                      setNewTabColor("#3B82F6");
+                      setShowNewTab(false);
+                      setSelectedTab(data.data.id);
+                    }
+                  } catch {}
+                }}
+                style={{ padding: "8px 16px", background: C.orange, border: `1px solid ${C.orange}`, borderRadius: 12, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+              >
+                Criar tab
               </button>
             </div>
           </div>
