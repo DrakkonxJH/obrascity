@@ -19,6 +19,34 @@ const C = {
 };
 
 const ETAPAS = ["Contato", "Qualificação", "Proposta", "Negociação", "Fechado", "Perdido"];
+const DEAL_STAGES = ["novos", "qualificacao", "proposta", "negociacao", "ganho", "perdido"];
+
+const DEAL_STAGE_META = {
+  novos: { label: "Novos", bg: "#1A2035", text: "#3B82F6" },
+  qualificacao: { label: "Qualificação", bg: "#1A2820", text: "#22C55E" },
+  proposta: { label: "Proposta", bg: "#2A1F0A", text: "#F59E0B" },
+  negociacao: { label: "Negociação", bg: "#2A1A0A", text: "#FF6B1A" },
+  ganho: { label: "Ganhos", bg: "#0F2A1A", text: "#22C55E" },
+  perdido: { label: "Perdidos", bg: "#2A0F0F", text: "#EF4444" },
+};
+
+const ACTIVITY_TYPES = [
+  { value: "follow_up", label: "Follow-up" },
+  { value: "call", label: "Ligação" },
+  { value: "email", label: "E-mail" },
+  { value: "meeting", label: "Reunião" },
+  { value: "proposal", label: "Proposta" },
+  { value: "note", label: "Nota" },
+  { value: "task", label: "Tarefa" },
+];
+
+const ACTIVITY_CHANNELS = [
+  { value: "manual", label: "Manual" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "email", label: "E-mail" },
+  { value: "call", label: "Ligação" },
+  { value: "meeting", label: "Reunião" },
+];
 
 const EC = {
   Contato:      { bg: "#1A2035", text: "#3B82F6" },
@@ -37,7 +65,36 @@ const PC = {
 
 const fmt     = v => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 const fmtDate = d => new Date(d).toLocaleDateString("pt-BR");
+const fmtDateTime = d => new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 const today   = () => new Date().toISOString().split("T")[0];
+
+function toDateOnly(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+function isBeforeToday(value) {
+  const dateOnly = toDateOnly(value);
+  if (!dateOnly) return false;
+  return dateOnly < today();
+}
+
+function isToday(value) {
+  const dateOnly = toDateOnly(value);
+  if (!dateOnly) return false;
+  return dateOnly === today();
+}
+
+function formatDealStage(stage) {
+  return DEAL_STAGE_META[stage]?.label ?? stage;
+}
+
+function formatActivityType(type) {
+  const entry = ACTIVITY_TYPES.find((item) => item.value === type);
+  return entry?.label ?? type;
+}
 
 // ─── Subcomponentes utilitários ───────────────────────────────────────
 function Badge({ label, colors }) {
@@ -312,11 +369,28 @@ function LeadModal({ lead, isNew, etapaInicial, onClose, onSave, saving }) {
 }
 
 // ─── Painel lateral ───────────────────────────────────────────────────
-function DetailPanel({ lead, onClose, onEdit, onDelete }) {
+function DetailPanel({
+  lead,
+  deal,
+  dealActivities,
+  dealActivitiesLoading,
+  dealActivitiesError,
+  activityDraft,
+  onActivityDraftChange,
+  onCreateActivity,
+  onToggleActivityDone,
+  activitySaving,
+  onClose,
+  onEdit,
+  onDelete,
+}) {
   const ec = EC[lead.etapa] || { bg: C.faint, text: C.muted };
   const pc = PC[lead.prioridade] || { bg: C.faint, text: C.muted };
+  const openActivities = dealActivities.filter((activity) => !activity.done);
+  const overdueActivities = openActivities.filter((activity) => isBeforeToday(activity.due_at));
+  const nextDue = deal?.next_activity_at ? fmtDateTime(deal.next_activity_at) : "Sem follow-up";
   return (
-    <div style={{ width: 320, background: C.card, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
+    <div style={{ width: 380, background: C.card, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
       <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>Detalhes</span>
         <button onClick={onClose} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer" }}>{Ico.close}</button>
@@ -357,6 +431,134 @@ function DetailPanel({ lead, onClose, onEdit, onDelete }) {
           </div>
         )}
       </div>
+      {deal ? (
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14, marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Negócio vinculado
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+            <Badge label={formatDealStage(deal.stage)} colors={DEAL_STAGE_META[deal.stage] || { bg: C.faint, text: C.muted }} />
+            <Badge label={deal.status === "ganho" ? "Ganho" : deal.status === "perdido" ? "Perdido" : "Aberto"} colors={{ bg: deal.status === "ganho" ? "#0F2A1A" : deal.status === "perdido" ? "#2A0F0F" : C.faint, text: deal.status === "ganho" ? "#22C55E" : deal.status === "perdido" ? "#EF4444" : C.muted }} />
+            <Badge label={deal.priority === "alta" ? "Prioridade alta" : deal.priority === "baixa" ? "Prioridade baixa" : "Prioridade média"} colors={PC[deal.priority === "alta" ? "Alta" : deal.priority === "baixa" ? "Baixa" : "Média"]} />
+          </div>
+          <div style={{ background: C.faint, borderRadius: 10, padding: 12, marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 4, fontWeight: 600, textTransform: "uppercase" }}>Resumo</div>
+            <div style={{ fontSize: 14, color: C.text, fontWeight: 700, marginBottom: 4 }}>{deal.company_name || deal.nome}</div>
+            <div style={{ fontSize: 12, color: C.muted }}>{deal.contact_name || lead.contato || "Sem contato principal"}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Valor</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.orange }}>{fmt(deal.valor)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Abertas</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>{deal.activities_open}</div>
+              </div>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: C.muted }}>
+              Próximo follow-up: <span style={{ color: C.text, fontWeight: 600 }}>{nextDue}</span>
+            </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>
+              Atrasadas: <span style={{ color: overdueActivities.length > 0 ? C.red : C.text, fontWeight: 600 }}>{overdueActivities.length}</span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Nova atividade
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <input
+                value={activityDraft.subject}
+                onChange={(e) => onActivityDraftChange("subject", e.target.value)}
+                placeholder="Assunto do follow-up"
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+                <select
+                  value={activityDraft.type}
+                  onChange={(e) => onActivityDraftChange("type", e.target.value)}
+                  style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+                >
+                  {ACTIVITY_TYPES.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={activityDraft.channel}
+                  onChange={(e) => onActivityDraftChange("channel", e.target.value)}
+                  style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+                >
+                  {ACTIVITY_CHANNELS.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="datetime-local"
+                value={activityDraft.due_at}
+                onChange={(e) => onActivityDraftChange("due_at", e.target.value)}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none" }}
+              />
+              <textarea
+                value={activityDraft.body}
+                onChange={(e) => onActivityDraftChange("body", e.target.value)}
+                placeholder="Observações, próximos passos e contexto"
+                rows={3}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "9px 12px", fontSize: 13, outline: "none", resize: "vertical" }}
+              />
+              <button
+                type="button"
+                onClick={onCreateActivity}
+                disabled={activitySaving}
+                style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 8, padding: "10px 14px", cursor: activitySaving ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 700, opacity: activitySaving ? 0.75 : 1 }}
+              >
+                {activitySaving ? "Salvando atividade..." : "Registrar follow-up"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Linha do tempo
+            </div>
+            {dealActivitiesLoading ? (
+              <div style={{ fontSize: 13, color: C.muted }}>Carregando atividades...</div>
+            ) : dealActivitiesError ? (
+              <div style={{ fontSize: 13, color: C.red }}>{dealActivitiesError}</div>
+            ) : dealActivities.length === 0 ? (
+              <div style={{ fontSize: 13, color: C.muted }}>Sem atividades registradas para este negócio.</div>
+            ) : (
+              <div style={{ display: "grid", gap: 8 }}>
+                {dealActivities.map((activity) => (
+                  <div key={activity.id} style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, background: C.faint }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{activity.subject}</div>
+                        <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
+                          {formatActivityType(activity.type)} · {activity.channel}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onToggleActivityDone(activity)}
+                        style={{ background: activity.done ? "#0F2A1A" : "none", border: `1px solid ${activity.done ? "#1F5130" : C.border}`, color: activity.done ? "#22C55E" : C.muted, borderRadius: 999, padding: "4px 8px", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}
+                      >
+                        {activity.done ? "Concluída" : "Marcar concluída"}
+                      </button>
+                    </div>
+                    {activity.body ? <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, marginBottom: 6 }}>{activity.body}</div> : null}
+                    <div style={{ fontSize: 11, color: C.muted, display: "flex", justifyContent: "space-between", gap: 8 }}>
+                      <span>Prazo: {activity.due_at ? fmtDateTime(activity.due_at) : "Sem prazo"}</span>
+                      <span>{activity.done ? `Finalizada em ${activity.completed_at ? fmtDateTime(activity.completed_at) : "—"}` : `Criada em ${fmtDateTime(activity.created_at)}`}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
       <div style={{ padding: 14, borderTop: `1px solid ${C.border}`, display: "flex", gap: 8 }}>
         <button onClick={() => onEdit(lead)} style={{ flex: 1, background: C.faint, border: `1px solid ${C.border}`, color: C.text, borderRadius: 7, padding: "8px 0", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
           {Ico.edit} Editar
@@ -377,11 +579,23 @@ export default function CrmPage() {
   const [search, setSearch] = useState("");
   const [fEtapa, setFEtapa] = useState("");
   const [fPrio, setFPrio]   = useState("");
+  const [fOrigem, setFOrigem] = useState("");
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState("");
   const [editingLead, setEditingLead] = useState(null);   // { lead } = editar | { etapaInicial } = novo
   const [saving, setSaving] = useState(false);
+  const [dealActivities, setDealActivities] = useState([]);
+  const [dealActivitiesLoading, setDealActivitiesLoading] = useState(false);
+  const [dealActivitiesError, setDealActivitiesError] = useState("");
+  const [activitySaving, setActivitySaving] = useState(false);
+  const [activityDraft, setActivityDraft] = useState({
+    type: "follow_up",
+    subject: "",
+    body: "",
+    channel: "whatsapp",
+    due_at: `${today()}T09:00`,
+  });
 
   const refreshDeals = useCallback(async () => {
     try {
@@ -395,6 +609,29 @@ export default function CrmPage() {
     }
   }, []);
 
+  const selectedDeal = useMemo(() => {
+    if (!selected) return null;
+    return deals.find((deal) => Array.isArray(deal.tags) && deal.tags.includes(`lead:${selected.id}`)) || null;
+  }, [selected, deals]);
+  const selectedDealId = selectedDeal?.id ?? null;
+
+  const dealSummary = useMemo(() => {
+    const openDeals = deals.filter((deal) => deal.status === "aberto");
+    const wonDeals = deals.filter((deal) => deal.status === "ganho");
+    const lostDeals = deals.filter((deal) => deal.status === "perdido");
+    const dueToday = openDeals.filter((deal) => isToday(deal.next_activity_at));
+    const overdue = openDeals.filter((deal) => isBeforeToday(deal.next_activity_at));
+    const openActivities = deals.reduce((sum, deal) => sum + (Number(deal.activities_open) || 0), 0);
+    const stageTotals = DEAL_STAGES.map((stage) => ({
+      stage,
+      label: formatDealStage(stage),
+      count: deals.filter((deal) => deal.stage === stage).length,
+      value: deals.filter((deal) => deal.stage === stage).reduce((sum, deal) => sum + (Number(deal.valor) || 0), 0),
+      meta: DEAL_STAGE_META[stage],
+    }));
+    return { openDeals, wonDeals, lostDeals, dueToday, overdue, openActivities, stageTotals };
+  }, [deals]);
+
   // ── Drag state ──
   const [dragState, setDragState] = useState({ draggingId: null, overCol: null });
   const draggingId = useRef(null);
@@ -403,6 +640,45 @@ export default function CrmPage() {
     draggingId.current = id;
     setDragState(s => ({ ...s, draggingId: id }));
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadActivities = async () => {
+      if (!selectedDealId) {
+        setDealActivities([]);
+        setDealActivitiesError("");
+        setDealActivitiesLoading(false);
+        return;
+      }
+
+      setDealActivitiesLoading(true);
+      setDealActivitiesError("");
+      try {
+        const res = await fetch(`/api/crm/deals/${selectedDealId}/activities`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        const data = await res.json();
+        if (!active) return;
+        if (res.ok && data?.ok && Array.isArray(data.activities)) {
+          setDealActivities(data.activities);
+        } else {
+          setDealActivities([]);
+          setDealActivitiesError(data?.message || "Falha ao carregar atividades do negócio.");
+        }
+      } catch {
+        if (!active) return;
+        setDealActivities([]);
+        setDealActivitiesError("Falha de conectividade ao carregar atividades.");
+      } finally {
+        if (active) setDealActivitiesLoading(false);
+      }
+    };
+    loadActivities();
+    return () => {
+      active = false;
+    };
+  }, [selectedDealId]);
 
   const handleDragEnd = useCallback(() => {
     draggingId.current = null;
@@ -477,13 +753,32 @@ export default function CrmPage() {
     }
   }, [leads, refreshDeals]);
 
+  const handleActivityDraftChange = useCallback((field, value) => {
+    setActivityDraft((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const loadSelectedDealActivities = useCallback(async () => {
+    if (!selectedDealId) return;
+    const res = await fetch(`/api/crm/deals/${selectedDealId}/activities`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const data = await res.json();
+    if (res.ok && data?.ok && Array.isArray(data.activities)) {
+      setDealActivities(data.activities);
+      return data.activities;
+    }
+    throw new Error(data?.message || "Falha ao recarregar atividades.");
+  }, [selectedDealId]);
+
   // ── Filtered ──
   const filtered = useMemo(() => leads.filter(l => {
     const q = search.toLowerCase();
     return (!q || l.nome.toLowerCase().includes(q) || l.contato.toLowerCase().includes(q) || (l.obra || "").toLowerCase().includes(q))
       && (!fEtapa || l.etapa === fEtapa)
-      && (!fPrio  || l.prioridade === fPrio);
-  }), [leads, search, fEtapa, fPrio]);
+      && (!fPrio  || l.prioridade === fPrio)
+      && (!fOrigem || l.origem === fOrigem);
+  }), [leads, search, fEtapa, fPrio, fOrigem]);
 
   // ── Métricas ──
   const fechados  = filtered.filter(l => l.etapa === "Fechado");
@@ -542,6 +837,64 @@ export default function CrmPage() {
     }
   }, [refreshDeals]);
 
+  const handleCreateActivity = useCallback(async (event) => {
+    event?.preventDefault?.();
+    if (!selectedDealId) return;
+    if (!activityDraft.subject.trim()) {
+      setDealActivitiesError("Informe um assunto para a atividade.");
+      return;
+    }
+    setActivitySaving(true);
+    setDealActivitiesError("");
+    try {
+      const res = await fetch(`/api/crm/deals/${selectedDealId}/activities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(activityDraft),
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        await refreshDeals();
+        await loadSelectedDealActivities();
+        setActivityDraft((current) => ({
+          ...current,
+          subject: "",
+          body: "",
+          due_at: `${today()}T09:00`,
+        }));
+      } else {
+        setDealActivitiesError(data?.message || "Erro ao criar atividade.");
+      }
+    } catch {
+      setDealActivitiesError("Erro de conexão ao criar atividade.");
+    } finally {
+      setActivitySaving(false);
+    }
+  }, [activityDraft, loadSelectedDealActivities, refreshDeals, selectedDealId]);
+
+  const handleToggleActivityDone = useCallback(async (activity) => {
+    setActivitySaving(true);
+    setDealActivitiesError("");
+    try {
+      const res = await fetch(`/api/crm/activities/${activity.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: !activity.done }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok) {
+        await refreshDeals();
+        await loadSelectedDealActivities();
+      } else {
+        setDealActivitiesError(data?.message || "Erro ao atualizar atividade.");
+      }
+    } catch {
+      setDealActivitiesError("Erro de conexão ao atualizar atividade.");
+    } finally {
+      setActivitySaving(false);
+    }
+  }, [loadSelectedDealActivities, refreshDeals]);
+
   const btnToggle = (active) => ({
     background: active ? C.orange : "none",
     border: `1px solid ${active ? C.orange : C.border}`,
@@ -599,6 +952,12 @@ export default function CrmPage() {
           <option value="">Todas as prioridades</option>
           {["Alta", "Média", "Baixa"].map(p => <option key={p} value={p}>{p}</option>)}
         </select>
+        <select value={fOrigem} onChange={e => setFOrigem(e.target.value)} style={{ ...selStyle, minWidth: 160 }}>
+          <option value="">Todas as origens</option>
+          {[...new Set(leads.map((lead) => lead.origem).filter(Boolean))].sort().map((origem) => (
+            <option key={origem} value={origem}>{origem}</option>
+          ))}
+        </select>
         <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
           <button
             onClick={() => setEditingLead({ etapaInicial: "Contato" })}
@@ -608,6 +967,36 @@ export default function CrmPage() {
           </button>
           <button onClick={() => setView("kanban")} style={btnToggle(view === "kanban")}>{Ico.kanban} Kanban</button>
           <button onClick={() => setView("list")}   style={btnToggle(view === "list")}>{Ico.list} Lista</button>
+        </div>
+      </div>
+
+      {/* ── Pipeline avançado ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1, background: C.border }}>
+        {[
+          { label: "Negócios abertos", value: dealSummary.openDeals.length, sub: `${dealSummary.openActivities} atividades pendentes`, accent: C.orange },
+          { label: "Follow-ups hoje", value: dealSummary.dueToday.length, sub: "ações com prazo para hoje", accent: C.blue },
+          { label: "Atrasados", value: dealSummary.overdue.length, sub: "follow-ups vencidos", accent: C.red },
+          { label: "Fechados", value: dealSummary.wonDeals.length, sub: `${dealSummary.lostDeals.length} perdidos`, accent: C.green },
+        ].map((item) => (
+          <div key={item.label} style={{ background: C.surface, padding: "14px 20px" }}>
+            <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>{item.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: item.accent }}>{item.value}</div>
+            <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{item.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "14px 24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+          {dealSummary.stageTotals.map((stage) => (
+            <div key={stage.stage} style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{stage.label}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: stage.meta.text }}>{stage.count}</div>
+                <div style={{ fontSize: 12, color: C.muted }}>{fmt(stage.value)}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -629,6 +1018,9 @@ export default function CrmPage() {
                 <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
                   <span style={{ color: C.muted }}>Etapa: <b style={{ color: C.text }}>{deal.stage}</b></span>
                   <span style={{ color: C.muted }}>Abertas: <b style={{ color: C.orange }}>{deal.activities_open}</b></span>
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>
+                  Próximo: <b style={{ color: deal.next_activity_at ? C.text : C.muted }}>{deal.next_activity_at ? fmtDateTime(deal.next_activity_at) : "Sem follow-up"}</b>
                 </div>
               </div>
             ))}
@@ -717,6 +1109,15 @@ export default function CrmPage() {
         {selected && (
           <DetailPanel
             lead={selected}
+            deal={selectedDeal}
+            dealActivities={dealActivities}
+            dealActivitiesLoading={dealActivitiesLoading}
+            dealActivitiesError={dealActivitiesError}
+            activityDraft={activityDraft}
+            onActivityDraftChange={handleActivityDraftChange}
+            onCreateActivity={handleCreateActivity}
+            onToggleActivityDone={handleToggleActivityDone}
+            activitySaving={activitySaving}
             onClose={() => setSelected(null)}
             onEdit={lead => setEditingLead({ lead })}
             onDelete={handleDeleteLead}

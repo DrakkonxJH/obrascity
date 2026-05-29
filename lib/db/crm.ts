@@ -34,6 +34,22 @@ export type CrmDealSummary = {
   next_activity_at: string | null;
   activities_total: number;
   activities_open: number;
+  tags: string[];
+};
+
+export type CrmDealActivity = {
+  id: string;
+  empresa_id: string;
+  deal_id: string;
+  type: string;
+  subject: string;
+  body: string;
+  channel: string;
+  due_at: string | null;
+  completed_at: string | null;
+  done: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 type UpsertCrmLeadInput = {
@@ -62,6 +78,15 @@ type CronogramaTaskSyncInput = {
   clienteNome?: string | null;
 };
 
+type CrmDealActivityInput = {
+  type: string;
+  subject: string;
+  body?: string;
+  channel?: string;
+  due_at?: string | null;
+  done?: boolean;
+};
+
 const CRM_SELECT =
   "id, empresa_id, nome, contato, cargo, email, telefone, valor, etapa, origem, obra, prioridade, ultima_atividade, notas, created_at, updated_at";
 
@@ -84,6 +109,43 @@ function mapLeadPrioridadeToDealPriority(prioridade: CrmLead["prioridade"]): "al
   if (prioridade === "Alta") return "alta";
   if (prioridade === "Baixa") return "baixa";
   return "media";
+}
+
+function normalizeDealStage(stage: string) {
+  const normalized = String(stage ?? "").trim().toLowerCase();
+  if (normalized === "novos") return "novos";
+  if (normalized === "qualificacao") return "qualificacao";
+  if (normalized === "proposta") return "proposta";
+  if (normalized === "negociacao") return "negociacao";
+  if (normalized === "ganho") return "ganho";
+  if (normalized === "perdido") return "perdido";
+  return "novos";
+}
+
+function normalizeDealPriority(priority: string) {
+  const normalized = String(priority ?? "").trim().toLowerCase();
+  if (normalized === "alta") return "alta";
+  if (normalized === "baixa") return "baixa";
+  return "media";
+}
+
+function normalizeActivityType(type: string) {
+  const normalized = String(type ?? "").trim().toLowerCase();
+  if (normalized === "ligacao" || normalized === "call") return "call";
+  if (normalized === "email" || normalized === "e-mail") return "email";
+  if (normalized === "reuniao" || normalized === "reunião") return "meeting";
+  if (normalized === "proposta") return "proposal";
+  if (normalized === "nota") return "note";
+  if (normalized === "tarefa" || normalized === "task") return "task";
+  return "follow_up";
+}
+
+function normalizeActivityChannel(channel: string) {
+  const normalized = String(channel ?? "").trim().toLowerCase();
+  if (["whatsapp", "email", "ligacao", "call", "reuniao", "meeting", "manual"].includes(normalized)) {
+    return normalized;
+  }
+  return "manual";
 }
 
 function asIsoDateTime(dateOrIso: string) {
@@ -241,9 +303,9 @@ async function syncLeadToDeal(supabase: SupabaseClient, lead: CrmLead) {
     obra_id: obraId,
     nome: lead.obra?.trim() ? `${lead.nome} — ${lead.obra}` : lead.nome,
     descricao: lead.notas || null,
-    stage: mapLeadEtapaToDealStage(lead.etapa),
+    stage: normalizeDealStage(mapLeadEtapaToDealStage(lead.etapa)),
     status: mapLeadEtapaToDealStatus(lead.etapa),
-    priority: mapLeadPrioridadeToDealPriority(lead.prioridade),
+    priority: normalizeDealPriority(mapLeadPrioridadeToDealPriority(lead.prioridade)),
     valor: lead.valor ?? 0,
     last_activity_at: asIsoDateTime(lead.ultima_atividade),
     next_activity_at: null,
@@ -328,7 +390,7 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
   const dealsRes = await supabase
     .from("crm_deals")
     .select(
-      "id, nome, stage, status, priority, valor, last_activity_at, next_activity_at, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome)",
+      "id, nome, stage, status, priority, valor, last_activity_at, next_activity_at, tags, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome)",
     )
     .eq("empresa_id", empresaId)
     .order("updated_at", { ascending: false })
@@ -378,8 +440,149 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
       next_activity_at: row.next_activity_at ? String(row.next_activity_at) : null,
       activities_total: counts.total,
       activities_open: counts.open,
+      tags: Array.isArray((row as { tags?: unknown }).tags)
+        ? ((row as { tags: string[] }).tags ?? []).filter((tag) => typeof tag === "string")
+        : [],
     } satisfies CrmDealSummary;
   });
+}
+
+function asNullableIso(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+async function refreshDealActivitySchedule(supabase: SupabaseClient, empresaId: string, dealId: string) {
+  const activitiesRes = await supabase
+    .from("crm_activities")
+    .select("due_at")
+    .eq("empresa_id", empresaId)
+    .eq("deal_id", dealId)
+    .eq("done", false)
+    .order("due_at", { ascending: true, nullsFirst: false })
+    .limit(1);
+
+  if (activitiesRes.error) {
+    throw new Error(`Erro ao calcular próxima atividade do negócio: ${activitiesRes.error.message}`);
+  }
+
+  const nextActivityAt = activitiesRes.data?.[0]?.due_at ? String(activitiesRes.data[0].due_at) : null;
+  const now = new Date().toISOString();
+  const update = await supabase
+    .from("crm_deals")
+    .update({
+      next_activity_at: nextActivityAt,
+      last_activity_at: now,
+      updated_at: now,
+    })
+    .eq("empresa_id", empresaId)
+    .eq("id", dealId);
+
+  if (update.error) {
+    throw new Error(`Erro ao atualizar agenda do negócio: ${update.error.message}`);
+  }
+}
+
+export async function listCrmDealActivities(dealId: string): Promise<CrmDealActivity[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("crm_activities")
+    .select("id, empresa_id, deal_id, type, subject, body, channel, due_at, completed_at, done, created_at, updated_at")
+    .eq("empresa_id", empresaId)
+    .eq("deal_id", dealId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Erro ao listar atividades do CRM: ${error.message}`);
+  }
+
+  return ((data ?? []) as CrmDealActivity[]).map((activity) => ({
+    ...activity,
+    due_at: activity.due_at ? String(activity.due_at) : null,
+    completed_at: activity.completed_at ? String(activity.completed_at) : null,
+  }));
+}
+
+export async function createCrmDealActivity(dealId: string, input: CrmDealActivityInput) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const now = new Date().toISOString();
+  const payload = {
+    empresa_id: empresaId,
+    deal_id: dealId,
+    type: normalizeActivityType(input.type),
+    subject: String(input.subject ?? "").trim(),
+    body: String(input.body ?? "").trim(),
+    channel: normalizeActivityChannel(input.channel ?? "manual"),
+    due_at: asNullableIso(input.due_at ?? null),
+    completed_at: input.done ? now : null,
+    done: Boolean(input.done),
+    updated_at: now,
+  };
+
+  if (!payload.subject) {
+    throw new Error("Assunto da atividade é obrigatório");
+  }
+
+  const { data, error } = await supabase
+    .from("crm_activities")
+    .insert(payload)
+    .select("id, empresa_id, deal_id, type, subject, body, channel, due_at, completed_at, done, created_at, updated_at")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Erro ao criar atividade do CRM: ${error?.message ?? "falha desconhecida"}`);
+  }
+
+  await refreshDealActivitySchedule(supabase, empresaId, dealId);
+  return data as CrmDealActivity;
+}
+
+export async function updateCrmDealActivity(activityId: string, patch: Partial<Pick<CrmDealActivityInput, "done" | "body" | "subject" | "due_at" | "type" | "channel">>) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const now = new Date().toISOString();
+  const { data: current, error: currentError } = await supabase
+    .from("crm_activities")
+    .select("id, deal_id, done")
+    .eq("empresa_id", empresaId)
+    .eq("id", activityId)
+    .maybeSingle<{ id: string; deal_id: string; done: boolean }>();
+
+  if (currentError) {
+    throw new Error(`Erro ao carregar atividade do CRM: ${currentError.message}`);
+  }
+  if (!current?.id) {
+    throw new Error("Atividade não encontrada");
+  }
+
+  const updatePayload: Record<string, unknown> = { updated_at: now };
+  if (typeof patch.subject === "string") updatePayload.subject = String(patch.subject).trim();
+  if (typeof patch.body === "string") updatePayload.body = String(patch.body).trim();
+  if (typeof patch.type === "string") updatePayload.type = normalizeActivityType(patch.type);
+  if (typeof patch.channel === "string") updatePayload.channel = normalizeActivityChannel(patch.channel);
+  if (patch.due_at !== undefined) updatePayload.due_at = asNullableIso(patch.due_at ?? null);
+  if (patch.done !== undefined) {
+    updatePayload.done = Boolean(patch.done);
+    updatePayload.completed_at = patch.done ? now : null;
+  }
+
+  const { data, error } = await supabase
+    .from("crm_activities")
+    .update(updatePayload)
+    .eq("empresa_id", empresaId)
+    .eq("id", activityId)
+    .select("id, empresa_id, deal_id, type, subject, body, channel, due_at, completed_at, done, created_at, updated_at")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Erro ao atualizar atividade do CRM: ${error?.message ?? "falha desconhecida"}`);
+  }
+
+  await refreshDealActivitySchedule(supabase, empresaId, current.deal_id);
+  return data as CrmDealActivity;
 }
 
 function mapTaskStatusToEtapa(status: string): CrmLead["etapa"] {
