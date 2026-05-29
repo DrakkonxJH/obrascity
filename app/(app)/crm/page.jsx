@@ -48,6 +48,22 @@ const ACTIVITY_CHANNELS = [
   { value: "meeting", label: "Reunião" },
 ];
 
+const ACTIVITY_TYPE_ICON = {
+  follow_up: "⏱",
+  call: "📞",
+  email: "✉",
+  meeting: "🤝",
+  proposal: "📄",
+  note: "📝",
+  task: "✅",
+};
+
+const HEALTH_META = {
+  hot: { label: "Quente", bg: "#0F2A1A", text: "#22C55E" },
+  warm: { label: "Morno", bg: "#2A2010", text: "#F59E0B" },
+  cold: { label: "Frio", bg: "#2A0F0F", text: "#EF4444" },
+};
+
 const EC = {
   Contato:      { bg: "#1A2035", text: "#3B82F6" },
   Qualificação: { bg: "#1A2820", text: "#22C55E" },
@@ -94,6 +110,27 @@ function formatDealStage(stage) {
 function formatActivityType(type) {
   const entry = ACTIVITY_TYPES.find((item) => item.value === type);
   return entry?.label ?? type;
+}
+
+function normalizeDateKey(value) {
+  if (!value) return "Sem data";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sem data";
+  return date.toISOString().slice(0, 10);
+}
+
+function computeHealth(deal) {
+  if (!deal || deal.status === "perdido") return { score: 0, level: "cold" };
+  if (deal.status === "ganho") return { score: 100, level: "hot" };
+  let score = Number(deal.probability) || 30;
+  if (isBeforeToday(deal.next_activity_at)) score -= 30;
+  if (isToday(deal.next_activity_at)) score += 8;
+  if ((Number(deal.activities_open) || 0) > 4) score -= 15;
+  if ((Number(deal.activities_open) || 0) === 0) score -= 20;
+  const bounded = Math.max(0, Math.min(100, score));
+  if (bounded >= 70) return { score: bounded, level: "hot" };
+  if (bounded >= 40) return { score: bounded, level: "warm" };
+  return { score: bounded, level: "cold" };
 }
 
 // ─── Subcomponentes utilitários ───────────────────────────────────────
@@ -372,9 +409,14 @@ function LeadModal({ lead, isNew, etapaInicial, onClose, onSave, saving }) {
 function DetailPanel({
   lead,
   deal,
+  profiles,
+  dealPatchSaving,
+  onPatchDeal,
   dealActivities,
   dealActivitiesLoading,
   dealActivitiesError,
+  activityFilters,
+  onActivityFiltersChange,
   activityDraft,
   onActivityDraftChange,
   onCreateActivity,
@@ -384,11 +426,27 @@ function DetailPanel({
   onEdit,
   onDelete,
 }) {
+  const [customKey, setCustomKey] = useState("");
+  const [customValue, setCustomValue] = useState("");
   const ec = EC[lead.etapa] || { bg: C.faint, text: C.muted };
   const pc = PC[lead.prioridade] || { bg: C.faint, text: C.muted };
+  const health = computeHealth(deal);
+  const healthMeta = HEALTH_META[health.level];
   const openActivities = dealActivities.filter((activity) => !activity.done);
   const overdueActivities = openActivities.filter((activity) => isBeforeToday(activity.due_at));
   const nextDue = deal?.next_activity_at ? fmtDateTime(deal.next_activity_at) : "Sem follow-up";
+  const filteredActivities = dealActivities.filter((activity) => {
+    const matchesType = !activityFilters.type || activity.type === activityFilters.type;
+    const matchesChannel = !activityFilters.channel || activity.channel === activityFilters.channel;
+    return matchesType && matchesChannel;
+  });
+  const groupedActivities = filteredActivities.reduce((acc, activity) => {
+    const key = normalizeDateKey(activity.created_at);
+    const current = acc.get(key) ?? [];
+    current.push(activity);
+    acc.set(key, current);
+    return acc;
+  }, new Map());
   return (
     <div style={{ width: 380, background: C.card, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
       <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -461,6 +519,115 @@ function DetailPanel({
             <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>
               Atrasadas: <span style={{ color: overdueActivities.length > 0 ? C.red : C.text, fontWeight: 600 }}>{overdueActivities.length}</span>
             </div>
+            <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>
+              Saúde:{" "}
+              <span style={{ background: healthMeta.bg, color: healthMeta.text, fontWeight: 700, borderRadius: 999, padding: "2px 8px" }}>
+                {healthMeta.label} · {health.score}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 14, display: "grid", gap: 8 }}>
+            <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Operação comercial
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <select
+                value={deal.stage}
+                onChange={(e) => onPatchDeal({ stage: e.target.value })}
+                disabled={dealPatchSaving}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+              >
+                {DEAL_STAGES.map((stage) => (
+                  <option key={stage} value={stage}>{formatDealStage(stage)}</option>
+                ))}
+              </select>
+              <select
+                value={deal.owner_profile_id || ""}
+                onChange={(e) => onPatchDeal({ owner_profile_id: e.target.value || null })}
+                disabled={dealPatchSaving}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+              >
+                <option value="">Sem responsável</option>
+                {profiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>{profile.nome || profile.email}</option>
+                ))}
+              </select>
+            </div>
+            {(deal.stage === "perdido" || deal.status === "perdido") ? (
+              <input
+                value={deal.loss_reason || ""}
+                onChange={(e) => onPatchDeal({ loss_reason: e.target.value })}
+                placeholder="Motivo de perda (obrigatório)"
+                disabled={dealPatchSaving}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+              />
+            ) : null}
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Playbook da etapa
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              {(deal.playbook_items || []).map((item) => (
+                <label key={item.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: C.text }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(item.done)}
+                    onChange={(e) => {
+                      const next = (deal.playbook_items || []).map((current) => current.id === item.id ? { ...current, done: e.target.checked } : current);
+                      onPatchDeal({ playbook_items: next });
+                    }}
+                    disabled={dealPatchSaving}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Campos customizados
+            </div>
+            <div style={{ display: "grid", gap: 6 }}>
+              {Object.entries(deal.custom_fields || {}).map(([key, value]) => (
+                <div key={key} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 6 }}>
+                  <input value={key} readOnly style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.muted, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                  <input value={value} readOnly style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = { ...(deal.custom_fields || {}) };
+                      delete next[key];
+                      onPatchDeal({ custom_fields: next });
+                    }}
+                    disabled={dealPatchSaving}
+                    style={{ background: "#2A0F0F", border: "1px solid #3A1515", color: C.red, borderRadius: 8, padding: "0 10px", fontSize: 12, cursor: "pointer" }}
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 6 }}>
+                <input value={customKey} onChange={(e) => setCustomKey(e.target.value)} placeholder="Campo" style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                <input value={customValue} onChange={(e) => setCustomValue(e.target.value)} placeholder="Valor" style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "7px 10px", fontSize: 12, outline: "none" }} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!customKey.trim()) return;
+                    onPatchDeal({ custom_fields: { ...(deal.custom_fields || {}), [customKey.trim()]: customValue.trim() } });
+                    setCustomKey("");
+                    setCustomValue("");
+                  }}
+                  disabled={dealPatchSaving}
+                  style={{ background: C.orange, border: "none", color: "#fff", borderRadius: 8, padding: "0 10px", fontSize: 12, cursor: "pointer" }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -515,6 +682,40 @@ function DetailPanel({
               >
                 {activitySaving ? "Salvando atividade..." : "Registrar follow-up"}
               </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onActivityDraftChange("type", "call");
+                    onActivityDraftChange("channel", "whatsapp");
+                    onActivityDraftChange("subject", activityDraft.subject || "Contato via WhatsApp");
+                    onCreateActivity();
+                    if (lead.telefone) {
+                      window.open(`https://wa.me/${String(lead.telefone).replace(/\D/g, "")}`, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  disabled={activitySaving}
+                  style={{ flex: 1, background: "#103021", border: "1px solid #1F5130", color: "#22C55E", borderRadius: 8, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                >
+                  WhatsApp + log
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onActivityDraftChange("type", "email");
+                    onActivityDraftChange("channel", "email");
+                    onActivityDraftChange("subject", activityDraft.subject || "Contato por e-mail");
+                    onCreateActivity();
+                    if (lead.email) {
+                      window.open(`mailto:${lead.email}`, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  disabled={activitySaving}
+                  style={{ flex: 1, background: "#1A2035", border: "1px solid #2A3A64", color: "#7DB6FF", borderRadius: 8, padding: "8px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700 }}
+                >
+                  E-mail + log
+                </button>
+              </div>
             </div>
           </div>
 
@@ -522,35 +723,64 @@ function DetailPanel({
             <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
               Linha do tempo
             </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <select
+                value={activityFilters.type}
+                onChange={(e) => onActivityFiltersChange("type", e.target.value)}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+              >
+                <option value="">Todos os tipos</option>
+                {ACTIVITY_TYPES.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+              <select
+                value={activityFilters.channel}
+                onChange={(e) => onActivityFiltersChange("channel", e.target.value)}
+                style={{ background: C.faint, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: "8px 10px", fontSize: 12, outline: "none" }}
+              >
+                <option value="">Todos os canais</option>
+                {ACTIVITY_CHANNELS.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+            </div>
             {dealActivitiesLoading ? (
               <div style={{ fontSize: 13, color: C.muted }}>Carregando atividades...</div>
             ) : dealActivitiesError ? (
               <div style={{ fontSize: 13, color: C.red }}>{dealActivitiesError}</div>
-            ) : dealActivities.length === 0 ? (
+            ) : filteredActivities.length === 0 ? (
               <div style={{ fontSize: 13, color: C.muted }}>Sem atividades registradas para este negócio.</div>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
-                {dealActivities.map((activity) => (
-                  <div key={activity.id} style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, background: C.faint }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{activity.subject}</div>
-                        <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
-                          {formatActivityType(activity.type)} · {activity.channel}
+                {[...groupedActivities.entries()].map(([day, activities]) => (
+                  <div key={day}>
+                    <div style={{ fontSize: 11, color: C.muted, marginBottom: 6, fontWeight: 700 }}>{day === "Sem data" ? day : new Date(`${day}T00:00:00`).toLocaleDateString("pt-BR")}</div>
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {activities.map((activity) => (
+                        <div key={activity.id} style={{ border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, background: C.faint }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{ACTIVITY_TYPE_ICON[activity.type] || "•"} {activity.subject}</div>
+                              <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
+                                {formatActivityType(activity.type)} · {activity.channel}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => onToggleActivityDone(activity)}
+                              style={{ background: activity.done ? "#0F2A1A" : "none", border: `1px solid ${activity.done ? "#1F5130" : C.border}`, color: activity.done ? "#22C55E" : C.muted, borderRadius: 999, padding: "4px 8px", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}
+                            >
+                              {activity.done ? "Concluída" : "Marcar concluída"}
+                            </button>
+                          </div>
+                          {activity.body ? <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, marginBottom: 6 }}>{activity.body}</div> : null}
+                          <div style={{ fontSize: 11, color: C.muted, display: "flex", justifyContent: "space-between", gap: 8 }}>
+                            <span>Prazo: {activity.due_at ? fmtDateTime(activity.due_at) : "Sem prazo"}</span>
+                            <span>{activity.done ? `Finalizada em ${activity.completed_at ? fmtDateTime(activity.completed_at) : "—"}` : `Criada em ${fmtDateTime(activity.created_at)}`}</span>
+                          </div>
                         </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onToggleActivityDone(activity)}
-                        style={{ background: activity.done ? "#0F2A1A" : "none", border: `1px solid ${activity.done ? "#1F5130" : C.border}`, color: activity.done ? "#22C55E" : C.muted, borderRadius: 999, padding: "4px 8px", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}
-                      >
-                        {activity.done ? "Concluída" : "Marcar concluída"}
-                      </button>
-                    </div>
-                    {activity.body ? <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, marginBottom: 6 }}>{activity.body}</div> : null}
-                    <div style={{ fontSize: 11, color: C.muted, display: "flex", justifyContent: "space-between", gap: 8 }}>
-                      <span>Prazo: {activity.due_at ? fmtDateTime(activity.due_at) : "Sem prazo"}</span>
-                      <span>{activity.done ? `Finalizada em ${activity.completed_at ? fmtDateTime(activity.completed_at) : "—"}` : `Criada em ${fmtDateTime(activity.created_at)}`}</span>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -575,20 +805,25 @@ function DetailPanel({
 export default function CrmPage() {
   const [leads, setLeads]   = useState([]);
   const [deals, setDeals]   = useState([]);
+  const [profiles, setProfiles] = useState([]);
+  const [lossReasons, setLossReasons] = useState([]);
   const [view, setView]     = useState("kanban");
   const [search, setSearch] = useState("");
   const [fEtapa, setFEtapa] = useState("");
   const [fPrio, setFPrio]   = useState("");
   const [fOrigem, setFOrigem] = useState("");
+  const [fOwner, setFOwner] = useState("");
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncError, setSyncError] = useState("");
   const [editingLead, setEditingLead] = useState(null);   // { lead } = editar | { etapaInicial } = novo
   const [saving, setSaving] = useState(false);
+  const [dealPatchSaving, setDealPatchSaving] = useState(false);
   const [dealActivities, setDealActivities] = useState([]);
   const [dealActivitiesLoading, setDealActivitiesLoading] = useState(false);
   const [dealActivitiesError, setDealActivitiesError] = useState("");
   const [activitySaving, setActivitySaving] = useState(false);
+  const [activityFilters, setActivityFilters] = useState({ type: "", channel: "" });
   const [activityDraft, setActivityDraft] = useState({
     type: "follow_up",
     subject: "",
@@ -609,6 +844,18 @@ export default function CrmPage() {
     }
   }, []);
 
+  const refreshLossReasons = useCallback(async () => {
+    try {
+      const res = await fetch("/api/crm/loss-reasons", { method: "GET", headers: { Accept: "application/json" } });
+      const data = await res.json();
+      if (res.ok && data?.ok && Array.isArray(data.reasons)) {
+        setLossReasons(data.reasons);
+      }
+    } catch {
+      // noop
+    }
+  }, []);
+
   const selectedDeal = useMemo(() => {
     if (!selected) return null;
     return deals.find((deal) => Array.isArray(deal.tags) && deal.tags.includes(`lead:${selected.id}`)) || null;
@@ -622,6 +869,16 @@ export default function CrmPage() {
     const dueToday = openDeals.filter((deal) => isToday(deal.next_activity_at));
     const overdue = openDeals.filter((deal) => isBeforeToday(deal.next_activity_at));
     const openActivities = deals.reduce((sum, deal) => sum + (Number(deal.activities_open) || 0), 0);
+    const forecast = openDeals.reduce((sum, deal) => sum + ((Number(deal.valor) || 0) * ((Number(deal.probability) || 0) / 100)), 0);
+    const baseDayTs = new Date(`${today()}T00:00:00`).getTime();
+    const avgAgingDays = openDeals.length
+      ? Math.round(openDeals.reduce((sum, deal) => {
+        const date = deal.last_activity_at ? new Date(deal.last_activity_at) : null;
+        if (!date || Number.isNaN(date.getTime())) return sum + 30;
+        const diffMs = baseDayTs - date.getTime();
+        return sum + Math.max(0, Math.round(diffMs / 86400000));
+      }, 0) / openDeals.length)
+      : 0;
     const stageTotals = DEAL_STAGES.map((stage) => ({
       stage,
       label: formatDealStage(stage),
@@ -629,7 +886,7 @@ export default function CrmPage() {
       value: deals.filter((deal) => deal.stage === stage).reduce((sum, deal) => sum + (Number(deal.valor) || 0), 0),
       meta: DEAL_STAGE_META[stage],
     }));
-    return { openDeals, wonDeals, lostDeals, dueToday, overdue, openActivities, stageTotals };
+    return { openDeals, wonDeals, lostDeals, dueToday, overdue, openActivities, stageTotals, forecast, avgAgingDays };
   }, [deals]);
 
   // ── Drag state ──
@@ -693,26 +950,36 @@ export default function CrmPage() {
     let active = true;
     const load = async () => {
       try {
-        const [leadsRes, dealsRes] = await Promise.all([
+        const [leadsRes, dealsRes, profilesRes, reasonsRes] = await Promise.all([
           fetch("/api/crm/leads", { method: "GET", headers: { Accept: "application/json" } }),
           fetch("/api/crm/deals", { method: "GET", headers: { Accept: "application/json" } }),
+          fetch("/api/crm/profiles", { method: "GET", headers: { Accept: "application/json" } }),
+          fetch("/api/crm/loss-reasons", { method: "GET", headers: { Accept: "application/json" } }),
         ]);
         const data = await leadsRes.json();
         const dealsData = await dealsRes.json();
+        const profilesData = await profilesRes.json();
+        const reasonsData = await reasonsRes.json();
         if (!active) return;
         if (!leadsRes.ok || !data?.ok) {
           setLeads([]);
           setDeals([]);
+          setProfiles([]);
+          setLossReasons([]);
           setSyncError(data?.message || "Falha ao carregar tarefas reais para o CRM.");
         } else {
           setLeads(Array.isArray(data.leads) ? data.leads : []);
           setDeals(dealsRes.ok && dealsData?.ok && Array.isArray(dealsData.deals) ? dealsData.deals : []);
+          setProfiles(profilesRes.ok && profilesData?.ok && Array.isArray(profilesData.profiles) ? profilesData.profiles : []);
+          setLossReasons(reasonsRes.ok && reasonsData?.ok && Array.isArray(reasonsData.reasons) ? reasonsData.reasons : []);
           setSyncError("");
         }
       } catch {
         if (!active) return;
         setLeads([]);
         setDeals([]);
+        setProfiles([]);
+        setLossReasons([]);
         setSyncError("Falha de conectividade com API CRM.");
       } finally {
         if (active) setLoading(false);
@@ -757,6 +1024,49 @@ export default function CrmPage() {
     setActivityDraft((current) => ({ ...current, [field]: value }));
   }, []);
 
+  const handleActivityFiltersChange = useCallback((field, value) => {
+    setActivityFilters((current) => ({ ...current, [field]: value }));
+  }, []);
+
+  const handlePatchSelectedDeal = useCallback(async (patch) => {
+    if (!selectedDealId) return;
+    setDealPatchSaving(true);
+    setDealActivitiesError("");
+    try {
+      const res = await fetch(`/api/crm/deals/${selectedDealId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        setDealActivitiesError(data?.message || "Falha ao atualizar negócio.");
+        return;
+      }
+      await refreshDeals();
+      await refreshLossReasons();
+    } catch {
+      setDealActivitiesError("Erro de conectividade ao atualizar negócio.");
+    } finally {
+      setDealPatchSaving(false);
+    }
+  }, [refreshDeals, refreshLossReasons, selectedDealId]);
+
+  const handleRunAutomation = useCallback(async () => {
+    try {
+      const res = await fetch("/api/crm/deals", { method: "POST", headers: { Accept: "application/json" } });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        setSyncError(data?.message || "Falha ao executar automações de follow-up.");
+        return;
+      }
+      await refreshDeals();
+      setSyncError("");
+    } catch {
+      setSyncError("Erro de conexão ao executar automações de follow-up.");
+    }
+  }, [refreshDeals]);
+
   const loadSelectedDealActivities = useCallback(async () => {
     if (!selectedDealId) return;
     const res = await fetch(`/api/crm/deals/${selectedDealId}/activities`, {
@@ -773,12 +1083,14 @@ export default function CrmPage() {
 
   // ── Filtered ──
   const filtered = useMemo(() => leads.filter(l => {
+    const linkedDeal = deals.find((deal) => Array.isArray(deal.tags) && deal.tags.includes(`lead:${l.id}`));
     const q = search.toLowerCase();
     return (!q || l.nome.toLowerCase().includes(q) || l.contato.toLowerCase().includes(q) || (l.obra || "").toLowerCase().includes(q))
       && (!fEtapa || l.etapa === fEtapa)
       && (!fPrio  || l.prioridade === fPrio)
-      && (!fOrigem || l.origem === fOrigem);
-  }), [leads, search, fEtapa, fPrio, fOrigem]);
+      && (!fOrigem || l.origem === fOrigem)
+      && (!fOwner || linkedDeal?.owner_profile_id === fOwner);
+  }), [leads, deals, search, fEtapa, fPrio, fOrigem, fOwner]);
 
   // ── Métricas ──
   const fechados  = filtered.filter(l => l.etapa === "Fechado");
@@ -958,7 +1270,19 @@ export default function CrmPage() {
             <option key={origem} value={origem}>{origem}</option>
           ))}
         </select>
+        <select value={fOwner} onChange={e => setFOwner(e.target.value)} style={{ ...selStyle, minWidth: 180 }}>
+          <option value="">Toda a carteira</option>
+          {profiles.map((profile) => (
+            <option key={profile.id} value={profile.id}>{profile.nome || profile.email}</option>
+          ))}
+        </select>
         <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+          <button
+            onClick={handleRunAutomation}
+            style={{ ...btnToggle(false), borderColor: C.blue, color: C.blue }}
+          >
+            {Ico.plus} Rodar automações
+          </button>
           <button
             onClick={() => setEditingLead({ etapaInicial: "Contato" })}
             style={{ ...btnToggle(false), background: C.orange, borderColor: C.orange, color: "#fff" }}
@@ -971,12 +1295,14 @@ export default function CrmPage() {
       </div>
 
       {/* ── Pipeline avançado ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1, background: C.border }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 1, background: C.border }}>
         {[
           { label: "Negócios abertos", value: dealSummary.openDeals.length, sub: `${dealSummary.openActivities} atividades pendentes`, accent: C.orange },
           { label: "Follow-ups hoje", value: dealSummary.dueToday.length, sub: "ações com prazo para hoje", accent: C.blue },
           { label: "Atrasados", value: dealSummary.overdue.length, sub: "follow-ups vencidos", accent: C.red },
           { label: "Fechados", value: dealSummary.wonDeals.length, sub: `${dealSummary.lostDeals.length} perdidos`, accent: C.green },
+          { label: "Forecast", value: fmt(dealSummary.forecast), sub: "receita ponderada por probabilidade", accent: "#7DB6FF" },
+          { label: "Aging médio", value: `${dealSummary.avgAgingDays} dias`, sub: "tempo sem avanço por negócio", accent: C.yellow },
         ].map((item) => (
           <div key={item.label} style={{ background: C.surface, padding: "14px 20px" }}>
             <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>{item.label}</div>
@@ -1000,6 +1326,22 @@ export default function CrmPage() {
         </div>
       </div>
 
+      {lossReasons.length > 0 && (
+        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "10px 24px" }}>
+          <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
+            Relatório de motivos de perda
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10 }}>
+            {lossReasons.slice(0, 6).map((reason) => (
+              <div key={reason.reason} style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px", background: C.faint }}>
+                <div style={{ fontSize: 13, color: C.text, fontWeight: 700 }}>{reason.reason}</div>
+                <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>{reason.total} negócios · {fmt(reason.value)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Negócios enterprise (deals + atividades) ── */}
       {deals.length > 0 && (
         <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "10px 24px" }}>
@@ -1021,6 +1363,10 @@ export default function CrmPage() {
                 </div>
                 <div style={{ marginTop: 6, fontSize: 12, color: C.muted }}>
                   Próximo: <b style={{ color: deal.next_activity_at ? C.text : C.muted }}>{deal.next_activity_at ? fmtDateTime(deal.next_activity_at) : "Sem follow-up"}</b>
+                </div>
+                <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 12, color: C.muted }}>
+                  <span>Saúde: <b style={{ color: HEALTH_META[computeHealth(deal).level].text }}>{HEALTH_META[computeHealth(deal).level].label}</b></span>
+                  <span>Owner: <b style={{ color: C.text }}>{deal.owner_name || "—"}</b></span>
                 </div>
               </div>
             ))}
@@ -1110,9 +1456,14 @@ export default function CrmPage() {
           <DetailPanel
             lead={selected}
             deal={selectedDeal}
+            profiles={profiles}
+            dealPatchSaving={dealPatchSaving}
+            onPatchDeal={handlePatchSelectedDeal}
             dealActivities={dealActivities}
             dealActivitiesLoading={dealActivitiesLoading}
             dealActivitiesError={dealActivitiesError}
+            activityFilters={activityFilters}
+            onActivityFiltersChange={handleActivityFiltersChange}
             activityDraft={activityDraft}
             onActivityDraftChange={handleActivityDraftChange}
             onCreateActivity={handleCreateActivity}

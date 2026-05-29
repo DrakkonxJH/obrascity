@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listCrmDealsSummary } from "@/lib/db/crm";
+import { listCrmDealsSummary, runCrmFollowupAutomation } from "@/lib/db/crm";
 
 export async function GET() {
   try {
@@ -11,3 +11,12 @@ export async function GET() {
   }
 }
 
+export async function POST() {
+  try {
+    const result = await runCrmFollowupAutomation();
+    return NextResponse.json({ ok: true, ...result });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro ao executar automações de CRM";
+    return NextResponse.json({ ok: false, message }, { status: 400 });
+  }
+}

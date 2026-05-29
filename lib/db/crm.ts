@@ -1,4 +1,5 @@
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
+import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { createServerClient } from "@/lib/supabase/server";
 import { type SupabaseClient } from "@supabase/supabase-js";
 
@@ -28,13 +29,19 @@ export type CrmDealSummary = {
   status: string;
   priority: string;
   valor: number;
+   probability: number;
   company_name: string;
   contact_name: string;
+  owner_profile_id: string | null;
+  owner_name: string;
   last_activity_at: string | null;
   next_activity_at: string | null;
   activities_total: number;
   activities_open: number;
   tags: string[];
+  loss_reason: string;
+  custom_fields: Record<string, string>;
+  playbook_items: Array<{ id: string; label: string; done: boolean }>;
 };
 
 export type CrmDealActivity = {
@@ -85,6 +92,30 @@ type CrmDealActivityInput = {
   channel?: string;
   due_at?: string | null;
   done?: boolean;
+};
+
+type CrmDealPlaybookItem = {
+  id: string;
+  label: string;
+  done: boolean;
+};
+
+type UpdateCrmDealInput = {
+  stage?: string;
+  status?: string;
+  priority?: string;
+  probability?: number;
+  owner_profile_id?: string | null;
+  loss_reason?: string;
+  custom_fields?: Record<string, string>;
+  playbook_items?: CrmDealPlaybookItem[];
+};
+
+type CrmProfileSummary = {
+  id: string;
+  nome: string;
+  email: string;
+  role: string;
 };
 
 const CRM_SELECT =
@@ -154,6 +185,123 @@ function asIsoDateTime(dateOrIso: string) {
     return new Date().toISOString();
   }
   return maybe.toISOString();
+}
+
+function defaultDealProbability(stage: string) {
+  if (stage === "ganho") return 100;
+  if (stage === "perdido") return 0;
+  if (stage === "negociacao") return 75;
+  if (stage === "proposta") return 55;
+  if (stage === "qualificacao") return 30;
+  return 10;
+}
+
+function buildDefaultPlaybook(stage: string): CrmDealPlaybookItem[] {
+  if (stage === "novos") {
+    return [
+      { id: "lead-source", label: "Validar origem e contexto do lead", done: false },
+      { id: "primeiro-contato", label: "Realizar primeiro contato", done: false },
+    ];
+  }
+  if (stage === "qualificacao") {
+    return [
+      { id: "dor-negocio", label: "Mapear dor principal do cliente", done: false },
+      { id: "stakeholders", label: "Identificar decisor e influenciadores", done: false },
+    ];
+  }
+  if (stage === "proposta") {
+    return [
+      { id: "escopo", label: "Definir escopo e premissas comerciais", done: false },
+      { id: "proposta-enviada", label: "Enviar proposta formal", done: false },
+    ];
+  }
+  if (stage === "negociacao") {
+    return [
+      { id: "objeções", label: "Documentar objeções e contrapartidas", done: false },
+      { id: "decisao", label: "Definir data de decisão com cliente", done: false },
+    ];
+  }
+  if (stage === "ganho") {
+    return [
+      { id: "onboarding", label: "Registrar handoff para operação/projeto", done: false },
+      { id: "kickoff", label: "Agendar kickoff com cliente", done: false },
+    ];
+  }
+  return [
+    { id: "motivo-perda", label: "Registrar motivo detalhado da perda", done: false },
+    { id: "aprendizado", label: "Documentar aprendizado comercial", done: false },
+  ];
+}
+
+function normalizePlaybookItems(value: unknown, stage: string): CrmDealPlaybookItem[] {
+  if (!Array.isArray(value)) return buildDefaultPlaybook(stage);
+  const parsed = value
+    .map((item) => {
+      const source = item as Partial<CrmDealPlaybookItem>;
+      const id = String(source.id ?? "").trim();
+      const label = String(source.label ?? "").trim();
+      if (!id || !label) return null;
+      return { id, label, done: Boolean(source.done) } satisfies CrmDealPlaybookItem;
+    })
+    .filter((item): item is CrmDealPlaybookItem => Boolean(item));
+  return parsed.length > 0 ? parsed : buildDefaultPlaybook(stage);
+}
+
+function normalizeCustomFields(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, fieldValue]) => [String(key).trim(), String(fieldValue ?? "").trim()] as const)
+    .filter(([key]) => key.length > 0);
+  return Object.fromEntries(entries);
+}
+
+function followupDelayByStage(stage: string) {
+  if (stage === "novos") return 1;
+  if (stage === "qualificacao") return 2;
+  if (stage === "proposta") return 2;
+  if (stage === "negociacao") return 1;
+  return 0;
+}
+
+async function ensureDealAutomationFollowup(
+  supabase: SupabaseClient,
+  empresaId: string,
+  dealId: string,
+  stage: string,
+  dealName: string,
+) {
+  if (stage === "ganho" || stage === "perdido") return;
+
+  const openActivities = await supabase
+    .from("crm_activities")
+    .select("id", { count: "exact", head: true })
+    .eq("empresa_id", empresaId)
+    .eq("deal_id", dealId)
+    .eq("done", false);
+
+  if (openActivities.error) {
+    throw new Error(`Erro ao validar automação de follow-up: ${openActivities.error.message}`);
+  }
+  if ((openActivities.count ?? 0) > 0) return;
+
+  const now = new Date();
+  now.setDate(now.getDate() + followupDelayByStage(stage));
+  now.setHours(9, 0, 0, 0);
+
+  const insert = await supabase.from("crm_activities").insert({
+    empresa_id: empresaId,
+    deal_id: dealId,
+    type: "follow_up",
+    subject: `Follow-up automático · ${dealName}`,
+    body: "Atividade criada automaticamente para manter o SLA comercial do negócio.",
+    channel: "manual",
+    due_at: now.toISOString(),
+    done: false,
+  });
+  if (insert.error) {
+    throw new Error(`Erro ao criar follow-up automático: ${insert.error.message}`);
+  }
+  await refreshDealActivitySchedule(supabase, empresaId, dealId);
 }
 
 async function ensureCompanyId(supabase: SupabaseClient, empresaId: string, companyName: string) {
@@ -306,9 +454,13 @@ async function syncLeadToDeal(supabase: SupabaseClient, lead: CrmLead) {
     stage: normalizeDealStage(mapLeadEtapaToDealStage(lead.etapa)),
     status: mapLeadEtapaToDealStatus(lead.etapa),
     priority: normalizeDealPriority(mapLeadPrioridadeToDealPriority(lead.prioridade)),
+    probability: defaultDealProbability(normalizeDealStage(mapLeadEtapaToDealStage(lead.etapa))),
     valor: lead.valor ?? 0,
     last_activity_at: asIsoDateTime(lead.ultima_atividade),
     next_activity_at: null,
+    loss_reason: "",
+    custom_fields: {},
+    playbook_items: buildDefaultPlaybook(normalizeDealStage(mapLeadEtapaToDealStage(lead.etapa))),
     updated_at: new Date().toISOString(),
   };
 
@@ -324,6 +476,7 @@ async function syncLeadToDeal(supabase: SupabaseClient, lead: CrmLead) {
     if (update.error || !update.data?.id) {
       throw new Error(`Erro ao atualizar deal sincronizado: ${update.error?.message ?? "falha desconhecida"}`);
     }
+    await ensureDealAutomationFollowup(supabase, lead.empresa_id, update.data.id, basePayload.stage, lead.nome);
     return update.data.id;
   }
 
@@ -339,6 +492,7 @@ async function syncLeadToDeal(supabase: SupabaseClient, lead: CrmLead) {
   if (insert.error || !insert.data?.id) {
     throw new Error(`Erro ao criar deal sincronizado: ${insert.error?.message ?? "falha desconhecida"}`);
   }
+  await ensureDealAutomationFollowup(supabase, lead.empresa_id, insert.data.id, basePayload.stage, lead.nome);
   return insert.data.id;
 }
 
@@ -390,7 +544,7 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
   const dealsRes = await supabase
     .from("crm_deals")
     .select(
-      "id, nome, stage, status, priority, valor, last_activity_at, next_activity_at, tags, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome)",
+      "id, nome, stage, status, priority, probability, valor, last_activity_at, next_activity_at, tags, owner_profile_id, loss_reason, custom_fields, playbook_items, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome), owner:profiles!crm_deals_owner_profile_id_fkey(nome)",
     )
     .eq("empresa_id", empresaId)
     .order("updated_at", { ascending: false })
@@ -433,9 +587,12 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
       stage: String(row.stage ?? ""),
       status: String(row.status ?? ""),
       priority: String(row.priority ?? ""),
+      probability: Number(row.probability ?? 0),
       valor: Number(row.valor ?? 0),
       company_name: String((row.company as { nome?: string } | null)?.nome ?? ""),
       contact_name: String((row.contact as { nome?: string } | null)?.nome ?? ""),
+      owner_profile_id: row.owner_profile_id ? String(row.owner_profile_id) : null,
+      owner_name: String((row.owner as { nome?: string } | null)?.nome ?? ""),
       last_activity_at: row.last_activity_at ? String(row.last_activity_at) : null,
       next_activity_at: row.next_activity_at ? String(row.next_activity_at) : null,
       activities_total: counts.total,
@@ -443,6 +600,9 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
       tags: Array.isArray((row as { tags?: unknown }).tags)
         ? ((row as { tags: string[] }).tags ?? []).filter((tag) => typeof tag === "string")
         : [],
+      loss_reason: String(row.loss_reason ?? ""),
+      custom_fields: normalizeCustomFields((row as { custom_fields?: unknown }).custom_fields),
+      playbook_items: normalizePlaybookItems((row as { playbook_items?: unknown }).playbook_items, String(row.stage ?? "novos")),
     } satisfies CrmDealSummary;
   });
 }
@@ -554,6 +714,7 @@ export async function updateCrmDealActivity(activityId: string, patch: Partial<P
   if (currentError) {
     throw new Error(`Erro ao carregar atividade do CRM: ${currentError.message}`);
   }
+
   if (!current?.id) {
     throw new Error("Atividade não encontrada");
   }
@@ -583,6 +744,149 @@ export async function updateCrmDealActivity(activityId: string, patch: Partial<P
 
   await refreshDealActivitySchedule(supabase, empresaId, current.deal_id);
   return data as CrmDealActivity;
+}
+
+export async function updateCrmDeal(dealId: string, patch: UpdateCrmDealInput) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const profile = await getCurrentProfile();
+  const supabase = await createServerClient();
+
+  const currentRes = await supabase
+    .from("crm_deals")
+    .select("id, nome, stage, status, loss_reason, playbook_items")
+    .eq("empresa_id", empresaId)
+    .eq("id", dealId)
+    .maybeSingle<{ id: string; nome: string; stage: string; status: string; loss_reason: string; playbook_items: unknown }>();
+  if (currentRes.error) {
+    throw new Error(`Erro ao carregar negócio CRM: ${currentRes.error.message}`);
+  }
+  if (!currentRes.data?.id) {
+    throw new Error("Negócio não encontrado");
+  }
+
+  const nextStage = patch.stage ? normalizeDealStage(patch.stage) : currentRes.data.stage;
+  const nextStatus = patch.status ? String(patch.status).trim().toLowerCase() : currentRes.data.status;
+  const nextLossReason = typeof patch.loss_reason === "string" ? patch.loss_reason.trim() : currentRes.data.loss_reason;
+  const isLost = nextStage === "perdido" || nextStatus === "perdido";
+  if (isLost && !nextLossReason) {
+    throw new Error("Motivo de perda é obrigatório para negócios perdidos.");
+  }
+
+  const updatePayload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (patch.stage) {
+    updatePayload.stage = nextStage;
+    updatePayload.probability = defaultDealProbability(nextStage);
+    if (nextStage === "ganho") updatePayload.status = "ganho";
+    if (nextStage === "perdido") updatePayload.status = "perdido";
+  }
+  if (patch.status) updatePayload.status = nextStatus;
+  if (patch.priority) updatePayload.priority = normalizeDealPriority(patch.priority);
+  if (typeof patch.probability === "number") {
+    const bounded = Math.max(0, Math.min(100, Math.round(patch.probability)));
+    updatePayload.probability = bounded;
+  }
+  if (patch.owner_profile_id !== undefined) {
+    updatePayload.owner_profile_id = patch.owner_profile_id ? String(patch.owner_profile_id) : null;
+  }
+  if (patch.loss_reason !== undefined) {
+    updatePayload.loss_reason = nextLossReason;
+  }
+  if (patch.custom_fields !== undefined) {
+    updatePayload.custom_fields = normalizeCustomFields(patch.custom_fields);
+  }
+  if (patch.playbook_items !== undefined) {
+    updatePayload.playbook_items = normalizePlaybookItems(patch.playbook_items, nextStage);
+  } else if (patch.stage) {
+    const currentItems = normalizePlaybookItems(currentRes.data.playbook_items, currentRes.data.stage);
+    const shouldResetPlaybook = currentItems.every((item) => item.done);
+    if (shouldResetPlaybook) {
+      updatePayload.playbook_items = buildDefaultPlaybook(nextStage);
+    }
+  }
+  if (!isLost && (patch.stage || patch.status) && patch.loss_reason === undefined) {
+    updatePayload.loss_reason = "";
+  }
+  if (patch.owner_profile_id === undefined && profile?.id) {
+    updatePayload.owner_profile_id = profile.id;
+  }
+
+  const update = await supabase
+    .from("crm_deals")
+    .update(updatePayload)
+    .eq("empresa_id", empresaId)
+    .eq("id", dealId)
+    .select("id")
+    .single<{ id: string }>();
+  if (update.error || !update.data?.id) {
+    throw new Error(`Erro ao atualizar negócio CRM: ${update.error?.message ?? "falha desconhecida"}`);
+  }
+
+  await ensureDealAutomationFollowup(supabase, empresaId, dealId, nextStage, currentRes.data.nome);
+  return update.data;
+}
+
+export async function listCrmLossReasonsReport() {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const deals = await supabase
+    .from("crm_deals")
+    .select("loss_reason, valor")
+    .eq("empresa_id", empresaId)
+    .eq("status", "perdido")
+    .neq("loss_reason", "");
+  if (deals.error) {
+    throw new Error(`Erro ao gerar relatório de perdas: ${deals.error.message}`);
+  }
+  const grouped = new Map<string, { reason: string; total: number; value: number }>();
+  for (const row of (deals.data ?? []) as Array<{ loss_reason: string; valor: number }>) {
+    const reason = String(row.loss_reason ?? "").trim() || "Não informado";
+    const slot = grouped.get(reason) ?? { reason, total: 0, value: 0 };
+    slot.total += 1;
+    slot.value += Number(row.valor ?? 0);
+    grouped.set(reason, slot);
+  }
+  return Array.from(grouped.values()).sort((a, b) => b.total - a.total);
+}
+
+export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, nome, email, role")
+    .eq("empresa_id", empresaId)
+    .order("nome", { ascending: true });
+  if (error) {
+    throw new Error(`Erro ao listar perfis comerciais: ${error.message}`);
+  }
+  return (data ?? []).map((item) => ({
+    id: String(item.id),
+    nome: String(item.nome ?? ""),
+    email: String(item.email ?? ""),
+    role: String(item.role ?? ""),
+  }));
+}
+
+export async function runCrmFollowupAutomation() {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const deals = await supabase
+    .from("crm_deals")
+    .select("id, nome, stage, status")
+    .eq("empresa_id", empresaId)
+    .eq("status", "aberto");
+  if (deals.error) {
+    throw new Error(`Erro ao carregar negócios para automação: ${deals.error.message}`);
+  }
+  let touched = 0;
+  for (const deal of (deals.data ?? []) as Array<{ id: string; nome: string; stage: string; status: string }>) {
+    await ensureDealAutomationFollowup(supabase, empresaId, deal.id, normalizeDealStage(deal.stage), deal.nome);
+    touched += 1;
+  }
+  return { processed: touched };
 }
 
 function mapTaskStatusToEtapa(status: string): CrmLead["etapa"] {
