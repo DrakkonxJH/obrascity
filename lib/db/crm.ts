@@ -857,20 +857,43 @@ export async function listCrmLossReasonsReport() {
 
 export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> {
   const empresaId = await getEmpresaIdFromProfile();
-  
-  // Security: Prevent listing profiles from master account for client users
-  await ensureNotMasterAccount(empresaId);
-  
   const supabase = await createServerClient();
+  
+  // Query: Get profiles from current company only
+  // Also filter to exclude profiles from master account unless user IS from master
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, nome, email, role")
+    .select("id, nome, email, role, empresa_id")
     .eq("empresa_id", empresaId)
     .order("nome", { ascending: true });
+    
   if (error) {
     throw new Error(`Erro ao listar perfis comerciais: ${error.message}`);
   }
-  return (data ?? []).map((item) => ({
+  
+  // Filter: Check if current user's company is master, if not, exclude master profiles
+  let filtered = data ?? [];
+  
+  const currentCompany = await supabase
+    .from("companies")
+    .select("is_master")
+    .eq("id", empresaId)
+    .single();
+    
+  const isCurrentUserFromMaster = currentCompany.data?.is_master === true;
+  
+  // If user is NOT from master, filter out any master company profiles
+  if (!isCurrentUserFromMaster) {
+    const masterCompanies = await supabase
+      .from("companies")
+      .select("id")
+      .eq("is_master", true);
+      
+    const masterIds = new Set((masterCompanies.data ?? []).map(c => c.id));
+    filtered = filtered.filter(p => !masterIds.has(p.empresa_id));
+  }
+  
+  return filtered.map((item) => ({
     id: String(item.id),
     nome: String(item.nome ?? ""),
     email: String(item.email ?? ""),
