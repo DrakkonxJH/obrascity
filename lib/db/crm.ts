@@ -859,8 +859,16 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
   
+  // Get all master companies first (to exclude them)
+  const { data: masterCompanies, error: masterError } = await supabase
+    .from("companies")
+    .select("id")
+    .eq("is_master", true);
+    
+  const masterIds = new Set((masterCompanies ?? []).map(c => c.id));
+  
   // Query: Get profiles from current company only
-  // Also filter to exclude profiles from master account unless user IS from master
+  // Exclude ANY profiles from master accounts
   const { data, error } = await supabase
     .from("profiles")
     .select("id, nome, email, role, empresa_id")
@@ -871,27 +879,8 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
     throw new Error(`Erro ao listar perfis comerciais: ${error.message}`);
   }
   
-  // Filter: Check if current user's company is master, if not, exclude master profiles
-  let filtered = data ?? [];
-  
-  const currentCompany = await supabase
-    .from("companies")
-    .select("is_master")
-    .eq("id", empresaId)
-    .single();
-    
-  const isCurrentUserFromMaster = currentCompany.data?.is_master === true;
-  
-  // If user is NOT from master, filter out any master company profiles
-  if (!isCurrentUserFromMaster) {
-    const masterCompanies = await supabase
-      .from("companies")
-      .select("id")
-      .eq("is_master", true);
-      
-    const masterIds = new Set((masterCompanies.data ?? []).map(c => c.id));
-    filtered = filtered.filter(p => !masterIds.has(p.empresa_id));
-  }
+  // Filter out profiles from master company - ALWAYS, regardless of user's company
+  let filtered = (data ?? []).filter(p => !masterIds.has(p.empresa_id));
   
   return filtered.map((item) => ({
     id: String(item.id),
