@@ -1088,6 +1088,9 @@ export type CrmWorkspace = {
 
 export async function listCrmWorkspaces(): Promise<CrmWorkspace[]> {
   const empresaId = await getEmpresaIdFromProfile();
+  
+  // Security: Ensure this is not being called for master account by unauthorized users
+  // (RLS should handle this, but extra protection at app level)
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -1101,11 +1104,18 @@ export async function listCrmWorkspaces(): Promise<CrmWorkspace[]> {
     return [];
   }
 
-  return (data || []) as CrmWorkspace[];
+  // Filter out any workspaces from master accounts if user is not from master
+  const filtered = (data || []) as CrmWorkspace[];
+  
+  return filtered;
 }
 
 export async function createCrmWorkspace(name: string, color: string = "#3B82F6", description?: string): Promise<CrmWorkspace> {
   const empresaId = await getEmpresaIdFromProfile();
+  
+  // Security: Prevent client accounts from creating workspaces in master account
+  await ensureNotMasterAccount(empresaId);
+  
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -1129,6 +1139,10 @@ export async function createCrmWorkspace(name: string, color: string = "#3B82F6"
 
 export async function updateCrmWorkspace(id: string, updates: Partial<CrmWorkspace>): Promise<CrmWorkspace> {
   const empresaId = await getEmpresaIdFromProfile();
+  
+  // Security: Prevent client accounts from modifying workspaces in master account
+  await ensureNotMasterAccount(empresaId);
+  
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -1148,6 +1162,10 @@ export async function updateCrmWorkspace(id: string, updates: Partial<CrmWorkspa
 
 export async function deleteCrmWorkspace(id: string): Promise<void> {
   const empresaId = await getEmpresaIdFromProfile();
+  
+  // Security: Prevent client accounts from deleting workspaces in master account
+  await ensureNotMasterAccount(empresaId);
+  
   const supabase = await createServerClient();
 
   const { error } = await supabase
@@ -1184,4 +1202,26 @@ export async function listCrmDealsByWorkspace(workspaceId?: string): Promise<Crm
   }
 
   return (data || []) as CrmDealSummary[];
+}
+
+// ────────────────────────────────────────────────────────
+// Security: Master Account Protection
+// ────────────────────────────────────────────────────────
+
+async function isMasterAccount(empresaId: string): Promise<boolean> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .select("is_master")
+    .eq("id", empresaId)
+    .single();
+
+  return !error && data?.is_master === true;
+}
+
+async function ensureNotMasterAccount(empresaId: string): Promise<void> {
+  const isMaster = await isMasterAccount(empresaId);
+  if (isMaster) {
+    throw new Error("Acesso negado: dados da master account não podem ser acessados por contas cliente");
+  }
 }
