@@ -1256,3 +1256,117 @@ async function ensureNotMasterAccount(empresaId: string): Promise<void> {
     throw new Error("Acesso negado: dados da master account não podem ser acessados por contas cliente");
   }
 }
+
+// ────────────────────────────────────────────────────────
+// CRM Custom Tabs - User-defined card organization
+// ────────────────────────────────────────────────────────
+
+export type CrmCustomTab = {
+  id: string;
+  company_id: string;
+  workspace_id?: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  filter_etapa?: string[];
+  filter_prioridade?: string[];
+  filter_origem?: string[];
+  filter_owner_id?: string[];
+  filter_search?: string;
+  sort_order: number;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function listCrmCustomTabs(workspaceId?: string): Promise<CrmCustomTab[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  let query = supabase
+    .from("crm_custom_tabs")
+    .select("*")
+    .eq("company_id", empresaId);
+
+  if (workspaceId) {
+    query = query.eq("workspace_id", workspaceId);
+  } else {
+    query = query.is("workspace_id", null);
+  }
+
+  const { data, error } = await query.order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao listar abas customizadas:", error);
+    return [];
+  }
+
+  return (data || []) as CrmCustomTab[];
+}
+
+export async function createCrmCustomTab(
+  name: string,
+  workspaceId?: string,
+  filters?: Partial<Omit<CrmCustomTab, "id" | "company_id" | "created_at" | "updated_at">>
+): Promise<CrmCustomTab> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("crm_custom_tabs")
+    .insert({
+      company_id: empresaId,
+      workspace_id: workspaceId,
+      name,
+      color: filters?.color || "#3B82F6",
+      description: filters?.description,
+      filter_etapa: filters?.filter_etapa || [],
+      filter_prioridade: filters?.filter_prioridade || [],
+      filter_origem: filters?.filter_origem || [],
+      filter_owner_id: filters?.filter_owner_id || [],
+      filter_search: filters?.filter_search || "",
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Erro ao criar aba customizada: ${error.message}`);
+  }
+
+  return data as CrmCustomTab;
+}
+
+export async function updateCrmCustomTab(id: string, updates: Partial<CrmCustomTab>): Promise<CrmCustomTab> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("crm_custom_tabs")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("company_id", empresaId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Erro ao atualizar aba customizada: ${error.message}`);
+  }
+
+  return data as CrmCustomTab;
+}
+
+export async function deleteCrmCustomTab(id: string): Promise<void> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { error } = await supabase
+    .from("crm_custom_tabs")
+    .delete()
+    .eq("id", id)
+    .eq("company_id", empresaId);
+
+  if (error) {
+    throw new Error(`Erro ao deletar aba customizada: ${error.message}`);
+  }
+}
