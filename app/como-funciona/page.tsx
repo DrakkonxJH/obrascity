@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { HardHat, Lock, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Como funciona — ObrasCitY",
@@ -62,7 +63,7 @@ export default function ComoFuncionaPage() {
                   boxShadow: "0 0 24px rgba(255,107,26,.4)",
                 }}
               >
-                🏗
+                <HardHat size={16} aria-hidden />
               </div>
               <div style={{ fontFamily: "Barlow Condensed, sans-serif", fontSize: "1.8rem", fontWeight: 700 }}>
                 OBRAS<span style={{ color: "#FF6B1A" }}>CITY</span>
@@ -73,7 +74,7 @@ export default function ComoFuncionaPage() {
                 Entrar
               </Link>
               <Link href="/cadastro" className="of-btn-primary" style={{ display: "inline-flex", alignItems: "center" }}>
-                Começar grátis →
+                Comecar gratis
               </Link>
             </div>
           </nav>
@@ -122,7 +123,7 @@ export default function ComoFuncionaPage() {
               </p>
               <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
                 <Link href="/cadastro" className="of-btn-primary" style={{ display: "inline-flex" }}>
-                  Começar 14 dias grátis
+                  Comecar 14 dias gratis
                 </Link>
                 <Link href="/contato" className="of-btn-ghost" style={{ display: "inline-flex" }}>
                   Agendar demonstração
@@ -229,7 +230,7 @@ export default function ComoFuncionaPage() {
                     placeItems: "center",
                   }}
                 >
-                  🏗
+                  <HardHat size={16} aria-hidden />
                 </div>
                 <div style={{ fontFamily: "Barlow Condensed, sans-serif", fontSize: "1.5rem", fontWeight: 700 }}>
                   OBRAS<span style={{ color: "#FF6B1A" }}>CITY</span>
@@ -287,10 +288,10 @@ export default function ComoFuncionaPage() {
           <div className="lp-footer-bottom">
             <span>© {new Date().getFullYear()} ObrasCitY. Plataforma SaaS de gestão de obras. Informações legais e comerciais disponíveis no site.</span>
             <div className="lp-footer-badges">
-              <span className="lp-fbadge">🔒 SSL</span>
-              <span className="lp-fbadge">✓ LGPD</span>
-              <span className="lp-fbadge">🛡 Segurança AES-256 + LGPD</span>
-              <span className="lp-fbadge">☁ 99.9% Uptime</span>
+              <span className="lp-fbadge"><Lock size={12} aria-hidden /> SSL</span>
+              <span className="lp-fbadge"><ShieldCheck size={12} aria-hidden /> LGPD</span>
+              <span className="lp-fbadge"><ShieldCheck size={12} aria-hidden /> Seguranca AES-256 + LGPD</span>
+              <span className="lp-fbadge">99.9% Uptime</span>
             </div>
           </div>
         </div>

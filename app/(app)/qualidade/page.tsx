@@ -224,8 +224,8 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
 
       <article className="of-card" style={{ marginBottom: 20 }}>
         <div className="of-card-title">Não conformidades e CAPA</div>
-        <div className="of-table-wrap" style={{ border: 0, marginTop: 12 }}>
-          <table className="of-table">
+        <div className="of-table-wrap of-table-wrap--flat of-table-wrap--dense" style={{ marginTop: 12 }}>
+          <table className="of-table of-table--dense">
             <thead>
               <tr>
                 <th>NC</th>
@@ -427,8 +427,8 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
           <textarea name="observacao" placeholder="Observações da inspeção" className="of-input md:col-span-6" />
         </form>
 
-        <div className="of-table-wrap" style={{ border: 0 }}>
-          <table className="of-table">
+        <div className="of-table-wrap of-table-wrap--flat of-table-wrap--dense">
+          <table className="of-table of-table--dense">
             <thead>
               <tr>
                 <th>Norma / Item</th>

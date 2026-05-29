@@ -1,5 +1,6 @@
 import { LoginForm } from "./login-form";
 import type { Metadata } from "next";
+import { HardHat } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Entrar — ObrasCitY",
@@ -33,7 +34,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <aside className="of-login-v2-card">
           <div className="of-login-v2-brand">
-            <span className="of-login-v2-brand-icon">🏗</span>
+            <span className="of-login-v2-brand-icon"><HardHat size={18} aria-hidden /></span>
             <span className="of-login-v2-brand-text">
               OBRAS<span>CITY</span>
             </span>

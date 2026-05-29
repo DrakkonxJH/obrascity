@@ -49,13 +49,13 @@ const ACTIVITY_CHANNELS = [
 ];
 
 const ACTIVITY_TYPE_ICON = {
-  follow_up: "⏱",
-  call: "📞",
-  email: "✉",
-  meeting: "🤝",
-  proposal: "📄",
-  note: "📝",
-  task: "✅",
+  follow_up: "FUP",
+  call: "TEL",
+  email: "MAIL",
+  meeting: "MEET",
+  proposal: "PROP",
+  note: "NOTE",
+  task: "TASK",
 };
 
 const HEALTH_META = {
@@ -470,8 +470,16 @@ function DetailPanel({
           <div style={{ fontSize: 11, color: C.muted, marginBottom: 3, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Valor potencial</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: C.orange }}>{fmt(lead.valor)}</div>
         </div>
-        {lead.email   && <div style={{ fontSize: 13, color: C.muted, marginBottom: 8 }}>✉ <span style={{ color: C.text }}>{lead.email}</span></div>}
-        {lead.telefone && <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>✆ <span style={{ color: C.text }}>{lead.telefone}</span></div>}
+        {lead.email && (
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 8 }}>
+            Email: <span style={{ color: C.text }}>{lead.email}</span>
+          </div>
+        )}
+        {lead.telefone && (
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>
+            Telefone: <span style={{ color: C.text }}>{lead.telefone}</span>
+          </div>
+        )}
         {lead.obra && (
           <div style={{ paddingTop: 14, borderTop: `1px solid ${C.border}`, marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: C.muted, marginBottom: 5, fontWeight: 600, textTransform: "uppercase" }}>Projeto</div>

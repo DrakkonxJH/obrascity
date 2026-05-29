@@ -3,21 +3,38 @@
 import { usePathname } from "next/navigation";
 import type { LayoutSummary } from "@/lib/db/layout-summary";
 import { useAppUi } from "@/components/shell/app-ui-provider";
+import {
+  Bell,
+  Briefcase,
+  Building2,
+  CalendarDays,
+  CreditCard,
+  FolderKanban,
+  Gauge,
+  HardHat,
+  Layers,
+  Package,
+  Plus,
+  Settings,
+  ShieldCheck,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
-const pageMeta: Record<string, { title: string; icon: string }> = {
-  "/dashboard": { title: "Dashboard", icon: "📊" },
-  "/obras": { title: "Obras", icon: "🏗️" },
-  "/cronograma": { title: "Cronograma", icon: "📅" },
-  "/financeiro": { title: "Financeiro", icon: "💰" },
-  "/equipes": { title: "Equipes", icon: "👥" },
-  "/materiais": { title: "Materiais", icon: "📦" },
-  "/diario": { title: "Diário de Obra", icon: "📋" },
-  "/qualidade": { title: "Qualidade e SSMA", icon: "🛡️" },
-  "/relatorios": { title: "Relatórios", icon: "📋" },
-  "/planos": { title: "Planos", icon: "⭐" },
-  "/portal": { title: "Portal do Cliente", icon: "🌐" },
-  "/configuracoes": { title: "Configurações", icon: "⚙️" },
-  "/contas": { title: "Gerenciamento de Contas", icon: "🏢" },
+const pageMeta: Record<string, { title: string; icon: LucideIcon }> = {
+  "/dashboard": { title: "Dashboard", icon: Gauge },
+  "/obras": { title: "Obras", icon: HardHat },
+  "/cronograma": { title: "Cronograma", icon: CalendarDays },
+  "/financeiro": { title: "Financeiro", icon: CreditCard },
+  "/equipes": { title: "Equipes", icon: Users },
+  "/materiais": { title: "Materiais", icon: Package },
+  "/diario": { title: "Diário de Obra", icon: Briefcase },
+  "/qualidade": { title: "Qualidade e SSMA", icon: ShieldCheck },
+  "/relatorios": { title: "Relatórios", icon: Layers },
+  "/planos": { title: "Planos", icon: FolderKanban },
+  "/portal": { title: "Portal do Cliente", icon: Building2 },
+  "/configuracoes": { title: "Configurações", icon: Settings },
+  "/contas": { title: "Gerenciamento de Contas", icon: Building2 },
 };
 
 function getPageMeta(pathname: string) {
@@ -26,7 +43,7 @@ function getPageMeta(pathname: string) {
       return value;
     }
   }
-  return { title: "ObrasCitY", icon: "🏗️" };
+  return { title: "ObrasCitY", icon: HardHat };
 }
 
 type TopbarProps = {
@@ -37,6 +54,7 @@ type TopbarProps = {
 export function Topbar({ summary, adminManagementOnly }: TopbarProps) {
   const pathname = usePathname();
   const meta = getPageMeta(pathname);
+  const IconComponent = meta.icon;
   const { toggleNotif, toggleMobileSidebar, openNovaObra, notifOpen } = useAppUi();
   const count = summary.unreadNotifications;
 
@@ -47,7 +65,7 @@ export function Topbar({ summary, adminManagementOnly }: TopbarProps) {
           ☰
         </button>
         <h1 className="of-topbar-title">
-          <span aria-hidden>{meta.icon}</span>
+          <IconComponent size={18} className="of-topbar-title-icon" aria-hidden />
           {meta.title}
         </h1>
       </div>
@@ -59,12 +77,13 @@ export function Topbar({ summary, adminManagementOnly }: TopbarProps) {
           aria-expanded={notifOpen}
           onClick={toggleNotif}
         >
-          🔔
+          <Bell size={16} aria-hidden />
           {count > 0 ? <span className="of-btn-notif-count">{count}</span> : null}
         </button>
         {!adminManagementOnly ? (
           <button type="button" className="of-btn-primary" onClick={openNovaObra}>
-            + Nova Obra
+            <Plus size={15} aria-hidden />
+            <span>Nova Obra</span>
           </button>
         ) : null}
       </div>

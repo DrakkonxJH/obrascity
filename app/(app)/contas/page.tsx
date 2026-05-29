@@ -347,8 +347,8 @@ export default async function ContasPage({
           <div className="of-card-title" style={{ marginBottom: 16 }}>
             Empresas ({empresas.length})
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="of-table-wrap of-table-wrap--flat">
+            <table className="of-table of-table--dense">
               <thead>
                 <tr>
                   <th style={TH_STYLE}>Empresa</th>
@@ -465,8 +465,8 @@ export default async function ContasPage({
           <div className="of-card-title" style={{ marginBottom: 16 }}>
             Todos os usuários ({perfis.length})
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="of-table-wrap of-table-wrap--flat">
+            <table className="of-table of-table--dense">
               <thead>
                 <tr>
                   <th style={TH_STYLE}>Nome</th>
@@ -601,8 +601,8 @@ export default async function ContasPage({
           </div>
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 16 }}>Carteira por plano</div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>Plano</th>
@@ -675,8 +675,8 @@ export default async function ContasPage({
       {tab === "integracoes" && (
         <article className="of-card">
           <div className="of-card-title" style={{ marginBottom: 12 }}>Integrações críticas SaaS</div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="of-table-wrap of-table-wrap--flat">
+            <table className="of-table of-table--dense">
               <thead>
                 <tr>
                   <th style={TH_STYLE}>Serviço</th>
@@ -778,8 +778,8 @@ export default async function ContasPage({
 
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 12 }}>Fila de suporte ({tickets.length})</div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>Empresa</th>
@@ -874,8 +874,8 @@ export default async function ContasPage({
               </a>
             ) : null}
           </form>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="of-table-wrap of-table-wrap--flat">
+            <table className="of-table of-table--dense">
               <thead>
                 <tr>
                   <th style={TH_STYLE}>Quando</th>
@@ -959,8 +959,8 @@ export default async function ContasPage({
 
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 12 }}>Sessões assistidas recentes ({sessions.length})</div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>Empresa</th>
@@ -1002,8 +1002,8 @@ export default async function ContasPage({
       {tab === "limites" && (
         <article className="of-card">
           <div className="of-card-title" style={{ marginBottom: 12 }}>Limites e quotas por tenant</div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="of-table-wrap of-table-wrap--flat">
+            <table className="of-table of-table--dense">
               <thead>
                 <tr>
                   <th style={TH_STYLE}>Empresa</th>
@@ -1089,8 +1089,8 @@ export default async function ContasPage({
         <div style={{ display: "grid", gap: 20 }}>
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 12 }}>Feature flags por tenant</div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>Empresa</th>
@@ -1178,8 +1178,8 @@ export default async function ContasPage({
 
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 12 }}>Comunicados recentes ({broadcasts.length})</div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>Empresa</th>
@@ -1277,8 +1277,8 @@ export default async function ContasPage({
             <div className="of-card-title" style={{ marginBottom: 16 }}>
               Alertas de segurança recentes ({alertas.length})
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>Categoria</th>
@@ -1346,8 +1346,8 @@ export default async function ContasPage({
             <div className="of-card-title" style={{ marginBottom: 16 }}>
               Tentativas de cadastro recentes ({tentativas.length})
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
                 <thead>
                   <tr>
                     <th style={TH_STYLE}>E-mail</th>

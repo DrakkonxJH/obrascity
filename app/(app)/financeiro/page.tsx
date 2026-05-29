@@ -6,6 +6,7 @@ import { createMedicaoAction } from "./medicoes-actions";
 import { getEvmIndicadores, listMedicoes } from "@/lib/db/medicoes";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listFinanceiroTitulos, listFluxoCaixaMensal } from "@/lib/db/financeiro-corporativo";
+import { PageHeader } from "@/components/ui/page-header";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -51,6 +52,11 @@ export default async function FinanceiroPage() {
   return (
     <FeatureGateWrapper feature="financeiro_avancado">
       <section className="of-page">
+      <PageHeader
+        eyebrow="Financeiro"
+        title="Controle financeiro da operacao"
+        subtitle="Monitore orcamento, fluxo de caixa, medicoes e titulos AP/AR em uma unica visao."
+      />
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
           <p className="of-card-title">Falha ao carregar dados financeiros</p>
@@ -80,8 +86,8 @@ export default async function FinanceiroPage() {
         </article>
       </div>
 
-      <div className="of-table-wrap">
-        <table className="of-table">
+      <div className="of-table-wrap of-table-wrap--dense">
+        <table className="of-table of-table--dense">
           <thead>
             <tr>
               <th>Obra</th>
@@ -203,8 +209,8 @@ export default async function FinanceiroPage() {
 
         <article className="of-card">
           <div className="of-card-title">Projeção mensal de caixa</div>
-          <div className="of-table-wrap" style={{ border: 0 }}>
-            <table className="of-table">
+          <div className="of-table-wrap of-table-wrap--dense of-table-wrap--flat">
+            <table className="of-table of-table--dense">
               <thead>
                 <tr>
                   <th>Mês</th>
@@ -237,8 +243,8 @@ export default async function FinanceiroPage() {
 
       <article className="of-card" style={{ marginTop: 20 }}>
         <div className="of-card-title">Títulos financeiros (AP/AR)</div>
-        <div className="of-table-wrap" style={{ border: 0 }}>
-          <table className="of-table">
+        <div className="of-table-wrap of-table-wrap--dense of-table-wrap--flat">
+          <table className="of-table of-table--dense">
             <thead>
               <tr>
                 <th>Obra</th>

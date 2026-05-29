@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { Obra } from "@/types/domain";
 import { useAppUi } from "@/components/shell/app-ui-provider";
 import { ObraLifecycleActions } from "./obra-lifecycle-actions";
+import { Search } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 type ObraWithBudget = Obra & { budgetPct: number };
 
@@ -66,9 +68,14 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
 
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Execucao"
+        title="Carteira de obras"
+        subtitle="Controle status, progresso e saude de orcamento das obras ativas e da lixeira operacional."
+      />
       <div className="of-obras-toolbar">
         <div className="of-search-wrap">
-          <span className="of-search-icon">🔍</span>
+          <span className="of-search-icon" aria-hidden><Search size={14} /></span>
           <input
             className="of-search-input"
             placeholder="Buscar obras, clientes..."

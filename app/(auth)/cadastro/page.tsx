@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SignupForm } from "./signup-form";
 import type { Metadata } from "next";
+import { HardHat } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Criar conta — ObrasCitY",
@@ -28,7 +29,7 @@ export default function CadastroPage() {
 
         <aside className="of-login-v2-card">
           <div className="of-login-v2-brand">
-            <span className="of-login-v2-brand-icon">🏗</span>
+            <span className="of-login-v2-brand-icon"><HardHat size={18} aria-hidden /></span>
             <span className="of-login-v2-brand-text">
               OBRAS<span>CITY</span>
             </span>

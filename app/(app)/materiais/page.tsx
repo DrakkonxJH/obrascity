@@ -170,8 +170,8 @@ export default async function MateriaisPage() {
 
       <article className="of-card" style={{ marginTop: 20 }}>
         <div className="of-card-title">Pedidos de Compra Recentes</div>
-        <div className="of-table-wrap" style={{ border: 0 }}>
-          <table className="of-table">
+        <div className="of-table-wrap of-table-wrap--flat of-table-wrap--dense">
+          <table className="of-table of-table--dense">
             <thead>
               <tr>
                 <th>Material</th>
@@ -261,8 +261,8 @@ export default async function MateriaisPage() {
 
       <article className="of-card" style={{ marginTop: 20 }}>
         <div className="of-card-title">Cotações em andamento</div>
-        <div className="of-table-wrap" style={{ border: 0 }}>
-          <table className="of-table">
+        <div className="of-table-wrap of-table-wrap--flat of-table-wrap--dense">
+          <table className="of-table of-table--dense">
             <thead>
               <tr>
                 <th>Título</th>
@@ -356,8 +356,8 @@ export default async function MateriaisPage() {
 
       <article className="of-card" style={{ marginTop: 20 }}>
         <div className="of-card-title">Contratos de fornecedores</div>
-        <div className="of-table-wrap" style={{ border: 0 }}>
-          <table className="of-table">
+        <div className="of-table-wrap of-table-wrap--flat of-table-wrap--dense">
+          <table className="of-table of-table--dense">
             <thead>
               <tr>
                 <th>Obra</th>

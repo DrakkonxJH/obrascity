@@ -790,6 +790,10 @@ a {
   font-weight: 800;
 }
 
+.of-topbar-title-icon {
+  color: var(--of-blue);
+}
+
 .of-topbar-actions {
   display: flex;
   align-items: center;
@@ -811,6 +815,9 @@ a {
   background: var(--of-blue);
   color: #fff;
   padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .of-btn-primary:hover:not(:disabled) {
@@ -869,6 +876,9 @@ a {
   background: var(--of-bg-3);
   border-color: var(--of-border);
   color: var(--of-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .of-btn-icon:hover:not(:disabled) {
@@ -903,6 +913,45 @@ a {
   padding: 0 5px;
   font-size: 0.62rem;
   text-align: center;
+}
+
+/* Design system base v1 */
+.of-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.of-page-head-main {
+  display: grid;
+  gap: 6px;
+}
+
+.of-page-head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.of-page-eyebrow {
+  font-family: "DM Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--of-text-2);
+}
+
+.of-page-title {
+  margin: 0;
+}
+
+.of-page-subtitle {
+  margin: 0;
+  color: var(--of-text-2);
+  font-size: 0.92rem;
 }
 
 /* Public pages aligned with landing aesthetics */
@@ -2427,6 +2476,16 @@ a {
   background: var(--of-bg-2);
 }
 
+.of-table-wrap--flat {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.of-table-wrap--dense {
+  border-radius: 12px;
+}
+
 .of-table {
   width: 100%;
   border-collapse: collapse;
@@ -2441,6 +2500,9 @@ a {
   text-align: left;
   padding: 12px 14px;
   border-bottom: 1px solid var(--of-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .of-table td {
@@ -2459,6 +2521,16 @@ a {
 
 .of-table tr:last-child td {
   border-bottom: 0;
+}
+
+.of-table--dense th {
+  font-size: 0.68rem;
+  padding: 10px 12px;
+}
+
+.of-table--dense td {
+  padding: 10px 12px;
+  font-size: 0.82rem;
 }
 
 .of-consumo-cell {

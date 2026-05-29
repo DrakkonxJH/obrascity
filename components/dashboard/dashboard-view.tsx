@@ -2,6 +2,17 @@
 
 import Link from "next/link";
 import type { Obra } from "@/types/domain";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  AlertTriangle,
+  BellDot,
+  Briefcase,
+  CheckCircle2,
+  HardHat,
+  Hourglass,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
 const statusVisual: Record<string, { color: string; label: string; meta: string }> = {
   planejamento: { color: "var(--of-blue)", label: "Planejamento", meta: "Em preparação" },
@@ -43,7 +54,7 @@ export function DashboardView({
           titulo: "Vamos começar seu ambiente",
           descricao: "Adicione sua primeira obra, equipe e materiais para liberar alertas operacionais reais.",
           tipo: "info" as const,
-          icon: "✨",
+          icon: BellDot,
           href: "/obras",
         },
       ]
@@ -55,37 +66,42 @@ export function DashboardView({
             titulo: `${obra.nome} com atraso`,
             descricao: `Cliente ${obra.cliente} · progresso ${obra.progresso}%.`,
             tipo: "danger" as const,
-            icon: "🚨",
+            icon: AlertTriangle,
             href: "/obras",
           })),
         {
           titulo: "Estoque crítico de materiais",
           descricao: "Revise níveis mínimos e pedidos pendentes.",
           tipo: "warn" as const,
-          icon: "⚠️",
+          icon: AlertTriangle,
           href: "/materiais",
         },
         {
           titulo: "Orçamento em monitoramento",
           descricao: `${consumoPct}% do orçamento total consumido.`,
           tipo: consumoPct >= 85 ? "warn" : "info",
-          icon: "💸",
+          icon: TrendingUp,
           href: "/financeiro",
         },
         {
           titulo: "Relatório semanal pendente",
           descricao: "Gere o relatório consolidado das equipes.",
           tipo: "info" as const,
-          icon: "📋",
+          icon: Briefcase,
           href: "/equipes",
         },
       ].slice(0, 4);
 
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Operacao"
+        title="Resumo executivo da operacao"
+        subtitle="Acompanhe obras, progresso, alertas e consumo de orcamento em tempo real."
+      />
       <div className="of-kpi-grid">
         <article className="of-metric-card blue">
-          <p className="of-kpi-icon">🏗️</p>
+          <p className="of-kpi-icon"><HardHat size={18} aria-hidden /></p>
           <p className="of-kpi-label">Obras Ativas</p>
           <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>
             {resumo.total}
@@ -95,7 +111,7 @@ export function DashboardView({
           </p>
         </article>
         <article className="of-metric-card yellow">
-          <p className="of-kpi-icon">⏳</p>
+          <p className="of-kpi-icon"><Hourglass size={18} aria-hidden /></p>
           <p className="of-kpi-label">Em Andamento</p>
           <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>
             {resumo.andamento}
@@ -105,7 +121,7 @@ export function DashboardView({
           </p>
         </article>
         <article className="of-metric-card green">
-          <p className="of-kpi-icon">👷</p>
+          <p className="of-kpi-icon"><Users size={18} aria-hidden /></p>
           <p className="of-kpi-label">Profissionais</p>
           <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>
             {membrosCount}
@@ -115,7 +131,7 @@ export function DashboardView({
           </p>
         </article>
         <article className="of-metric-card purple">
-          <p className="of-kpi-icon">✅</p>
+          <p className="of-kpi-icon"><CheckCircle2 size={18} aria-hidden /></p>
           <p className="of-kpi-label">Concluídas</p>
           <p className="of-kpi-value" style={{ color: "var(--of-purple)" }}>
             {resumo.concluidas}
@@ -157,15 +173,18 @@ export function DashboardView({
           <article className="of-card">
             <div className="of-card-title">Alertas Ativos</div>
             <div className="of-alert-list">
-              {alertas.map((alerta) => (
-                <Link key={alerta.titulo} href={alerta.href} className={`of-alert-item ${alerta.tipo}`}>
-                  <p className="of-alert-title">
-                    <span className="of-alert-icon">{alerta.icon}</span>
-                    {alerta.titulo}
-                  </p>
-                  <p className="of-alert-description">{alerta.descricao}</p>
-                </Link>
-              ))}
+              {alertas.map((alerta) => {
+                const AlertIcon = alerta.icon;
+                return (
+                  <Link key={alerta.titulo} href={alerta.href} className={`of-alert-item ${alerta.tipo}`}>
+                    <p className="of-alert-title">
+                      <span className="of-alert-icon"><AlertIcon size={14} aria-hidden /></span>
+                      {alerta.titulo}
+                    </p>
+                    <p className="of-alert-description">{alerta.descricao}</p>
+                  </Link>
+                );
+              })}
             </div>
           </article>
 
@@ -203,7 +222,7 @@ export function DashboardView({
           <div className="of-card-title">Orçamento Total</div>
           <p className="of-mini-value">{money.format(totalOrcado)}</p>
           <p className="of-mini-sub">
-            {isContaNova ? "Defina orçamento ao cadastrar a primeira obra" : `across ${obras.length} obras ativas`}
+            {isContaNova ? "Defina orçamento ao cadastrar a primeira obra" : `${obras.length} obras ativas`}
           </p>
           <svg className="of-mini-chart" viewBox="0 0 200 60" preserveAspectRatio="none">
             <defs>

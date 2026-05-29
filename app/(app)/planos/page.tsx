@@ -7,6 +7,7 @@ import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { openBillingPortalAction, startCheckoutAction } from "./actions";
 import { GatewayCheckoutForm } from "./gateway-selector";
+import { PageHeader } from "@/components/ui/page-header";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 
@@ -214,16 +215,43 @@ export default async function PlanosPage({
 
   return (
     <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 18, alignItems: "flex-start" }}>
-        <div>
-          <h1 className="of-page-title" style={{ marginBottom: 6 }}>
-            Plano de uso
-          </h1>
-          <p className="of-empty-text">
-            Organize a assinatura da sua empresa e evolua o plano conforme a operação cresce.
-          </p>
+      <PageHeader
+        eyebrow="Comercial"
+        title="Planos e assinatura"
+        subtitle="Organize a assinatura da empresa e evolua o plano conforme a operacao cresce."
+        actions={
+          <>
+            <span className="of-badge of-badge-blue">{planLabel(currentPlan)}</span>
+            <span className="of-badge of-badge-green">{statusLabel(assinatura?.status)}</span>
+          </>
+        }
+      />
+
+      <article className="of-card" style={{ marginBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <p className="of-list-description" style={{ marginBottom: 4 }}>
+              Ciclo atual: <strong>{billingCycle === "annual" ? "Anual" : "Mensal"}</strong>
+            </p>
+            <p className="of-list-description">
+              Gateway ativo: <strong>{billingProvider}</strong>
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <Link href="/planos?billing=monthly" className={billingCycle === "monthly" ? "of-btn-primary" : "of-btn-ghost"}>
+              Mensal
+            </Link>
+            <Link href="/planos?billing=annual" className={billingCycle === "annual" ? "of-btn-primary" : "of-btn-ghost"}>
+              Anual
+            </Link>
+            {canManageBilling && billingProvider === "Stripe" ? (
+              <form action={openBillingPortalAction}>
+                <button type="submit" className="of-btn-ghost">Portal de cobrança</button>
+              </form>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </article>
 
       {errorMessage ? (
         <p className="mb-6 rounded-md border border-[#ff4060]/40 bg-[#ff4060]/10 px-3 py-2 text-sm text-[#ff9aad]">
@@ -352,73 +380,22 @@ export default async function PlanosPage({
           </h2>
         </div>
 
-        <div
-          style={{
-            marginBottom: 28,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div
+        {billingCycle === "annual" && (
+          <span
             style={{
               display: "inline-flex",
-              alignItems: "center",
-              gap: 0,
-              border: "1px solid var(--of-border)",
-              borderRadius: 999,
-              padding: 4,
-              background: "var(--of-bg-3)",
+              marginBottom: 28,
+              padding: "4px 12px",
+              background: "rgba(255, 107, 26, 0.15)",
+              color: "#ff6b1a",
+              borderRadius: 4,
+              fontSize: "0.85rem",
+              fontWeight: 600,
             }}
           >
-            <Link
-              href={`/planos?billing=monthly`}
-              style={{
-                padding: "8px 16px",
-                textDecoration: "none",
-                color: billingCycle === "monthly" ? "#fff" : "var(--of-text-secondary)",
-                fontWeight: billingCycle === "monthly" ? 600 : 500,
-                fontSize: "0.9rem",
-                borderRadius: billingCycle === "monthly" ? 999 : 0,
-                background: billingCycle === "monthly" ? "#ff6b1a" : "transparent",
-                transition: "all 0.2s ease",
-                cursor: "pointer",
-              }}
-            >
-              Mensal
-            </Link>
-            <Link
-              href={`/planos?billing=annual`}
-              style={{
-                padding: "8px 16px",
-                textDecoration: "none",
-                color: billingCycle === "annual" ? "#fff" : "var(--of-text-secondary)",
-                fontWeight: billingCycle === "annual" ? 600 : 500,
-                fontSize: "0.9rem",
-                borderRadius: billingCycle === "annual" ? 999 : 0,
-                background: billingCycle === "annual" ? "#ff6b1a" : "transparent",
-                transition: "all 0.2s ease",
-                cursor: "pointer",
-              }}
-            >
-              Anual
-            </Link>
-          </div>
-          {billingCycle === "annual" && (
-            <span
-              style={{
-                padding: "4px 12px",
-                background: "rgba(255, 107, 26, 0.15)",
-                color: "#ff6b1a",
-                borderRadius: 4,
-                fontSize: "0.85rem",
-                fontWeight: 600,
-              }}
-            >
-              -30% OFF
-            </span>
-          )}
-        </div>
+            -30% OFF
+          </span>
+        )}
         <div
           style={{
             marginBottom: 18,
@@ -703,10 +680,10 @@ export default async function PlanosPage({
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600 }}>
-                💳 Cartão de crédito
+                Cartão de crédito
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600, opacity: 0.55 }} title="PIX em breve — disponível após ativação pelo Stripe">
-                ⚡ PIX (em breve)
+                PIX (em breve)
               </span>
             </div>
           </div>
