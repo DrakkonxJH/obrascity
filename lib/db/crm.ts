@@ -830,6 +830,10 @@ export async function updateCrmDeal(dealId: string, patch: UpdateCrmDealInput) {
 
 export async function listCrmLossReasonsReport() {
   const empresaId = await getEmpresaIdFromProfile();
+  
+  // Security: Prevent viewing loss reasons from master account for client users
+  await ensureNotMasterAccount(empresaId);
+  
   const supabase = await createServerClient();
   const deals = await supabase
     .from("crm_deals")
@@ -853,6 +857,10 @@ export async function listCrmLossReasonsReport() {
 
 export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> {
   const empresaId = await getEmpresaIdFromProfile();
+  
+  // Security: Prevent listing profiles from master account for client users
+  await ensureNotMasterAccount(empresaId);
+  
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("profiles")
