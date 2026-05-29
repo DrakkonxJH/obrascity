@@ -1068,3 +1068,120 @@ export async function deleteCrmLead(id: string) {
     throw new Error(`Erro ao remover lead do CRM: ${error.message}`);
   }
 }
+
+// ────────────────────────────────────────────────────────
+// CRM Workspaces - Contextos separados (Vendas, Operacional, etc.)
+// ────────────────────────────────────────────────────────
+
+export type CrmWorkspace = {
+  id: string;
+  company_id: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  sort_order: number;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function listCrmWorkspaces(): Promise<CrmWorkspace[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("crm_workspaces")
+    .select("*")
+    .eq("company_id", empresaId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao listar workspaces:", error);
+    return [];
+  }
+
+  return (data || []) as CrmWorkspace[];
+}
+
+export async function createCrmWorkspace(name: string, color: string = "#3B82F6", description?: string): Promise<CrmWorkspace> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("crm_workspaces")
+    .insert({
+      company_id: empresaId,
+      name,
+      color,
+      description,
+      sort_order: 0,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Erro ao criar workspace: ${error.message}`);
+  }
+
+  return data as CrmWorkspace;
+}
+
+export async function updateCrmWorkspace(id: string, updates: Partial<CrmWorkspace>): Promise<CrmWorkspace> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("crm_workspaces")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("company_id", empresaId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Erro ao atualizar workspace: ${error.message}`);
+  }
+
+  return data as CrmWorkspace;
+}
+
+export async function deleteCrmWorkspace(id: string): Promise<void> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const { error } = await supabase
+    .from("crm_workspaces")
+    .delete()
+    .eq("id", id)
+    .eq("company_id", empresaId);
+
+  if (error) {
+    throw new Error(`Erro ao deletar workspace: ${error.message}`);
+  }
+}
+
+export async function listCrmDealsByWorkspace(workspaceId?: string): Promise<CrmDealSummary[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  let query = supabase
+    .from("crm_deals")
+    .select(DEAL_SELECT)
+    .eq("company_id", empresaId);
+
+  if (workspaceId) {
+    query = query.eq("workspace_id", workspaceId);
+  } else {
+    query = query.is("workspace_id", null);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Erro ao listar deals do workspace:", error);
+    return [];
+  }
+
+  return (data || []) as CrmDealSummary[];
+}

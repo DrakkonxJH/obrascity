@@ -807,6 +807,11 @@ export default function CrmPage() {
   const [deals, setDeals]   = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [lossReasons, setLossReasons] = useState([]);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [selectedWorkspace, setSelectedWorkspace] = useState(null);
+  const [showNewWorkspace, setShowNewWorkspace] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [newWorkspaceColor, setNewWorkspaceColor] = useState("#3B82F6");
   const [view, setView]     = useState("kanban");
   const [search, setSearch] = useState("");
   const [fEtapa, setFEtapa] = useState("");
@@ -950,28 +955,37 @@ export default function CrmPage() {
     let active = true;
     const load = async () => {
       try {
-        const [leadsRes, dealsRes, profilesRes, reasonsRes] = await Promise.all([
+        const [leadsRes, dealsRes, profilesRes, reasonsRes, workspacesRes] = await Promise.all([
           fetch("/api/crm/leads", { method: "GET", headers: { Accept: "application/json" } }),
           fetch("/api/crm/deals", { method: "GET", headers: { Accept: "application/json" } }),
           fetch("/api/crm/profiles", { method: "GET", headers: { Accept: "application/json" } }),
           fetch("/api/crm/loss-reasons", { method: "GET", headers: { Accept: "application/json" } }),
+          fetch("/api/crm/workspaces", { method: "GET", headers: { Accept: "application/json" } }),
         ]);
         const data = await leadsRes.json();
         const dealsData = await dealsRes.json();
         const profilesData = await profilesRes.json();
         const reasonsData = await reasonsRes.json();
+        const workspacesData = await workspacesRes.json();
         if (!active) return;
         if (!leadsRes.ok || !data?.ok) {
           setLeads([]);
           setDeals([]);
           setProfiles([]);
           setLossReasons([]);
+          setWorkspaces([]);
           setSyncError(data?.message || "Falha ao carregar tarefas reais para o CRM.");
         } else {
           setLeads(Array.isArray(data.leads) ? data.leads : []);
           setDeals(dealsRes.ok && dealsData?.ok && Array.isArray(dealsData.deals) ? dealsData.deals : []);
           setProfiles(profilesRes.ok && profilesData?.ok && Array.isArray(profilesData.profiles) ? profilesData.profiles : []);
           setLossReasons(reasonsRes.ok && reasonsData?.ok && Array.isArray(reasonsData.reasons) ? reasonsData.reasons : []);
+          if (workspacesRes.ok && workspacesData?.success && Array.isArray(workspacesData.data)) {
+            setWorkspaces(workspacesData.data);
+            if (workspacesData.data.length > 0 && !selectedWorkspace) {
+              setSelectedWorkspace(workspacesData.data[0].id);
+            }
+          }
           setSyncError("");
         }
       } catch {
@@ -980,6 +994,7 @@ export default function CrmPage() {
         setDeals([]);
         setProfiles([]);
         setLossReasons([]);
+        setWorkspaces([]);
         setSyncError("Falha de conectividade com API CRM.");
       } finally {
         if (active) setLoading(false);
@@ -1230,6 +1245,121 @@ export default function CrmPage() {
       {!loading && syncError && (
         <div style={{ background: "#2A1A0A", color: "#FFB37F", fontSize: 12, padding: "8px 24px", borderBottom: `1px solid ${C.border}` }}>
           {syncError}
+        </div>
+      )}
+
+      {/* ── Workspaces (Abas de contexto) ── */}
+      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto" }}>
+        {workspaces.map((ws) => (
+          <div
+            key={ws.id}
+            onClick={() => setSelectedWorkspace(ws.id)}
+            style={{
+              padding: "12px 16px",
+              cursor: "pointer",
+              borderBottom: selectedWorkspace === ws.id ? `3px solid ${ws.color}` : `3px solid transparent`,
+              color: selectedWorkspace === ws.id ? C.text : C.muted,
+              fontSize: 13,
+              fontWeight: selectedWorkspace === ws.id ? 600 : 500,
+              transition: "all .15s",
+              whiteSpace: "nowrap",
+              userSelect: "none",
+              background: selectedWorkspace === ws.id ? `${ws.color}15` : "transparent",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.text; }}
+            onMouseLeave={e => { e.currentTarget.style.color = selectedWorkspace === ws.id ? C.text : C.muted; }}
+          >
+            <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: ws.color, marginRight: 8, verticalAlign: "middle" }}></span>
+            {ws.name}
+          </div>
+        ))}
+        <button
+          onClick={() => setShowNewWorkspace(true)}
+          style={{
+            padding: "12px 16px",
+            border: "none",
+            background: "transparent",
+            color: C.muted,
+            cursor: "pointer",
+            fontSize: 13,
+            marginLeft: "auto",
+            flexShrink: 0,
+            transition: "all .15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = C.orange; }}
+          onMouseLeave={e => { e.currentTarget.style.color = C.muted; }}
+        >
+          {Ico.plus} Nova aba
+        </button>
+      </div>
+
+      {/* ── Modal: Criar novo workspace ── */}
+      {showNewWorkspace && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowNewWorkspace(false); }}>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, width: "100%", maxWidth: 400, padding: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Nova aba de contexto</div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.muted, display: "block", marginBottom: 4, fontWeight: 500 }}>Nome da aba *</label>
+              <input
+                value={newWorkspaceName}
+                onChange={e => setNewWorkspaceName(e.target.value)}
+                placeholder="Ex: Vendas, Operacional, Engenharia..."
+                style={{ width: "100%", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 12, color: C.muted, display: "block", marginBottom: 4, fontWeight: 500 }}>Cor</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                {["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#06B6D4", "#F97316"].map((color) => (
+                  <div
+                    key={color}
+                    onClick={() => setNewWorkspaceColor(color)}
+                    style={{
+                      width: "100%",
+                      aspectRatio: 1,
+                      background: color,
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      border: newWorkspaceColor === color ? `2px solid ${C.text}` : `2px solid ${C.border}`,
+                      transition: "all .15s",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowNewWorkspace(false)}
+                style={{ padding: "8px 16px", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text, cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newWorkspaceName.trim()) return;
+                  try {
+                    const res = await fetch("/api/crm/workspaces", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ name: newWorkspaceName, color: newWorkspaceColor }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data?.success) {
+                      setWorkspaces([...workspaces, data.data]);
+                      setNewWorkspaceName("");
+                      setNewWorkspaceColor("#3B82F6");
+                      setShowNewWorkspace(false);
+                      setSelectedWorkspace(data.data.id);
+                    }
+                  } catch {}
+                }}
+                style={{ padding: "8px 16px", background: C.orange, border: `1px solid ${C.orange}`, borderRadius: 6, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 500 }}
+              >
+                Criar aba
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
