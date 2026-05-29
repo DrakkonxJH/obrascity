@@ -15,7 +15,7 @@ Plataforma SaaS para gestão de obras com operação multiempresa (tenant), foca
 - **Frontend + API web:** Next.js (App Router), publicado na Vercel.
 - **Banco/Auth/Storage:** Supabase (Postgres + Auth + Storage + RLS por tenant).
 - **Jobs assíncronos:** BullMQ + Redis com worker dedicado (`worker/src/index.ts`).
-- **Pagamentos:** Stripe (checkout, portal de cobrança, webhook).
+- **Pagamentos:** Stripe, Asaas PIX e Mercado Pago PIX (checkout, portal de cobrança, webhook).
 
 ## Endereçamento atual
 
@@ -103,6 +103,7 @@ tests/                  # testes automatizados críticos
 - Runbook operacional: `DEPLOYMENT_SETUP.md` e `GUIA_GO_LIVE_OBRASCITY.md`.
 - Roteiro completo de processo de obra (15 andares): `GUIA_ROTEIRO_OBRA_COMPLETA_15_ANDARES.md`.
 - Relatório de execução do roteiro no produto: `RELATORIO_EXECUCAO_ROTEIRO_OBRA_ROTEIRO.md`.
+- **Configuração de pagamentos:** veja `STRIPE_CONFIGURATION.md` para setup Stripe, Asaas e Mercado Pago.
 
 ## Segurança e isolamento
 
