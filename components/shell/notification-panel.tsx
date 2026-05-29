@@ -33,7 +33,7 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
       />
       <div className="of-notif-panel" role="dialog" aria-label="Notificações">
         <div className="of-notif-panel-header">
-          <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>Notificações</span>
+          <span>Notificações</span>
           <button type="button" className="of-notif-mark-read" onClick={closeNotif}>
             Marcar todas lidas
           </button>
@@ -49,12 +49,12 @@ export function NotificationPanel({ items }: NotificationPanelProps) {
           ) : null}
           {items.map((item) => {
             const content = (
-              <>
+              <div className="of-notif-content">
                 <p className="of-notif-item-title">{item.titulo}</p>
                 <p className="of-notif-item-desc">{item.descricao}</p>
                 {item.destino ? <p className="of-notif-item-desc">{`Abre em: ${item.destino}`}</p> : null}
                 <p className="of-notif-item-time">{item.tempo}</p>
-              </>
+              </div>
             );
             if (item.href) {
               return (
