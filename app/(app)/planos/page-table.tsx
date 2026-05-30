@@ -6,17 +6,18 @@ import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { startCheckoutAction } from "./actions";
 import { featuresAgrupadas, type CategoriaFeature, type TierPlano } from "@/lib/billing/features-agrupadas";
+import { PageHeader } from "@/components/ui/page-header";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 
-const categoriasLabels: Record<CategoriaFeature, { emoji: string; label: string }> = {
-  operacional: { emoji: "🎯", label: "Operacional" },
-  relatórios: { emoji: "📊", label: "Relatórios" },
-  comunicação: { emoji: "💬", label: "Comunicação" },
-  integração: { emoji: "🔌", label: "Integrações" },
-  automacao: { emoji: "⚙️", label: "Automações" },
-  segurança: { emoji: "🔐", label: "Segurança" },
-  api: { emoji: "🚀", label: "API" },
+const categoriasLabels: Record<CategoriaFeature, { label: string }> = {
+  operacional: { label: "Operacional" },
+  relatórios: { label: "Relatórios" },
+  comunicação: { label: "Comunicação" },
+  integração: { label: "Integrações" },
+  automacao: { label: "Automações" },
+  segurança: { label: "Segurança" },
+  api: { label: "API" },
 };
 
 const PLANOS = [
@@ -70,17 +71,11 @@ export default async function PlanosPage({
 
   return (
     <section className="of-page" style={{ paddingTop: 40, paddingBottom: 60 }}>
-      {/* Header */}
-      <div className="of-inline-header" style={{ marginBottom: 40, alignItems: "flex-start" }}>
-        <div>
-          <h1 className="of-page-title" style={{ marginBottom: 6 }}>
-            Planos de Preços
-          </h1>
-          <p className="of-page-description">
-            Escolha o plano ideal para sua operação. Todos incluem suporte técnico e atualizações.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Comercial"
+        title="Planos de preços"
+        subtitle="Escolha o plano ideal para sua operação. Todos incluem suporte técnico e atualizações."
+      />
 
       {checkoutMessage && (
         <div
@@ -273,7 +268,7 @@ export default async function PlanosPage({
             </tr>
 
             {/* Features por Categoria */}
-            {Object.entries(categoriasLabels).map(([categoria, { emoji, label }]) => {
+            {Object.entries(categoriasLabels).map(([categoria, { label }]) => {
               const features = featuresAgrupadas[categoria as CategoriaFeature];
               if (!features?.length) return null;
 
@@ -295,7 +290,7 @@ export default async function PlanosPage({
                         color: "var(--of-text-primary)",
                       }}
                     >
-                      {emoji} {label}
+                      {label}
                     </td>
                   </tr>
 

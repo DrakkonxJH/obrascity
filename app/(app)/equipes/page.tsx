@@ -20,7 +20,7 @@ export default async function EquipesPage() {
       <input name="nome" required placeholder="Nome da equipe" className="of-input" />
       <input name="especialidade" placeholder="Especialidade" className="of-input" />
       <button type="submit" className="of-btn-primary">
-        + Cadastrar equipe
+        Cadastrar equipe
       </button>
     </form>
   );

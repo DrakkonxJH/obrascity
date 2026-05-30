@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGuiaBySlug } from "../data";
+import { PageHeader } from "@/components/ui/page-header";
 
 type GuiaDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -140,21 +141,18 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
 
   return (
     <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 16, alignItems: "flex-start" }}>
-        <div>
-          <h1 className="of-page-title" style={{ marginBottom: 8 }}>
-            {guia.icone} Guia completo: {guia.titulo}
-          </h1>
-          <p className="of-empty-text" style={{ marginBottom: 10 }}>
-            {guia.resumo}
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <PageHeader
+        eyebrow="Guia operacional"
+        title={`Guia completo: ${guia.titulo}`}
+        subtitle={guia.resumo}
+        actions={
+          <>
             <span className="of-badge of-badge-blue">Nivel: {nivelLabel(guia.nivel)}</span>
             <span className="of-badge of-badge-green">Leitura: {guia.tempoMedioLeitura}</span>
             <span className="of-badge of-badge-purple">Guia operacional detalhado</span>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="of-dashboard-grid" style={{ marginBottom: 16 }}>
         <article className="of-card">
@@ -172,7 +170,7 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
         <ul className="of-list">
           {guia.preRequisitos.map((item) => (
             <li key={item} className="of-list-item">
-              <p className="of-list-description">✅ {item}</p>
+              <p className="of-list-description">{item}</p>
             </li>
           ))}
         </ul>
@@ -286,7 +284,7 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
                 <ul className="of-list">
                   {passo.falhasComuns.map((erro) => (
                     <li key={erro} className="of-list-item">
-                      <p className="of-list-description">⚠ {erro}</p>
+                      <p className="of-list-description">{erro}</p>
                     </li>
                   ))}
                 </ul>

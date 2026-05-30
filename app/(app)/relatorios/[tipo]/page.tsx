@@ -13,6 +13,7 @@ import { listViabilidade } from "@/lib/db/viabilidade";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "../actions";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 
 type ReportType = "progresso" | "financeiro" | "equipes" | "materiais" | "diario" | "executivo" | "qualidade" | "mudancas" | "viabilidade";
 
@@ -629,20 +630,19 @@ export default async function ReportTypePage({ params }: PageParams) {
   return (
     <FeatureGateWrapper feature="relatórios_basic">
       <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 16 }}>
-        <div>
-          <p className="of-empty-text" style={{ marginBottom: 6 }}>
-            {meta.subtitle}
-          </p>
-          <h1 className="of-card-title">{meta.title}</h1>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {meta.formats.map((formato) => exportForm(formato))}
-          <Link href="/relatorios" className="of-btn-ghost">
-            Voltar
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Relatorio"
+        title={meta.title}
+        subtitle={meta.subtitle}
+        actions={
+          <>
+            {meta.formats.map((formato) => exportForm(formato))}
+            <Link href="/relatorios" className="of-btn-ghost">
+              Voltar
+            </Link>
+          </>
+        }
+      />
 
       {mainSection}
       {detailSection}

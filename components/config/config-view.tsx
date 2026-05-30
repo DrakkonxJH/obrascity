@@ -98,7 +98,7 @@ export function ConfigView({
         ) : null}
 
         <article className="of-config-section">
-          <p className="of-config-title">⚙️ Preferências</p>
+          <p className="of-config-title">Preferências</p>
           <p className="of-config-desc">Ajustes gerais da plataforma</p>
           {[
             ["Notificações push", "Alertas de atrasos e urgências"],
@@ -137,7 +137,7 @@ export function ConfigView({
         </article>
 
         <article className="of-config-section">
-          <p className="of-config-title">👥 Gestão de Perfis da Empresa</p>
+          <p className="of-config-title">Gestão de perfis da empresa</p>
           <p className="of-config-desc">
             Conta empresarial com criação de acessos individuais para funcionários.
           </p>
@@ -246,7 +246,7 @@ export function ConfigView({
         </article>
 
         <article className="of-config-section">
-          <p className="of-config-title">🛡️ Segurança e LGPD</p>
+          <p className="of-config-title">Segurança e LGPD</p>
           <p className="of-config-desc">Controle de acesso, privacidade e autenticação</p>
           <div className="of-config-row">
             <div>

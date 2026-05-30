@@ -4,6 +4,7 @@ import { listObras } from "@/lib/db/obras";
 import { listViabilidade } from "@/lib/db/viabilidade";
 import { saveViabilidadeAction } from "./actions";
 import { RiskMatrix } from "./risk-matrix";
+import { PageHeader } from "@/components/ui/page-header";
 
 type StatusField = "status_tecnico" | "status_legal" | "status_economico";
 
@@ -80,30 +81,30 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
 
 function statusBadge(status: string) {
   if (status === "ok") {
-    return <span className="of-badge of-badge-green">✓ Aprovado</span>;
+    return <span className="of-badge of-badge-green">Aprovado</span>;
   }
   if (status === "restricao") {
-    return <span className="of-badge of-badge-yellow">⚠ Restrição</span>;
+    return <span className="of-badge of-badge-yellow">Restrição</span>;
   }
-  return <span className="of-badge">⏳ Pendente</span>;
+  return <span className="of-badge">Pendente</span>;
 }
 
 function goNoGoBadge(value: string) {
   if (value === "go") {
     return (
       <span className="of-badge of-badge-green" style={{ fontWeight: 800, fontSize: "0.9rem" }}>
-        ✅ GO
+        GO
       </span>
     );
   }
   if (value === "no_go") {
     return (
       <span className="of-badge of-badge-red" style={{ fontWeight: 800 }}>
-        🚫 NO-GO
+        NO-GO
       </span>
     );
   }
-  return <span className="of-badge of-badge-yellow">⏳ Em análise</span>;
+  return <span className="of-badge of-badge-yellow">Em análise</span>;
 }
 
 function formatCurrency(value: number | null) {
@@ -182,12 +183,11 @@ export default async function ViabilidadePage() {
   return (
     <FeatureGateWrapper feature="obras_basic">
       <section className="of-page">
-        <div style={{ marginBottom: 24 }}>
-          <h1 className="of-page-title">🔎 Estudos de Viabilidade</h1>
-          <p style={{ color: "var(--of-text-2)", marginTop: 4 }}>
-            Análise técnica, legal e econômico-financeira dos empreendimentos.
-          </p>
-        </div>
+        <PageHeader
+          eyebrow="Viabilidade"
+          title="Estudos de viabilidade"
+          subtitle="Análise técnica, legal e econômico-financeira dos empreendimentos."
+        />
 
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
@@ -246,7 +246,7 @@ export default async function ViabilidadePage() {
         </div>
 
         <article className="of-card" style={{ marginBottom: 20 }}>
-          <div className="of-card-title">🚦 Sinalizador GO / NO-GO</div>
+          <div className="of-card-title">Sinalizador GO / NO-GO</div>
           <div
             style={{
               display: "grid",
@@ -302,7 +302,7 @@ export default async function ViabilidadePage() {
         </article>
 
         <article className="of-card" style={{ marginBottom: 20 }}>
-          <div className="of-card-title">➕ Nova análise / Atualizar estudo</div>
+          <div className="of-card-title">Nova análise / Atualizar estudo</div>
           <p className="of-empty-text" style={{ marginTop: 6 }}>
             Consolide a viabilidade física, ambiental, jurídica e financeira de cada empreendimento.
           </p>
@@ -345,7 +345,7 @@ export default async function ViabilidadePage() {
               </FormField>
             </div>
 
-            <FormSection title="📐 Dados Físicos do Empreendimento">
+            <FormSection title="Dados físicos do empreendimento">
               <FormField label="Área do terreno (m²)">
                 <input name="area_terreno_m2" type="number" step="0.01" className="of-input" placeholder="0,00" />
               </FormField>
@@ -369,7 +369,7 @@ export default async function ViabilidadePage() {
               </FormField>
             </FormSection>
 
-            <FormSection title="💰 Análise Econômico-Financeira">
+            <FormSection title="Análise econômico-financeira">
               <FormField label="Investimento total (R$)">
                 <input name="valor_investimento" type="number" step="0.01" className="of-input" placeholder="0,00" />
               </FormField>
@@ -390,7 +390,7 @@ export default async function ViabilidadePage() {
               </FormField>
             </FormSection>
 
-            <FormSection title="⚙️ Análise Técnica">
+            <FormSection title="Análise técnica">
               <FormField label="Status técnico">
                 <select name="status_tecnico" className="of-input" defaultValue="pendente">
                   <option value="pendente">Pendente</option>
@@ -418,7 +418,7 @@ export default async function ViabilidadePage() {
               </FormField>
             </FormSection>
 
-            <FormSection title="⚖️ Análise Legal">
+            <FormSection title="Análise legal">
               <FormField label="Status legal">
                 <select name="status_legal" className="of-input" defaultValue="pendente">
                   <option value="pendente">Pendente</option>
@@ -437,7 +437,7 @@ export default async function ViabilidadePage() {
               </FormField>
             </FormSection>
 
-            <FormSection title="📊 Análise Econômica">
+            <FormSection title="Análise econômica">
               <FormField label="Status econômico">
                 <select name="status_economico" className="of-input" defaultValue="pendente">
                   <option value="pendente">Pendente</option>
@@ -456,7 +456,7 @@ export default async function ViabilidadePage() {
               </FormField>
             </FormSection>
 
-            <FormSection title="🎯 Registro de Riscos Estratégicos">
+            <FormSection title="Registro de riscos estratégicos">
               <FormField label="Riscos (JSON)" fullWidth>
                 <textarea
                   name="riscos"
@@ -480,7 +480,7 @@ export default async function ViabilidadePage() {
         </article>
 
         <article className="of-card" style={{ marginBottom: 20 }}>
-          <div className="of-card-title">📋 Todos os estudos</div>
+          <div className="of-card-title">Todos os estudos</div>
           <div className="of-table-wrap" style={{ border: 0, marginTop: 12 }}>
             <table className="of-table">
               <thead>
@@ -540,15 +540,15 @@ export default async function ViabilidadePage() {
           }}
         >
           {[
-            { label: "Análise Técnica", icon: "⚙️", resumo: resumoTecnico },
-            { label: "Análise Legal", icon: "⚖️", resumo: resumoLegal },
-            { label: "Análise Econômica", icon: "📊", resumo: resumoEconomico },
-          ].map(({ label, icon, resumo }) => {
+            { label: "Análise técnica", resumo: resumoTecnico },
+            { label: "Análise legal", resumo: resumoLegal },
+            { label: "Análise econômica", resumo: resumoEconomico },
+          ].map(({ label, resumo }) => {
             const total = resumo.aprovados + resumo.restricoes + resumo.pendentes;
             return (
               <article key={label} className="of-card">
                 <div className="of-card-title">
-                  {icon} {label}
+                  {label}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                   {[

@@ -6,6 +6,7 @@ import {
   importPurchaseOrdersAction,
   type ImportMaterialsState,
 } from "@/app/(app)/materiais/actions";
+import { Plus } from "lucide-react";
 
 type OptionItem = {
   id: string;
@@ -56,7 +57,8 @@ export function PurchaseOrderModal({ materiais, obras }: PurchaseOrderModalProps
   return (
     <>
       <button type="button" className="of-btn-primary" onClick={() => setOpen(true)}>
-        + Pedido de Compra
+        <Plus size={16} aria-hidden />
+        Pedido de compra
       </button>
 
       {open ? (

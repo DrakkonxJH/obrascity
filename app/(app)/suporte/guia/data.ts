@@ -92,7 +92,7 @@ function buildPassoDetalhado(guia: GuiaBase, passo: string, index: number): Guia
       legenda:
         `Use esta referencia para localizar rapidamente onde executar "${passo.toLowerCase()}" ` +
         `dentro do modulo ${guia.titulo}.`,
-      destaqueVisual: `${guia.icone} ${guia.titulo} · etapa ${numero}`,
+      destaqueVisual: `${guia.titulo} · etapa ${numero}`,
     },
   };
 }
@@ -100,7 +100,7 @@ function buildPassoDetalhado(guia: GuiaBase, passo: string, index: number): Guia
 const GUIAS_BASE: GuiaBase[] = [
   {
     slug: "dashboard",
-    icone: "📊",
+    icone: "DASH",
     titulo: "Dashboard",
     resumo: "Painel central para acompanhar indicadores da operacao em tempo real.",
     paraQueServe:
@@ -152,7 +152,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "obras",
-    icone: "🏗️",
+    icone: "OBRA",
     titulo: "Obras",
     resumo: "Cadastro e acompanhamento completo da execucao de cada obra.",
     paraQueServe:
@@ -203,7 +203,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "cronograma",
-    icone: "📅",
+    icone: "CRON",
     titulo: "Cronograma",
     resumo: "Planejamento das etapas e marcos para garantir entrega no prazo.",
     paraQueServe:
@@ -254,7 +254,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "financeiro",
-    icone: "💰",
+    icone: "FIN",
     titulo: "Financeiro",
     resumo: "Controle de orcamento, realizado e saude financeira das obras.",
     paraQueServe:
@@ -305,7 +305,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "equipes",
-    icone: "👥",
+    icone: "EQP",
     titulo: "Equipes",
     resumo: "Gestão de profissionais, papéis e distribuicao por frente de trabalho.",
     paraQueServe:
@@ -356,7 +356,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "materiais",
-    icone: "📦",
+    icone: "MAT",
     titulo: "Materiais",
     resumo: "Controle de estoque, consumo e reposicao para evitar ruptura.",
     paraQueServe:
@@ -407,7 +407,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "qualidade",
-    icone: "🛡️",
+    icone: "QLD",
     titulo: "Qualidade",
     resumo: "Registro de não conformidades, inspecoes e planos de acao.",
     paraQueServe:
@@ -458,7 +458,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "relatórios",
-    icone: "📋",
+    icone: "REL",
     titulo: "Relatórios",
     resumo: "Geracao de relatórios gerenciais para operacao, cliente e diretoria.",
     paraQueServe:
@@ -509,7 +509,7 @@ const GUIAS_BASE: GuiaBase[] = [
   },
   {
     slug: "configuracoes",
-    icone: "⚙️",
+    icone: "CFG",
     titulo: "Configuracoes",
     resumo: "Ajustes de conta, empresa, segurança, perfis e preferencias.",
     paraQueServe:

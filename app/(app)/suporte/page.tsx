@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listGuias } from "./guia/data";
 import { AiSupportChat } from "@/components/support/ai-support-chat";
+import { PageHeader } from "@/components/ui/page-header";
 
 const canais = [
   {
@@ -28,17 +29,11 @@ export default function SuportePage() {
 
   return (
     <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 20, alignItems: "flex-start" }}>
-        <div>
-          <h1 className="of-page-title" style={{ marginBottom: 6 }}>
-            SAC e Guia de Uso
-          </h1>
-          <p className="of-empty-text">
-            Central de atendimento e orientacoes praticas para sua equipe usar o ObrasCitY com
-            segurança e produtividade.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Suporte"
+        title="SAC e guia de uso"
+        subtitle="Central de atendimento e orientacoes praticas para sua equipe usar o ObrasCitY com segurança e produtividade."
+      />
 
       <div className="of-dashboard-grid" style={{ marginBottom: 20 }}>
         {canais.map((canal) => (

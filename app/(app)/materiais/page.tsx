@@ -20,6 +20,7 @@ import { buildMaterialSuggestions } from "@/lib/materials/catalog";
 import { MaterialImportButton } from "@/components/materiais/material-import-button";
 import { PurchaseOrderModal } from "@/components/materiais/purchase-order-modal";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -58,16 +59,20 @@ export default async function MateriaisPage() {
   return (
     <FeatureGateWrapper feature="materiais_basic">
       <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 20, alignItems: "flex-start" }}>
-        <p className="of-empty-text">Estoque geral de materiais por obra</p>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <MaterialImportButton />
-          <PurchaseOrderModal
-            materiais={materiais.map((material) => ({ id: material.id, nome: material.nome }))}
-            obras={obras.map((obra) => ({ id: obra.id, nome: obra.nome }))}
-          />
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Suprimentos"
+        title="Materiais e compras"
+        subtitle="Estoque geral por obra, cotações multi-fornecedor e pedidos operacionais."
+        actions={
+          <>
+            <MaterialImportButton />
+            <PurchaseOrderModal
+              materiais={materiais.map((material) => ({ id: material.id, nome: material.nome }))}
+              obras={obras.map((obra) => ({ id: obra.id, nome: obra.nome }))}
+            />
+          </>
+        }
+      />
       <form action={createMaterialAction} className="of-card" style={{ marginBottom: 20, padding: 0, overflow: "hidden" }}>
         <div
           style={{
@@ -115,7 +120,7 @@ export default async function MateriaisPage() {
             <input id="material-mínimo" name="mínimo" type="number" step="0.01" defaultValue="0" className="of-input" />
           </div>
           <button type="submit" className="of-btn-primary" style={{ minHeight: 52, alignSelf: "end" }}>
-            + Cadastrar
+            Cadastrar
           </button>
         </div>
       </form>

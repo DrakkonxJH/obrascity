@@ -125,7 +125,7 @@ export default async function PixAsaasPage({ searchParams }: Props) {
             ← Voltar aos planos
           </Link>
           <Link href="/planos" className="of-btn of-btn-primary">
-            Já paguei →
+            Já paguei
           </Link>
         </div>
       </article>

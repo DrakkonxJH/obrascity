@@ -73,6 +73,26 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
         title="Carteira de obras"
         subtitle="Controle status, progresso e saude de orcamento das obras ativas e da lixeira operacional."
       />
+      <div className="of-kpi-grid" style={{ marginTop: -2 }}>
+        <article className="of-metric-card blue">
+          <p className="of-kpi-label">Obras ativas</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{obrasAtivas.length}</p>
+        </article>
+        <article className="of-metric-card yellow">
+          <p className="of-kpi-label">Em andamento</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{totalAndamento}</p>
+        </article>
+        <article className="of-metric-card green">
+          <p className="of-kpi-label">Concluídas</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>
+            {obrasAtivas.filter((o) => o.status === "concluida").length}
+          </p>
+        </article>
+        <article className="of-metric-card">
+          <p className="of-kpi-label">Lixeira</p>
+          <p className="of-kpi-value" style={{ color: "var(--of-red)" }}>{obrasLixeira.length}</p>
+        </article>
+      </div>
       <div className="of-obras-toolbar">
         <div className="of-search-wrap">
           <span className="of-search-icon" aria-hidden><Search size={14} /></span>
@@ -172,7 +192,7 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
                 </div>
                 <div>
                   <p className="of-obra-meta-label">Detalhes</p>
-                  <p className="of-obra-meta-value">Painel →</p>
+                  <p className="of-obra-meta-value">Abrir painel</p>
                 </div>
               </div>
             </article>

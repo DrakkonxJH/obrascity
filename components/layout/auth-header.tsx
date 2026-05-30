@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { HardHat } from "lucide-react";
 
 export function AuthHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -190,7 +191,7 @@ export function AuthHeader() {
       <nav id="navbar" className="scrolled">
         <div className="nav-inner">
           <Link href="/" className="nav-logo">
-            <div className="nav-logo-mark">🏗</div>
+            <div className="nav-logo-mark"><HardHat size={18} aria-hidden /></div>
             <div className="nav-logo-text">
               OBRAS<em>CITY</em>
             </div>
@@ -217,7 +218,7 @@ export function AuthHeader() {
               Entrar
             </Link>
             <Link href="/cadastro" className="btn-nav-fire">
-              Começar grátis →
+              Começar grátis
             </Link>
           </div>
           <button
@@ -255,7 +256,7 @@ export function AuthHeader() {
           Planos
         </Link>
         <a href="/cadastro" className="btn-nav-fire" onClick={() => setMobileMenuOpen(false)}>
-          Começar grátis →
+          Começar grátis
         </a>
       </div>
     </>

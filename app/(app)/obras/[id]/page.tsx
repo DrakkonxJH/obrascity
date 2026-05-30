@@ -7,6 +7,7 @@ import { listCronograma } from "@/lib/db/cronograma";
 import { listPedidosCompra } from "@/lib/db/materiais";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { ObraLifecycleActions } from "@/components/obras/obra-lifecycle-actions";
+import { PageHeader } from "@/components/ui/page-header";
 
 type ObraDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -86,13 +87,12 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
 
   return (
     <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 16 }}>
-        <div>
-          <h1 className="of-page-title">{obra.nome}</h1>
-          <p className="of-empty-text">Cliente: {obra.cliente}</p>
-        </div>
-        <span className={statusBadge(obra.status)}>{statusLabel(obra.status)}</span>
-      </div>
+      <PageHeader
+        eyebrow="Cockpit da obra"
+        title={obra.nome}
+        subtitle={`Cliente: ${obra.cliente}`}
+        actions={<span className={statusBadge(obra.status)}>{statusLabel(obra.status)}</span>}
+      />
 
       <div style={{ marginBottom: 16 }}>
         <ObraLifecycleActions obra={obra} afterActionHref="/obras" />

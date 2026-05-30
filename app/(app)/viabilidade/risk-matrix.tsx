@@ -30,7 +30,7 @@ export function RiskMatrix({
 
   return (
     <article id={`risk-matrix-${estudoId}`} className="of-card" style={{ marginTop: 20 }}>
-      <div className="of-card-title">🎯 Matriz de Riscos — {obraNome}</div>
+      <div className="of-card-title">Matriz de riscos - {obraNome}</div>
       <p className="of-empty-text" style={{ marginTop: 6, marginBottom: 16 }}>
         Visualização consolidada dos riscos do estudo. Ajustes podem ser feitos ao atualizar a análise.
       </p>
@@ -131,7 +131,7 @@ export function RiskMatrix({
                   </span>
                 </div>
                 {risk.mitigacao ? (
-                  <p style={{ fontSize: "0.83rem", color: "var(--of-text-2)", margin: 0 }}>🛡 {risk.mitigacao}</p>
+                  <p style={{ fontSize: "0.83rem", color: "var(--of-text-2)", margin: 0 }}>{risk.mitigacao}</p>
                 ) : null}
               </div>
             );

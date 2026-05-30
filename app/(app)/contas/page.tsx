@@ -38,6 +38,23 @@ import {
   iniciarAcessoAssistidoAction,
   encerrarAcessoAssistidoAction,
 } from "./actions";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  Bell,
+  Building2,
+  CheckCircle2,
+  CircleDollarSign,
+  ClipboardList,
+  Database,
+  FlaskConical,
+  Flag,
+  HardHat,
+  HeartPulse,
+  Inbox,
+  KeyRound,
+  Settings,
+  UsersRound,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -250,15 +267,11 @@ export default async function ContasPage({
 
   return (
     <section className="of-page" style={{ display: "grid", gap: 20 }}>
-      {/* Header */}
-      <div className="of-inline-header">
-        <div>
-          <h1 className="of-page-title">Controle Total</h1>
-          <p className="of-page-description">
-            Todas as empresas, usuários e acessos da plataforma em tempo real.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Master"
+        title="Controle Total"
+        subtitle="Todas as empresas, usuarios e acessos da plataforma em tempo real."
+      />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {MASTER_TABS.map((item) => {
@@ -279,13 +292,13 @@ export default async function ContasPage({
       {/* KPIs */}
       <div className="of-kpi-grid">
         <article className="of-metric-card blue">
-          <p className="of-kpi-icon">🏢</p>
+          <p className="of-kpi-icon"><Building2 size={18} aria-hidden /></p>
           <p className="of-kpi-label">Empresas cadastradas</p>
           <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{empresas.length}</p>
           <p className="of-metric-change">{totalAtivos} ativas · {totalSuspensos} suspensas</p>
         </article>
         <article className="of-metric-card green">
-          <p className="of-kpi-icon">👥</p>
+          <p className="of-kpi-icon"><UsersRound size={18} aria-hidden /></p>
           <p className="of-kpi-label">Total de usuários</p>
           <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>{perfis.length}</p>
           <p className="of-metric-change">em {empresas.length} empresas</p>
@@ -296,7 +309,7 @@ export default async function ContasPage({
           style={{ textDecoration: "none", color: "inherit", display: "block", cursor: "pointer" }}
           aria-label="Ver alertas de segurança"
         >
-          <p className="of-kpi-icon">🔔</p>
+          <p className="of-kpi-icon"><Bell size={18} aria-hidden /></p>
           <p className="of-kpi-label">Alertas de segurança</p>
           <p className="of-kpi-value" style={{ color: alertasHigh > 0 ? "var(--of-red)" : "var(--of-yellow)" }}>
             {alertas.length}
@@ -304,7 +317,7 @@ export default async function ContasPage({
           <p className="of-metric-change">{alertasHigh} críticos (high)</p>
         </Link>
         <article className="of-metric-card purple">
-          <p className="of-kpi-icon">📋</p>
+          <p className="of-kpi-icon"><ClipboardList size={18} aria-hidden /></p>
           <p className="of-kpi-label">Tentativas de cadastro</p>
           <p className="of-kpi-value" style={{ color: "var(--of-purple)" }}>{tentativas.length}</p>
           <p className="of-metric-change">
@@ -312,19 +325,19 @@ export default async function ContasPage({
           </p>
         </article>
         <article className="of-metric-card">
-          <p className="of-kpi-icon">🏗️</p>
+          <p className="of-kpi-icon"><HardHat size={18} aria-hidden /></p>
           <p className="of-kpi-label">Obras ativas</p>
           <p className="of-kpi-value">{totalObrasAtivas}</p>
           <p className="of-metric-change">{totalObras} obras no total</p>
         </article>
         <article className="of-metric-card">
-          <p className="of-kpi-icon">💾</p>
+          <p className="of-kpi-icon"><Database size={18} aria-hidden /></p>
           <p className="of-kpi-label">Storage estimado</p>
           <p className="of-kpi-value">{totalStorageEstimate.toFixed(1)} MB</p>
           <p className="of-metric-change">baseado em mídia, relatórios e diários</p>
         </article>
         <article className="of-metric-card">
-          <p className="of-kpi-icon">🏁</p>
+          <p className="of-kpi-icon"><Flag size={18} aria-hidden /></p>
           <p className="of-kpi-label">Feature flags ativas</p>
           <p className="of-kpi-value">{enabledFlags}</p>
           <p className="of-metric-change">de {featureFlags.length} registradas</p>
@@ -334,7 +347,7 @@ export default async function ContasPage({
           className="of-metric-card"
           style={{ textDecoration: "none", color: "inherit", display: "block", cursor: "pointer" }}
         >
-          <p className="of-kpi-icon">🪪</p>
+          <p className="of-kpi-icon"><KeyRound size={18} aria-hidden /></p>
           <p className="of-kpi-label">Acessos assistidos</p>
           <p className="of-kpi-value">{openAssistSessions}</p>
           <p className="of-metric-change">sessões abertas para suporte</p>
@@ -579,7 +592,7 @@ export default async function ContasPage({
         <div style={{ display: "grid", gap: 20 }}>
           <div className="of-kpi-grid">
             <article className="of-metric-card green">
-              <p className="of-kpi-icon">💰</p>
+              <p className="of-kpi-icon"><CircleDollarSign size={18} aria-hidden /></p>
               <p className="of-kpi-label">MRR estimado</p>
               <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>
                 R$ {mrrEstimado.toLocaleString("pt-BR")}
@@ -587,13 +600,13 @@ export default async function ContasPage({
               <p className="of-metric-change">baseado no plano atual de cada empresa</p>
             </article>
             <article className="of-metric-card blue">
-              <p className="of-kpi-icon">✅</p>
+              <p className="of-kpi-icon"><CheckCircle2 size={18} aria-hidden /></p>
               <p className="of-kpi-label">Clientes pagantes</p>
               <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{empresasPagantes}</p>
               <p className="of-metric-change">assinaturas ativas</p>
             </article>
             <article className="of-metric-card yellow">
-              <p className="of-kpi-icon">🧪</p>
+              <p className="of-kpi-icon"><FlaskConical size={18} aria-hidden /></p>
               <p className="of-kpi-label">Clientes em trial</p>
               <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{empresasTrial}</p>
               <p className="of-metric-change">potencial de conversão</p>
@@ -1215,25 +1228,25 @@ export default async function ContasPage({
         <div style={{ display: "grid", gap: 20 }}>
           <div className="of-kpi-grid">
             <article className="of-metric-card green">
-              <p className="of-kpi-icon">❤️</p>
+              <p className="of-kpi-icon"><HeartPulse size={18} aria-hidden /></p>
               <p className="of-kpi-label">API principal</p>
               <p className="of-kpi-value">OK</p>
               <p className="of-metric-change">/api/health</p>
             </article>
             <article className="of-metric-card blue">
-              <p className="of-kpi-icon">⚙️</p>
+              <p className="of-kpi-icon"><Settings size={18} aria-hidden /></p>
               <p className="of-kpi-label">Health de ops</p>
               <p className="of-kpi-value">OK</p>
               <p className="of-metric-change">/api/health/ops</p>
             </article>
             <article className="of-metric-card yellow">
-              <p className="of-kpi-icon">📬</p>
+              <p className="of-kpi-icon"><Inbox size={18} aria-hidden /></p>
               <p className="of-kpi-label">Filas</p>
               <p className="of-kpi-value">{ticketsAbertos}</p>
               <p className="of-metric-change">tickets abertos para suporte</p>
             </article>
             <article className="of-metric-card purple">
-              <p className="of-kpi-icon">💵</p>
+              <p className="of-kpi-icon"><CircleDollarSign size={18} aria-hidden /></p>
               <p className="of-kpi-label">MRR estimado</p>
               <p className="of-kpi-value">R$ {mrrEstimado.toLocaleString("pt-BR")}</p>
               <p className="of-metric-change">carteira total do plano</p>

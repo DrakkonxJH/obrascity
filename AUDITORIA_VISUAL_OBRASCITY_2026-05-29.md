@@ -329,3 +329,85 @@ Pendencias de baixa prioridade apos go-live:
 - reduzir estilo inline remanescente em paginas antigas, migrando gradualmente para componentes/tokens;
 - evoluir CRM para mesmo nivel de linguagem visual dos demais modulos;
 - revisar copy de apoio institucional para SEO/comercial com foco em conversao.
+
+### 2026-05-29 19:39:43 -04 (America/Manaus) - Bloco 7 concluido
+
+Status: concluido.
+
+Mudancas aplicadas:
+- `app/globals.css`
+  - reforco visual global para diferenca perceptivel imediata nos modulos alterados:
+    - `of-page-head` com bloco destacado (gradiente, borda e profundidade);
+    - `of-card` com camada de luz laranja sutil, elevacao e hover mais evidente;
+    - `of-obra-card` com contraste superior e destaque de borda no hover;
+    - `of-table-wrap` e `thead` com acabamento mais forte para leitura operacional;
+    - hover de linhas de tabela mais perceptivel.
+- `app/(app)/materiais/page.tsx`
+  - migracao de header manual para `PageHeader` com acoes no topo (importacao + pedido de compra);
+  - padronizacao com os demais modulos centrais.
+- `app/(app)/qualidade/page.tsx`
+  - migracao de header manual para `PageHeader` com titulo/subtitulo padronizados.
+- `components/obras/obras-view.tsx`
+  - adicao de grade de KPIs no topo da pagina (`Obras ativas`, `Em andamento`, `Concluidas`, `Lixeira`) para impacto visual direto na rota `/obras`.
+
+Validacao tecnica:
+- typecheck executado com sucesso apos as alteracoes.
+
+Impacto visual esperado deste bloco:
+- diferenca visivel sem alterar identidade do produto;
+- maior hierarquia de informacao no topo das paginas;
+- percepcao de produto mais maduro em modulos operacionais criticos.
+
+### 2026-05-29 20:18:26 -04 (America/Manaus) - Reauditoria e Bloco 8 concluido
+
+Status: concluido.
+
+Escopo reavaliado:
+- backlog visual imediato da auditoria original;
+- rotas com `of-inline-header` remanescente;
+- emojis/simbolos informais em paginas autenticadas e componentes centrais;
+- comportamento basico de rotas no servidor local.
+
+Mudancas aplicadas:
+- `app/globals.css`
+  - ajuste responsivo global em `PageHeader`;
+  - scroll horizontal consistente para tabelas em telas estreitas;
+  - largura minima de tabela para evitar quebra visual em colunas densas.
+- `app/(app)/obras/[id]/page.tsx`, `app/(app)/relatorios/page.tsx`, `app/(app)/relatorios/[tipo]/page.tsx`, `app/(app)/suporte/page.tsx`, `app/(app)/suporte/guia/page.tsx`, `app/(app)/suporte/guia/[slug]/page.tsx`, `app/(app)/viabilidade/page.tsx`, `app/(app)/contas/page.tsx`, `components/equipes/equipes-view.tsx`
+  - migracao dos cabecalhos manuais restantes para `PageHeader`;
+  - reducao de divergencia visual entre modulos.
+- `app/(app)/relatorios/page.tsx`, `app/(app)/contas/page.tsx`, `components/layout/auth-header.tsx`, `components/materiais/purchase-order-modal.tsx`
+  - substituicao de emojis/simbolos informais por `lucide-react` ou texto corporativo.
+- `app/(app)/viabilidade/page.tsx`, `app/(app)/viabilidade/risk-matrix.tsx`, `app/(app)/planos/page-table.tsx`, `app/(app)/suporte/guia/data.ts`, `components/config/config-view.tsx`, `components/feature-gate-wrapper.tsx`
+  - limpeza de emojis em titulos, badges, guias e estados operacionais.
+- `app/(app)/*/error.tsx`
+  - padronizacao visual das telas de erro sem emoji grande.
+- `app/(app)/cronograma/cronograma-content.tsx`, `app/(app)/materiais/page.tsx`, `app/(app)/qualidade/page.tsx`, `app/(app)/crm/page.jsx`, `components/obras/obras-view.tsx`
+  - limpeza de sinais textuais de prototipo em botoes/links (`+`, seta textual, "Painel ->").
+
+Evidencias de validacao:
+- `npm run typecheck`: executado com sucesso.
+- servidor local iniciado em `http://127.0.0.1:3000`.
+- `agent-browser`: indisponivel neste ambiente (`command not found`), portanto nao houve captura automatizada de screenshot.
+- checagem HTTP local:
+  - `/`: `307` para `/landing.html`;
+  - `/login`: `200`;
+  - `/cadastro`: `200`;
+  - `/como-funciona`: `200`;
+  - `/contato`: `200`;
+  - `/planos`, `/obras`, `/relatorios`, `/suporte`, `/viabilidade`: `307` para `/login`, esperado sem sessao autenticada local.
+- busca estrutural:
+  - `of-inline-header` em paginas/componentes: 0 usos remanescentes fora da definicao CSS.
+  - emojis nas paginas autenticadas e componentes centrais auditados: 0 ocorrencias remanescentes pelo filtro aplicado.
+
+Checklist atualizado:
+- [x] Shell visual padronizado (`sidebar`, `topbar`, botoes e icones base).
+- [x] Cabecalhos dos modulos auditados padronizados com `PageHeader`.
+- [x] Tabelas densas com base visual unificada e scroll responsivo.
+- [x] Remocao de emojis/simbolos informais dos fluxos autenticados centrais.
+- [x] Estados de erro autenticados padronizados.
+- [x] Auditoria atualizada com evidencias de validacao local.
+- [ ] Captura visual logada em producao com usuario real e screenshots por rota.
+
+Pendencia real restante:
+- a revisao pixel a pixel logada ainda depende de uma ferramenta de browser disponivel ou de sessao autenticada em producao/local. Sem isso, a validacao feita aqui e estrutural + HTTP + typecheck.

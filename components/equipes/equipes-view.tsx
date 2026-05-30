@@ -4,6 +4,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import type { EquipeItem, MembroItem } from "@/lib/db/equipes";
 import { getAvatarColor, getTeamStyle, initialsFromCargo } from "@/lib/demo/team-styles";
 import { useAppUi } from "@/components/shell/app-ui-provider";
+import { PageHeader } from "@/components/ui/page-header";
+import { Plus } from "lucide-react";
 
 type EquipesViewProps = {
   equipes: EquipeItem[];
@@ -36,15 +38,18 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
 
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Equipes"
+        title="Mobilizacao e alocacao"
+        subtitle={`${membros.length} profissionais em ${equipes.length} equipes`}
+        actions={
+          <button type="button" className="of-btn-primary" onClick={openAddMember}>
+            <Plus size={16} aria-hidden />
+            Adicionar membro
+          </button>
+        }
+      />
       {formSlot}
-      <div className="of-inline-header" style={{ marginBottom: 20 }}>
-        <p className="of-empty-text">
-          {membros.length} profissionais em {equipes.length} equipes
-        </p>
-        <button type="button" className="of-btn-primary" onClick={openAddMember}>
-          + Adicionar Membro
-        </button>
-      </div>
 
       <div className="of-teams-grid">
         {equipes.map((equipe, index) => {

@@ -3,11 +3,33 @@ import { listObras } from "@/lib/db/obras";
 import { listRelatorioExecucoes, listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "./actions";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  BarChart3,
+  Boxes,
+  ClipboardList,
+  FileText,
+  LineChart,
+  SearchCheck,
+  ShieldCheck,
+  Target,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 
-const reportCards = [
+const reportCards: Array<{
+  tipo: string;
+  Icon: LucideIcon;
+  titulo: string;
+  desc: string;
+  foot: string;
+  badge: string;
+  badgeLabel: string;
+  href: string;
+}> = [
   {
     tipo: "progresso",
-    icon: "📊",
+    Icon: BarChart3,
     titulo: "Relatório de Progresso",
     desc: "Visão geral do andamento de todas as obras, com percentuais de conclusão, prazos e desvios.",
     foot: "Atualizado hoje",
@@ -17,7 +39,7 @@ const reportCards = [
   },
   {
     tipo: "financeiro",
-    icon: "💰",
+    Icon: LineChart,
     titulo: "Relatório Financeiro",
     desc: "Análise de orçamento vs. realizado, fluxo de caixa, pagamentos e previsões por obra.",
     foot: `Dados: ${new Date().toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}`,
@@ -27,7 +49,7 @@ const reportCards = [
   },
   {
     tipo: "equipes",
-    icon: "👥",
+    Icon: UsersRound,
     titulo: "Relatório de Equipes",
     desc: "Produtividade, horas trabalhadas, alocação e disponibilidade de todos os profissionais.",
     foot: "Semana atual",
@@ -37,7 +59,7 @@ const reportCards = [
   },
   {
     tipo: "materiais",
-    icon: "📦",
+    Icon: Boxes,
     titulo: "Relatório de Materiais",
     desc: "Inventário de estoque, consumo por obra, pedidos pendentes e alertas de ruptura.",
     foot: "Em tempo real",
@@ -47,7 +69,7 @@ const reportCards = [
   },
   {
     tipo: "qualidade",
-    icon: "🛡️",
+    Icon: ShieldCheck,
     titulo: "Relatório de Qualidade",
     desc: "Checklists de inspeção, não conformidades registradas, índice de qualidade e ações corretivas por obra.",
     foot: "Por obra",
@@ -57,7 +79,7 @@ const reportCards = [
   },
   {
     tipo: "mudancas",
-    icon: "🔁",
+    Icon: ClipboardList,
     titulo: "Relatório de Mudanças",
     desc: "Solicitações de mudança aprovadas e rejeitadas, impacto acumulado de prazo e custo, distribuição por tipo.",
     foot: "Consolidado",
@@ -67,7 +89,7 @@ const reportCards = [
   },
   {
     tipo: "viabilidade",
-    icon: "🔎",
+    Icon: SearchCheck,
     titulo: "Relatório de Viabilidade",
     desc: "Estudos de viabilidade técnica, legal e econômica. Resumo de GO/NO-GO por empreendimento.",
     foot: "Por estudo",
@@ -77,7 +99,7 @@ const reportCards = [
   },
   {
     tipo: "diario",
-    icon: "📝",
+    Icon: FileText,
     titulo: "Diário de Obra",
     desc: "Registro diário de atividades, clima, equipes presentes e ocorrências de cada obra.",
     foot: "Por obra",
@@ -87,7 +109,7 @@ const reportCards = [
   },
   {
     tipo: "executivo",
-    icon: "🎯",
+    Icon: Target,
     titulo: "Sumário Executivo",
     desc: "Visão consolidada para diretores: KPIs principais, riscos críticos e próximos marcos.",
     foot: "Mensal",
@@ -118,14 +140,16 @@ export default async function RelatóriosPage() {
           <p className="of-empty-text">{loadError}</p>
         </article>
       ) : null}
-      <p className="of-empty-text" style={{ marginBottom: 20 }}>
-        Gere e exporte relatórios gerenciais das suas obras
-      </p>
+      <PageHeader
+        eyebrow="Relatorios"
+        title="Central de relatorios"
+        subtitle="Gere, acompanhe e exporte relatorios gerenciais das suas obras."
+      />
 
       <div className="of-rel-grid">
         {reportCards.map((card) => (
           <Link key={card.tipo} href={card.href} target="_blank" rel="noreferrer" className="of-rel-card">
-            <p className="of-rel-icon">{card.icon}</p>
+            <p className="of-rel-icon"><card.Icon size={22} aria-hidden /></p>
             <p className="of-rel-title">{card.titulo}</p>
             <p className="of-rel-desc">{card.desc}</p>
             <div className="of-rel-foot">

@@ -90,7 +90,7 @@ export async function CronogramaContent() {
           </select>
           <div className="md:col-span-5">
             <button type="submit" className="of-btn-primary">
-              + Adicionar tarefa
+              Adicionar tarefa
             </button>
           </div>
         </form>

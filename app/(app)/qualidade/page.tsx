@@ -17,6 +17,7 @@ import {
   updatePlanoAcaoStatusAction,
 } from "./actions";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 
 type QualidadePageProps = {
   searchParams: Promise<{
@@ -100,11 +101,11 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
           <p className="of-empty-text">{loadError}</p>
         </article>
       ) : null}
-      <div className="of-inline-header" style={{ marginBottom: 20 }}>
-        <p className="of-empty-text">
-          Gestão de Qualidade e SSMA com CAPA, indicadores, inspeções, evidências e rastreabilidade completa.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Qualidade"
+        title="Qualidade e SSMA"
+        subtitle="CAPA, indicadores, inspeções, evidências e rastreabilidade completa da operação."
+      />
 
       <form className="of-card of-form-grid md:grid-cols-7" style={{ marginBottom: 16 }}>
         <div className="of-card-title md:col-span-7">Filtros operacionais</div>
@@ -422,7 +423,7 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
             ))}
           </select>
           <button type="submit" className="of-btn-primary">
-            + Inspeção
+            Inspeção
           </button>
           <textarea name="observacao" placeholder="Observações da inspeção" className="of-input md:col-span-6" />
         </form>

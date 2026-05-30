@@ -321,7 +321,7 @@ function KanbanColumn({ etapa, leads, onCardClick, onAddCard, dragState, onDragS
             onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}
           >
-            + Adicionar lead
+            Adicionar lead
           </div>
         )}
 

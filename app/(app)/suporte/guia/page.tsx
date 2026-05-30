@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listGuias } from "./data";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -8,17 +9,11 @@ export default function GuiaPage() {
 
   return (
     <section className="of-page">
-      <div className="of-inline-header" style={{ marginBottom: 20, alignItems: "flex-start" }}>
-        <div>
-          <h1 className="of-page-title" style={{ marginBottom: 6 }}>
-            Guia completo da plataforma
-          </h1>
-          <p className="of-empty-text">
-            Selecione o modulo para aprender para que serve, quando usar e o passo a passo
-            operacional.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Base de conhecimento"
+        title="Guia completo da plataforma"
+        subtitle="Selecione o modulo para aprender para que serve, quando usar e o passo a passo operacional."
+      />
 
       <div
         className="of-dashboard-grid"

@@ -39,7 +39,7 @@ export async function FeatureGateWrapper({
             background: "rgba(255, 209, 102, 0.08)",
           }}
         >
-          <p className="of-card-title">⚠ Dados de acesso indisponíveis</p>
+          <p className="of-card-title">Dados de acesso indisponíveis</p>
           <p className="of-empty-text">
             {warning} A página foi aberta com acesso limitado para evitar falha de carregamento.
           </p>
@@ -54,7 +54,7 @@ export async function FeatureGateWrapper({
             background: "rgba(255, 209, 102, 0.08)",
           }}
         >
-          <p className="of-card-title">⚠ Ativo durante período de teste</p>
+          <p className="of-card-title">Ativo durante período de teste</p>
           <p className="of-empty-text">
             Este módulo está disponível durante os 14 dias de trial e pode deixar de ficar
             ativo após o período de avaliação, conforme o plano contratado.
