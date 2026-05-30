@@ -714,6 +714,11 @@ a {
   flex-shrink: 0;
 }
 
+.of-nav-icon svg,
+.of-sidebar-brand-icon svg {
+  display: block;
+}
+
 .of-nav-badge {
   margin-left: auto;
   border-radius: 999px;

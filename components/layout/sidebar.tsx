@@ -6,36 +6,37 @@ import type { LayoutSummary } from "@/lib/db/layout-summary";
 import { signOut } from "@/lib/auth/actions";
 import { useAppUi } from "@/components/shell/app-ui-provider";
 import {
-  LayoutDashboard,
-  Building2,
-  Calendar,
-  Search,
-  Users,
-  FileText,
-  BarChart3,
-  Users2,
-  Package,
-  RefreshCw,
-  BookOpen,
-  ShieldCheck,
-  Key,
-  Wrench,
-  ClipboardList,
-  Star,
-  Globe,
-  HelpCircle,
-  ScrollText,
-  Lock,
-  Smartphone,
-  Settings,
-  Building,
-  CreditCard,
-  TrendingUp,
-  Plug,
-  Rocket,
-  AlertCircle,
+  BellDot,
   BookMarked,
-  Monitor,
+  Briefcase,
+  Building2,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Search,
+  CreditCard,
+  FileText,
+  FolderKanban,
+  Gauge,
+  Globe,
+  Hammer,
+  HardHat,
+  HelpCircle,
+  Layers,
+  LogOut,
+  Package,
+  Plug,
+  RefreshCw,
+  Rocket,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  TrendingUp,
+  Users,
+  Users2,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,22 +49,22 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
       {
         title: "SaaS",
         items: [
-          { href: "/contas?tab=empresas", label: "Clientes (Empresas)", icon: Building },
+          { href: "/contas?tab=empresas", label: "Clientes (Empresas)", icon: Building2 },
           { href: "/contas?tab=usuarios", label: "Usuários da Plataforma", icon: Users },
-          { href: "/contas?tab=faturamento", label: "Faturamento e Planos", icon: CreditCard },
+          { href: "/contas?tab=faturamento", label: "Faturamento e Planos", icon: FolderKanban },
         ],
       },
       {
         title: "Operacao",
         items: [
           { href: "/contas?tab=operacao", label: "Operação e SLO", icon: TrendingUp },
-          { href: "/contas?tab=suporte", label: "Suporte e SLA", icon: AlertCircle },
+          { href: "/contas?tab=suporte", label: "Suporte e SLA", icon: BellDot },
           { href: "/contas?tab=integracoes", label: "Integrações", icon: Plug },
           { href: "/contas?tab=deploy", label: "Deploy e Domínio", icon: Rocket },
-          { href: "/contas?tab=seguranca", label: "Segurança", icon: Lock },
+          { href: "/contas?tab=seguranca", label: "Segurança", icon: ShieldCheck },
           { href: "/contas?tab=auditoria", label: "Auditoria", icon: ScrollText },
           { href: "/contas?tab=runbooks", label: "Runbooks", icon: BookMarked },
-          { href: "/contas?tab=terminal", label: "Terminal TI", icon: Monitor },
+          { href: "/contas?tab=terminal", label: "Terminal TI", icon: Wrench },
         ],
       },
     ];
@@ -73,9 +74,9 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
     {
       title: "Principal",
       items: [
-        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/obras", label: "Obras", icon: Building2 },
-        { href: "/cronograma", label: "Cronograma", icon: Calendar },
+        { href: "/dashboard", label: "Dashboard", icon: Gauge },
+        { href: "/obras", label: "Obras", icon: HardHat },
+        { href: "/cronograma", label: "Cronograma", icon: CalendarDays },
       ],
     },
     {
@@ -84,15 +85,15 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
         { href: "/viabilidade", label: "Viabilidade", icon: Search },
         { href: "/crm", label: "CRM", icon: Users2 },
         { href: "/projetos", label: "Projetos", icon: FileText },
-        { href: "/financeiro", label: "Financeiro", icon: BarChart3 },
-        { href: "/equipes", label: "Equipes", icon: Users2 },
+        { href: "/financeiro", label: "Financeiro", icon: CreditCard },
+        { href: "/equipes", label: "Equipes", icon: Users },
         { href: "/materiais", label: "Materiais", icon: Package },
         { href: "/mudancas", label: "Mudanças", icon: RefreshCw },
-        { href: "/diario", label: "Diário", icon: BookOpen },
+        { href: "/diario", label: "Diário", icon: Briefcase },
         { href: "/qualidade", label: "Qualidade", icon: ShieldCheck },
-        { href: "/entrega", label: "Entrega", icon: Key },
-        { href: "/garantia", label: "Garantia", icon: Wrench },
-        { href: "/relatorios", label: "Relatórios", icon: ClipboardList },
+        { href: "/entrega", label: "Entrega", icon: ClipboardCheck },
+        { href: "/garantia", label: "Garantia", icon: Hammer },
+        { href: "/relatorios", label: "Relatórios", icon: Layers },
       ],
     },
   ];
@@ -101,7 +102,7 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
     sections.push({
       title: "Gestão de Contas",
       items: [
-        { href: "/contas", label: "Todas as Contas", icon: Building },
+        { href: "/contas", label: "Todas as Contas", icon: Building2 },
       ],
     });
   }
@@ -109,11 +110,11 @@ function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: b
   sections.push({
     title: "Sistema",
     items: [
-      { href: "/planos", label: "Planos", icon: Star },
+      { href: "/planos", label: "Planos", icon: FolderKanban },
       { href: "/portal", label: "Portal do Cliente", icon: Globe },
       { href: "/suporte", label: "SAC e Guia", icon: HelpCircle },
       { href: "/governanca", label: "Governança", icon: ScrollText },
-      { href: "/seguranca-corporativa", label: "Segurança Corporativa", icon: Lock },
+      { href: "/seguranca-corporativa", label: "Segurança Corporativa", icon: ShieldCheck },
       { href: "/mobile-campo", label: "Mobile Campo", icon: Smartphone },
       { href: "/configuracoes", label: "Configurações", icon: Settings },
     ],
@@ -154,7 +155,7 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
           <div className="of-sidebar-header-row" style={{ width: "100%" }}>
             <div className="of-sidebar-brand">
               <div className="of-sidebar-brand-icon">
-                <Building2 size={24} />
+                <HardHat size={20} aria-hidden />
               </div>
               <div className="of-sidebar-brand-text of-sidebar-logo-text">
                 Obras<span>CitY</span>
@@ -167,7 +168,7 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
               title="Recolher menu"
               aria-label="Recolher menu"
             >
-              {sidebarCollapsed ? "▶" : "◀"}
+              {sidebarCollapsed ? <ChevronRight size={16} aria-hidden /> : <ChevronLeft size={16} aria-hidden />}
             </button>
           </div>
         </div>
@@ -189,7 +190,7 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
                     onClick={closeMobileSidebar}
                   >
                     <span className="of-nav-icon" aria-hidden>
-                      <IconComponent size={20} />
+                      <IconComponent size={18} strokeWidth={2} />
                     </span>
                     <span className="of-nav-label">{item.label}</span>
                     {badge ? <span className="of-nav-badge">{badge}</span> : null}
@@ -210,7 +211,8 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
           </div>
           <form action={signOut}>
             <button type="submit" className="of-sidebar-logout">
-              <span className="of-sidebar-logout-text">↩ Sair da conta</span>
+              <LogOut size={15} aria-hidden />
+              <span className="of-sidebar-logout-text">Sair da conta</span>
             </button>
           </form>
         </footer>

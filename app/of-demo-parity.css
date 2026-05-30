@@ -187,6 +187,9 @@
   background: none;
   border: none;
   font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .of-sidebar-logout:hover {
   color: var(--of-text-2);
