@@ -1,8 +1,9 @@
 import { getCurrentProfile } from "@/lib/auth/require-profile";
-import type { PlanFeature, PlanId } from "@/lib/billing/plans";
-import { getProfileLimitByPlan, planIncludes } from "@/lib/billing/plans";
+import type { PlanId } from "@/lib/billing/plans";
+import { getProfileLimitByPlan } from "@/lib/billing/plans";
 import Link from "next/link";
 import type { BillingCycle } from "@/lib/billing/stripe-price-map";
+import { CheckCircle2, CircleDollarSign, CreditCard, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { openBillingPortalAction, startCheckoutAction } from "./actions";
@@ -11,63 +12,19 @@ import { PageHeader } from "@/components/ui/page-header";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 
-const featureCatalog: Record<PlanFeature, { label: string }> = {
-  dashboard: { label: "Dashboard operacional" },
-  obras_basic: { label: "Gestão de obras" },
-  equipes_basic: { label: "Gestão de equipes" },
-  materiais_basic: { label: "Gestão de materiais" },
-  cronograma: { label: "Cronograma de obra" },
-  qualidade_basic: { label: "Módulo de qualidade" },
-  relatórios_basic: { label: "Relatórios básicos" },
-  relatórios_export: { label: "Exportacao de relatórios" },
-  relatórios_agendados: { label: "Relatórios agendados por email" },
-  notificacoes_alertas: { label: "Notificacoes e alertas em tempo real" },
-  controle_acesso_avancado: { label: "Controle de acesso avancado" },
-  financeiro_avancado: { label: "Financeiro avancado" },
-  integração_whatsapp: { label: "Integração WhatsApp" },
-  integração_sheets: { label: "Sync com Google Sheets" },
-  integração_zapier: { label: "Integração Zapier" },
-  automacoes_workflow: { label: "Automacoes com workflow builder" },
-  gestão_documentos: { label: "Gestão e OCR de documentos" },
-  comunicação_integrada: { label: "Chat integrado por projeto" },
-  segurança_enterprise: { label: "SSO/SAML + Suporte 24/7" },
-  api_access: { label: "Acesso via API completa" },
-};
-
-const planFeatureOrder: PlanFeature[] = [
-  "dashboard",
-  "obras_basic",
-  "equipes_basic",
-  "materiais_basic",
-  "cronograma",
-  "qualidade_basic",
-  "relatórios_basic",
-  "relatórios_export",
-  "relatórios_agendados",
-  "notificacoes_alertas",
-  "controle_acesso_avancado",
-  "financeiro_avancado",
-  "integração_whatsapp",
-  "integração_sheets",
-  "integração_zapier",
-  "automacoes_workflow",
-  "gestão_documentos",
-  "comunicação_integrada",
-  "segurança_enterprise",
-  "api_access",
-];
-
 const commercialSplit: Array<{
   id: Exclude<PlanId, "trial">;
   label: string;
   focus: string[];
   description: string;
+  positioning: string;
 }> = [
   {
     id: "starter",
     label: "Starter",
     focus: ["Obras", "Cronograma", "Equipes", "Materiais", "Viabilidade"],
     description: "Conta da empresa com rotina e poucos perfis.",
+    positioning: "Organizacao inicial da operacao e controle basico do canteiro.",
   },
   {
     id: "pro",
@@ -85,12 +42,14 @@ const commercialSplit: Array<{
       "Portal do Cliente",
     ],
     description: "Operação completa com mais times e mais perfis.",
+    positioning: "Gestao integrada para empresas que ja vendem, executam e prestam contas.",
   },
   {
     id: "enterprise",
     label: "Enterprise",
     focus: ["Mobile Campo", "API", "Automações", "Integrações", "Governança", "Segurança corporativa"],
     description: "Escala corporativa, governança e integrações avançadas.",
+    positioning: "Controles de escala para operacoes maiores, integradas e auditaveis.",
   },
 ];
 
@@ -99,7 +58,11 @@ const sharedBaseCapabilities = [
   "Perfis de usuarios internos",
   "Compartilhamento entre perfis",
   "Permissões por cargo",
-  "Limite de perfis por plano",
+  "Dashboard operacional",
+  "Gestão de obras",
+  "Gestão de equipes",
+  "Materiais",
+  "Cronograma",
 ];
 
 function planLabel(plano: string) {
@@ -163,6 +126,9 @@ export default async function PlanosPage({
     annual: number;
     blurb: string;
     audience: string;
+    decision: string;
+    modules: string[];
+    upgrades: string[];
     profileLimit: number;
     highlight?: boolean;
   }> = [
@@ -173,6 +139,9 @@ export default async function PlanosPage({
       annual: 90,
       blurb: "Base para organizar a obra e a rotina da operação.",
       audience: "Melhor encaixe: Obras, Cronograma, Equipes, Materiais e Viabilidade.",
+      decision: "Para construtoras que precisam sair da planilha e padronizar a rotina.",
+      modules: ["Obras", "Cronograma", "Equipes", "Materiais", "Viabilidade"],
+      upgrades: ["Controle operacional essencial", "Perfis internos por plano", "Base pronta para evoluir para Pro"],
       profileLimit: getProfileLimitByPlan("starter"),
     },
     {
@@ -183,6 +152,9 @@ export default async function PlanosPage({
       blurb: "Central de gestão para escalar a operação.",
       audience:
         "Melhor encaixe: CRM, Projetos, Financeiro, Relatórios, Mudanças, Diário, Qualidade, Entrega, Garantia e Portal do Cliente.",
+      decision: "Para operacoes com mais times, financeiro ativo e prestacao de contas recorrente.",
+      modules: ["CRM", "Projetos", "Financeiro", "Relatórios", "Mudanças", "Diário", "Qualidade", "Portal do Cliente"],
+      upgrades: ["Relatórios e exportações", "Controle financeiro avancado", "Qualidade, entrega e garantia"],
       profileLimit: getProfileLimitByPlan("pro"),
       highlight: true,
     },
@@ -194,6 +166,9 @@ export default async function PlanosPage({
       blurb: "Escala, integração e governança para operações complexas.",
       audience:
         "Melhor encaixe: Mobile Campo, API, automações, integrações, governança e segurança corporativa.",
+      decision: "Para empresas que precisam integrar sistemas, auditar operacao e governar acessos.",
+      modules: ["Mobile Campo", "API", "Automações", "Integrações", "Governança", "Segurança corporativa"],
+      upgrades: ["API e integrações", "Automacoes de workflow", "SSO/SAML e suporte 24/7"],
       profileLimit: getProfileLimitByPlan("enterprise"),
     },
   ];
@@ -272,154 +247,98 @@ export default async function PlanosPage({
         </p>
       ) : null}
 
-      <div className="of-kpi-grid" style={{ marginBottom: 18 }}>
-        <article className="of-metric-card blue">
-          <p className="of-kpi-label">Plano atual</p>
-          <p className="of-kpi-value of-plan-kpi-value" style={{ color: "var(--of-blue)" }}>
-            {planLabel(currentPlan)}
-          </p>
+      <section className="of-plans-status-grid">
+        <article className="of-plan-status-card">
+          <CreditCard size={18} aria-hidden />
+          <div>
+            <span>Plano atual</span>
+            <strong>{planLabel(currentPlan)}</strong>
+          </div>
         </article>
-        <article className="of-metric-card green">
-          <p className="of-kpi-label">Status da assinatura</p>
-          <p className="of-kpi-value of-plan-kpi-value" style={{ color: "var(--of-green)" }}>
-            {statusLabel(assinatura?.status)}
-          </p>
-          {assinatura?.periodo_fim ? (
-            <p className="of-list-description">
-              Renova/termina em {new Date(assinatura.periodo_fim).toLocaleDateString("pt-BR")}
-            </p>
-          ) : null}
+        <article className="of-plan-status-card">
+          <ShieldCheck size={18} aria-hidden />
+          <div>
+            <span>Status da assinatura</span>
+            <strong>{statusLabel(assinatura?.status)}</strong>
+            {assinatura?.periodo_fim ? (
+              <small>{new Date(assinatura.periodo_fim).toLocaleDateString("pt-BR")}</small>
+            ) : null}
+          </div>
         </article>
-        <article className="of-metric-card yellow">
-          <p className="of-kpi-label">Permissão de cobrança</p>
-          <p className="of-kpi-value of-plan-kpi-value" style={{ color: "var(--of-yellow)" }}>
-            {canManageBilling ? "Habilitada" : "Restrita"}
-          </p>
-          <p className="of-list-description">
-            {canManageBilling
-              ? `Voce pode iniciar checkout e gerenciar a cobrança atual via ${billingProvider}.`
-              : "Somente administrador/gestor altera plano."}
-          </p>
+        <article className="of-plan-status-card">
+          <CircleDollarSign size={18} aria-hidden />
+          <div>
+            <span>Cobrança</span>
+            <strong>{canManageBilling ? "Liberada" : "Restrita"}</strong>
+            <small>{billingProvider}</small>
+          </div>
         </article>
-      </div>
+      </section>
 
-      <div className="of-card" style={{ marginBottom: 28 }}>
-        <div className="of-card-title">Base comum em todos os planos</div>
-        <p className="of-list-description" style={{ marginBottom: 14 }}>
-          Todo plano parte da conta da empresa. O que muda entre Starter, Pro e Enterprise é o
-          limite de perfis, a escala da operação e os controles avançados.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <section className="of-plans-common-band">
+        <div>
+          <p className="of-page-eyebrow">Base comum em todos os planos</p>
+          <h2>O essencial não se repete na comparação.</h2>
+          <p>
+            Starter, Pro e Enterprise partem da mesma fundação operacional. A escolha do plano deve
+            ser feita pelo nível de gestão, escala e automação que sua empresa precisa.
+          </p>
+        </div>
+        <div className="of-plan-common-list">
           {sharedBaseCapabilities.map((item) => (
-            <span
-              key={item}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "6px 10px",
-                borderRadius: 999,
-                background: "rgba(255, 107, 26, 0.1)",
-                border: "1px solid rgba(255, 107, 26, 0.22)",
-                color: "var(--of-text-primary)",
-                fontSize: "0.8rem",
-              }}
-            >
+            <span key={item}>
+              <CheckCircle2 size={14} aria-hidden />
               {item}
             </span>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="of-card" style={{ marginBottom: 28 }}>
-        <div className="of-card-title">Separação comercial sugerida</div>
-        <div className="of-dashboard-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 16 }}>
+      <section className="of-plan-split-panel">
+        <div className="of-plan-section-head">
+          <div>
+            <p className="of-page-eyebrow">Separação comercial sugerida</p>
+            <h2>Escolha pelo estágio da operação, não por uma lista repetida.</h2>
+          </div>
+          <span>{billingCycle === "annual" ? "Anual com melhor custo mensal" : "Mensal sem compromisso anual"}</span>
+        </div>
+        <div className="of-plan-split-grid">
           {commercialSplit.map((plan) => (
-            <article
-              key={plan.id}
-              style={{
-                border: "1px solid var(--of-border)",
-                borderRadius: 12,
-                padding: 18,
-                background: "var(--of-bg-3)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
-                <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--of-blue)" }}>
-                  {plan.label}
-                </h3>
-                <span style={{ fontSize: "0.75rem", color: "var(--of-text-secondary)" }}>{plan.description}</span>
+            <article key={plan.id} className={`of-plan-split-card ${plan.id === "pro" ? "featured" : ""}`}>
+              <div className="of-plan-split-title">
+                <strong>{plan.label}</strong>
+                <span>{plan.description}</span>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <p>{plan.positioning}</p>
+              <div className="of-plan-chip-row">
                 {plan.focus.map((item) => (
-                  <span
-                    key={`${plan.id}-${item}`}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      padding: "6px 10px",
-                      borderRadius: 999,
-                      background: "rgba(255, 107, 26, 0.1)",
-                      border: "1px solid rgba(255, 107, 26, 0.22)",
-                      color: "var(--of-text-primary)",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    {item}
-                  </span>
+                  <span key={`${plan.id}-${item}`}>{item}</span>
                 ))}
               </div>
             </article>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: 8, color: "var(--of-blue)" }}>
-            Escolha seu plano
-          </h2>
+      <section className="of-plan-pricing-section">
+        <div className="of-plan-section-head">
+          <div>
+            <p className="of-page-eyebrow">Planos</p>
+            <h2>Preços e módulos por estágio.</h2>
+          </div>
+          {billingCycle === "annual" ? <span>30% OFF no anual</span> : <span>Troque para anual e reduza o custo mensal</span>}
         </div>
 
-        {billingCycle === "annual" && (
-          <span
-            style={{
-              display: "inline-flex",
-              marginBottom: 28,
-              padding: "4px 12px",
-              background: "rgba(255, 107, 26, 0.15)",
-              color: "#ff6b1a",
-              borderRadius: 4,
-              fontSize: "0.85rem",
-              fontWeight: 600,
-            }}
-          >
-            -30% OFF
-          </span>
-        )}
-        <div
-          style={{
-            marginBottom: 18,
-            padding: "12px 14px",
-            border: "1px solid rgba(255, 107, 26, 0.32)",
-            background: "rgba(255, 107, 26, 0.08)",
-            borderRadius: 8,
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--of-text-1)", fontWeight: 600 }}>
-            Oferta especial de entrada: 20% OFF por 3 meses nos planos Pro e Enterprise.
-          </p>
-          <p className="of-list-description" style={{ marginTop: 6 }}>
-            Escale sua operacao com previsibilidade de custo e condicoes comerciais diferenciadas
-            para novos contratos.
-          </p>
+        <div className="of-plan-offer">
+          <Sparkles size={18} aria-hidden />
+          <div>
+            <strong>Oferta especial de entrada</strong>
+            <span>20% OFF por 3 meses nos planos Pro e Enterprise para novos contratos.</span>
+          </div>
         </div>
 
-        <div
-          className="of-dashboard-grid"
-          style={{ gridTemplateColumns: "repeat(auto-fit,minmax(310px,1fr))", gap: 20 }}
-        >
+        <div className="of-plan-price-grid">
           {catalog.map((item) => {
-            
             const itemOrder = planOrder[item.id] ?? 0;
             const isActiveSubscription = assinatura?.status === "active" || assinatura?.status === "trialing";
             const isCurrent = currentPlan === item.id && isActiveSubscription;
@@ -429,135 +348,32 @@ export default async function PlanosPage({
             return (
               <article
                 key={item.id}
-                className="of-card"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 14,
-                  position: "relative",
-                  border: item.highlight
-                    ? "2px solid rgba(255, 107, 26, 0.45)"
-                    : "1px solid var(--of-border)",
-                  background: item.highlight ? "rgba(255, 107, 26, 0.03)" : "var(--of-bg-2)",
-                  boxShadow: item.highlight
-                    ? "0 8px 24px rgba(255, 107, 26, 0.15)"
-                    : "0 1px 3px rgba(0,0,0,0.05)",
-                  padding: "24px",
-                }}
+                className={`of-plan-price-card ${item.highlight ? "featured" : ""}`}
               >
                 {item.highlight && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: -12,
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      background: "#ff6b1a",
-                      color: "#fff",
-                      padding: "4px 16px",
-                      borderRadius: 999,
-                      fontSize: "0.8rem",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
+                  <div className="of-plan-popular">
                     MAIS POPULAR
                   </div>
                 )}
 
-                <div>
-                  <h3
-                    style={{
-                      fontSize: "1.25rem",
-                      fontWeight: 700,
-                      color: "var(--of-blue)",
-                      marginBottom: 12,
-                    }}
-                  >
-                    {item.name}
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: "3rem",
-                      fontWeight: 800,
-                      fontFamily: "Syne, DM Sans, sans-serif",
-                      color: item.highlight ? "#ff6b1a" : "var(--of-blue)",
-                      lineHeight: 1,
-                      marginBottom: 4,
-                    }}
-                  >
-                    R$ {shownPrice}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "var(--of-text-secondary)",
-                      marginBottom: 12,
-                    }}
-                  >
-                    {billingCycle === "annual"
-                      ? "por mês · cobrado anualmente"
-                      : "por mês · cobrado mensalmente"}
-                  </p>
-                  <p className="of-list-description" style={{ marginBottom: 4 }}>
-                    {item.blurb}
-                  </p>
-                  <p className="of-list-description" style={{ marginBottom: 4 }}>
-                    Até {item.profileLimit} perfis por empresa.
-                  </p>
-                  <p className="of-list-description">{item.audience}</p>
+                <div className="of-plan-card-top">
+                  <span>{item.name}</span>
+                  <strong>R$ {shownPrice}</strong>
+                  <small>{billingCycle === "annual" ? "por mês · anual" : "por mês · mensal"}</small>
+                  <p>{item.decision}</p>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                    minHeight: 48,
-                    justifyContent: "flex-start",
-                  }}
-                >
+                <div className="of-plan-card-action">
                   {isCurrent ? (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        background: "rgba(112, 187, 129, 0.12)",
-                        color: "#70bb81",
-                        borderRadius: 6,
-                        fontSize: "0.9rem",
-                        fontWeight: 500,
-                        textAlign: "center",
-                      }}
-                    >
+                    <div className="of-plan-state ok">
                       Seu plano atual
                     </div>
                   ) : !isUpgrade ? (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        background: "rgba(136, 150, 179, 0.12)",
-                        color: "var(--of-text-secondary)",
-                        borderRadius: 6,
-                        fontSize: "0.9rem",
-                        fontWeight: 500,
-                        textAlign: "center",
-                      }}
-                    >
+                    <div className="of-plan-state">
                       Voce ja tem um plano superior
                     </div>
                   ) : !canManageBilling ? (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        background: "rgba(136, 150, 179, 0.12)",
-                        color: "var(--of-text-secondary)",
-                        borderRadius: 6,
-                        fontSize: "0.9rem",
-                        fontWeight: 500,
-                        textAlign: "center",
-                      }}
-                    >
+                    <div className="of-plan-state">
                       Sem permissao de cobrança
                     </div>
                   ) : (
@@ -572,64 +388,33 @@ export default async function PlanosPage({
                   )}
                 </div>
 
-                <div
-                  style={{
-                    borderTop: "1px solid var(--of-border)",
-                    paddingTop: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  {planFeatureOrder.map((feature) => {
-                    const included = planIncludes(item.id, feature);
-                    return (
-                      <div
-                        key={`${item.id}-${feature}`}
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 8,
-                        }}
-                      >
-                        <div
-                          style={{
-                            minWidth: 18,
-                            width: 18,
-                            height: 18,
-                            borderRadius: 3,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: included ? "rgba(112, 187, 129, 0.12)" : "rgba(136, 150, 179, 0.12)",
-                            color: included ? "#70bb81" : "rgba(136, 150, 179, 0.5)",
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            marginTop: 2,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {included ? "✓" : "✕"}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: "0.85rem",
-                            lineHeight: "1.4",
-                            color: included ? "var(--of-text-primary)" : "rgba(136, 150, 179, 0.7)",
-                            fontWeight: included ? 500 : 400,
-                          }}
-                        >
-                          {featureCatalog[feature].label}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div className="of-plan-card-body">
+                  <div>
+                    <p>Módulos foco</p>
+                    <div className="of-plan-chip-row compact">
+                      {item.modules.map((module) => (
+                        <span key={`${item.id}-${module}`}>{module}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="of-plan-upgrade-list">
+                    {item.upgrades.map((upgrade) => (
+                      <span key={`${item.id}-${upgrade}`}>
+                        <CheckCircle2 size={14} aria-hidden />
+                        {upgrade}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="of-plan-profile-limit">
+                    <UsersRound size={15} aria-hidden />
+                    Até {item.profileLimit} perfis por empresa
+                  </div>
                 </div>
               </article>
             );
           })}
         </div>
-      </div>
+      </section>
 
       <div className="of-dashboard-grid" style={{ gridTemplateColumns: "2fr 1fr", gap: 16 }}>
         {canManageBilling ? (
