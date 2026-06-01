@@ -612,6 +612,14 @@ a {
   padding: 24px 28px;
 }
 
+html[data-device="tablet"] .of-main-content {
+  padding: 20px;
+}
+
+html[data-device="mobile"] .of-main-content {
+  padding: 16px;
+}
+
 /* Full-bleed pages (e.g. CRM) that need to break out of main-content padding */
 .of-crm-fullbleed {
   margin: -24px -28px;
@@ -803,6 +811,33 @@ a {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.of-mobile-menu-btn {
+  display: none;
+  background: var(--of-bg-3);
+  border: 1px solid var(--of-border);
+  border-radius: 8px;
+  color: var(--of-text);
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.of-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 190;
+}
+
+.of-sidebar-backdrop.open {
+  display: block;
 }
 
 .of-btn-primary,
@@ -1980,9 +2015,34 @@ a {
   .of-dash-grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .of-topbar-actions .of-btn-primary span {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
+  .of-mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .of-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(84vw, 260px);
+    min-width: min(84vw, 260px);
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
+  }
+
+  .of-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
   .of-main-content {
     padding: 16px;
   }
@@ -2017,6 +2077,10 @@ a {
     font-size: 1rem;
     gap: 8px;
     white-space: nowrap;
+  }
+
+  .of-topbar-actions .of-btn-primary {
+    padding: 8px 10px;
   }
 
   .of-kpi-value {
@@ -2083,6 +2147,18 @@ a {
     max-width: 62vw;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .of-topbar-actions {
+    gap: 6px;
+  }
+
+  .of-topbar-actions .of-btn-primary {
+    padding: 8px;
+  }
+
+  .of-topbar-actions .of-btn-primary span {
+    display: none;
   }
 
   .of-metric-card {

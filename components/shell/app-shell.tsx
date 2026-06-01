@@ -14,6 +14,35 @@ import { NovaObraModal } from "./nova-obra-modal";
 import { AddMemberModal } from "./add-member-modal";
 import { markNotificationAsReadAction, markAllNotificationsAsReadAction } from "@/app/actions";
 
+type DeviceClass = "mobile" | "tablet" | "desktop";
+
+function detectDeviceClass(): DeviceClass {
+  if (typeof window === "undefined") return "desktop";
+
+  const ua = navigator.userAgent.toLowerCase();
+  const width = window.innerWidth;
+
+  const isTabletUa =
+    ua.includes("ipad") ||
+    ua.includes("tablet") ||
+    ua.includes("playbook") ||
+    ua.includes("silk") ||
+    (ua.includes("android") && !ua.includes("mobile"));
+
+  const isMobileUa =
+    ua.includes("mobi") ||
+    ua.includes("iphone") ||
+    ua.includes("ipod") ||
+    ua.includes("blackberry") ||
+    ua.includes("opera mini") ||
+    ua.includes("iemobile") ||
+    ua.includes("phone");
+
+  if (isTabletUa || (width >= 768 && width <= 1100)) return "tablet";
+  if (isMobileUa || width < 768) return "mobile";
+  return "desktop";
+}
+
 type AppShellProps = {
   summary: LayoutSummary;
   notifications: NotifDisplay[];
@@ -41,6 +70,20 @@ export function AppShell({
       router.replace("/contas");
     }
   }, [adminManagementOnly, pathname, router]);
+
+  useEffect(() => {
+    const applyDeviceClass = () => {
+      const device = detectDeviceClass();
+      const root = document.documentElement;
+      root.setAttribute("data-device", device);
+      root.classList.remove("device-mobile", "device-tablet", "device-desktop");
+      root.classList.add(`device-${device}`);
+    };
+
+    applyDeviceClass();
+    window.addEventListener("resize", applyDeviceClass);
+    return () => window.removeEventListener("resize", applyDeviceClass);
+  }, []);
 
   const blockedByAdminView = adminManagementOnly && !pathname.startsWith("/contas");
 
