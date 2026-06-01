@@ -55,6 +55,7 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
   const supabase = await createServerClient();
   const obrasAtivas = await listObras();
   const activeObraIds = new Set(obrasAtivas.map((obra: { id: string }) => obra.id));
+  const activeObraIdList = obrasAtivas.map((obra: { id: string }) => obra.id);
   const obraNomeById = new Map(obrasAtivas.map((obra: { id: string; nome: string }) => [obra.id, obra.nome]));
 
   const withJoin = await supabase
@@ -76,6 +77,21 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     }
 
     sourceRows = (fallback.data ?? []) as Array<Record<string, unknown>>;
+  }
+
+  // Fallback defensivo:
+  // em ambientes com inconsistência de empresa_id histórico em obras_tarefas,
+  // tenta carregar tarefas por obra visível do usuário para evitar tela zerada.
+  if (sourceRows.length === 0 && activeObraIdList.length > 0) {
+    const byObra = await supabase
+      .from("obras_tarefas")
+      .select("id, obra_id, nome, inicio, fim, status, updated_at")
+      .in("obra_id", activeObraIdList)
+      .order("inicio", { ascending: true });
+
+    if (!byObra.error) {
+      sourceRows = (byObra.data ?? []) as Array<Record<string, unknown>>;
+    }
   }
 
   const activeRows = sourceRows.filter((item) => activeObraIds.has(String(item.obra_id ?? "")));
