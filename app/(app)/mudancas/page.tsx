@@ -48,7 +48,7 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   const [obrasResult, mudancasResult, approvalsResult] = await Promise.allSettled([
     listObras(),
     listMudancas(),
-    listApprovalRequests({ status: "pending", limit: 200 }),
+    listApprovalRequests({ limit: 200 }),
   ]);
   const warnings: string[] = [];
 
@@ -60,10 +60,18 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
     mudancasResult.status === "fulfilled"
       ? mudancasResult.value
       : (warnings.push("Falha ao carregar mudanças registradas (verifique migrations)."), []);
-  const pendingApprovals =
+  const changeApprovals =
     approvalsResult.status === "fulfilled"
       ? approvalsResult.value.filter((item) => item.entity_type === "cronograma_change")
       : (warnings.push("Falha ao carregar fila de aprovações para mudanças."), []);
+  const pendingApprovals = changeApprovals.filter((item) => item.status === "pending");
+
+  const decisionByChangeId = new Map(
+    changeApprovals
+      .filter((item) => item.status !== "pending")
+      .sort((a, b) => new Date(b.approved_at ?? b.created_at).getTime() - new Date(a.approved_at ?? a.created_at).getTime())
+      .map((item) => [item.entity_id, item] as const),
+  );
 
   const pendentesAprovacao = mudancas.filter((item) => ["pendente", "em_aprovacao"].includes(item.status)).length;
   const aprovadas = mudancas.filter((item) => item.status === "aprovada").length;
@@ -331,6 +339,8 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
                   <th>Prazo</th>
                   <th>Custo</th>
                   <th>Status</th>
+                  <th>Decisão por</th>
+                  <th>Decisão em</th>
                 </tr>
               </thead>
               <tbody>
@@ -346,11 +356,17 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
                         {statusLabels[item.status] ?? item.status}
                       </span>
                     </td>
+                    <td className="of-mono">{decisionByChangeId.get(item.id)?.approved_by ?? "—"}</td>
+                    <td className="of-mono">
+                      {decisionByChangeId.get(item.id)?.approved_at
+                        ? new Date(String(decisionByChangeId.get(item.id)?.approved_at)).toLocaleString("pt-BR")
+                        : "—"}
+                    </td>
                   </tr>
                 ))}
                 {filteredMudancas.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="of-empty-text">Nenhuma solicitação encontrada para os filtros selecionados.</td>
+                    <td colSpan={8} className="of-empty-text">Nenhuma solicitação encontrada para os filtros selecionados.</td>
                   </tr>
                 ) : null}
               </tbody>
