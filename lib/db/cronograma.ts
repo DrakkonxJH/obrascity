@@ -64,9 +64,11 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     return [];
   }
 
-  return (data ?? [])
-    .filter((item) => activeObraIds.has(item.obra_id as string))
-    .map((item) => ({
+  const sourceRows = (data ?? []) as Array<Record<string, unknown>>;
+  const activeRows = sourceRows.filter((item) => activeObraIds.has(String(item.obra_id ?? "")));
+  const rowsToMap = activeRows.length > 0 || sourceRows.length === 0 ? activeRows : sourceRows;
+
+  return rowsToMap.map((item) => ({
     id: item.id as string,
     obra_id: item.obra_id as string,
     obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra sem nome",

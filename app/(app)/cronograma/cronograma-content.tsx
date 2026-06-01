@@ -49,6 +49,10 @@ type CronogramaContentProps = {
 
 const PAGE_SIZE = 12;
 const getCurrentTimeMs = () => Date.now();
+const safeDateMs = (value: string) => {
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 export async function CronogramaContent({
   obraId = "",
@@ -145,18 +149,22 @@ export async function CronogramaContent({
   const nextPage = Math.min(totalPages, pageNum + 1);
 
   const fallbackTime = new Date("2000-01-01").getTime();
-  const allDates = filteredItems.flatMap((item) => [new Date(item.inicio), new Date(item.fim)]);
-  const startBoundary = allDates.length > 0 ? Math.min(...allDates.map((d) => d.getTime())) : fallbackTime;
-  const endBoundary = allDates.length > 0 ? Math.max(...allDates.map((d) => d.getTime())) : fallbackTime + 1;
+  const validItemsForTimeline = filteredItems.filter((item) => safeDateMs(item.inicio) !== null && safeDateMs(item.fim) !== null);
+  const invalidTimelineCount = filteredItems.length - validItemsForTimeline.length;
+  const allDates = validItemsForTimeline.flatMap((item) => [safeDateMs(item.inicio) ?? fallbackTime, safeDateMs(item.fim) ?? fallbackTime]);
+  const startBoundary = allDates.length > 0 ? Math.min(...allDates) : fallbackTime;
+  const endBoundary = allDates.length > 0 ? Math.max(...allDates) : fallbackTime + 1;
   const totalRange = Math.max(endBoundary - startBoundary, 1);
   const months = buildGanttMonths(startBoundary, endBoundary);
   const monthIndex = currentMonthIndex(months);
 
-  const ganttItems = filteredItems.map((item) => {
-    const start = new Date(item.inicio).getTime();
-    const end = new Date(item.fim).getTime();
+  const ganttItems = validItemsForTimeline.map((item) => {
+    const start = safeDateMs(item.inicio) ?? startBoundary;
+    const end = safeDateMs(item.fim) ?? start;
     const left = ((start - startBoundary) / totalRange) * 100;
     const width = (Math.max(end - start, 86_400_000) / totalRange) * 100;
+    const safeLeft = Number.isFinite(left) ? Math.max(0, Math.min(100, left)) : 0;
+    const safeWidth = Number.isFinite(width) ? Math.max(3, width) : 3;
     return {
       id: item.id,
       nome: item.nome,
@@ -164,8 +172,8 @@ export async function CronogramaContent({
       status: item.status,
       inicio: item.inicio,
       fim: item.fim,
-      left: Math.max(0, left),
-      width: Math.min(100 - left, Math.max(3, width)),
+      left: safeLeft,
+      width: Math.min(100 - safeLeft, safeWidth),
       color: ganttBarColor(item.status),
     };
   });
@@ -250,6 +258,14 @@ export async function CronogramaContent({
 
       {selectedView === "visao" ? (
         <>
+          {invalidTimelineCount > 0 ? (
+            <article className="of-card" style={{ borderColor: "var(--of-yellow)", background: "rgba(245, 158, 11, 0.08)" }}>
+              <div className="of-card-title">Atenção no cronograma</div>
+              <p className="of-empty-text">
+                {invalidTimelineCount} tarefa(s) ficaram fora do Gantt por data inválida. Revise início/fim na aba Operação.
+              </p>
+            </article>
+          ) : null}
           <div className="of-gantt-controls of-crono-gantt-head">
             <span className="of-gantt-period">Timeline {months[0]} — {months[months.length - 1]} {new Date().getFullYear()}</span>
             <div className="of-gantt-legend">
