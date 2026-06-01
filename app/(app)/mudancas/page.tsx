@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { listMudancas } from "@/lib/db/mudancas";
 import { createMudancaAction } from "./actions";
+import type { CSSProperties } from "react";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -46,14 +47,32 @@ export default async function MudancasPage() {
     total: mudancas.filter((item) => item.tipo === tipo).length,
   }));
 
+  const statCardStyle: CSSProperties = {
+    border: "1px solid var(--of-border)",
+    borderRadius: 14,
+    background: "linear-gradient(180deg, rgba(20, 28, 46, 0.9), rgba(12, 18, 32, 0.92))",
+    padding: "14px 16px",
+  };
+
+  const statValueStyle: CSSProperties = {
+    fontFamily: "\"Barlow Condensed\", sans-serif",
+    fontSize: "2rem",
+    lineHeight: 1,
+    color: "#f1f4ff",
+  };
+
+  const statLabelStyle: CSSProperties = {
+    marginTop: 6,
+    fontSize: "0.78rem",
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+    color: "var(--of-text-2)",
+  };
+
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
-        <PageHeader
-          eyebrow="Governança de escopo"
-          title="Mudanças"
-          subtitle="Controle solicitações de escopo, prazo, custo e cláusulas contratuais com rastreabilidade operacional."
-        />
+        <PageHeader title="Mudanças" />
 
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
@@ -63,21 +82,21 @@ export default async function MudancasPage() {
         ) : null}
 
         <div className="of-stats-grid" style={{ marginBottom: 20 }}>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{totalMudancas}</div>
-            <div className="of-stat-label">Total de mudanças</div>
+          <article className="of-stat-card" style={statCardStyle}>
+            <div className="of-stat-value" style={statValueStyle}>{totalMudancas}</div>
+            <div className="of-stat-label" style={statLabelStyle}>Total de mudanças</div>
           </article>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{pendentesAprovacao}</div>
-            <div className="of-stat-label">Pendentes de aprovação</div>
+          <article className="of-stat-card" style={statCardStyle}>
+            <div className="of-stat-value" style={statValueStyle}>{pendentesAprovacao}</div>
+            <div className="of-stat-label" style={statLabelStyle}>Pendentes de aprovação</div>
           </article>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{impactoTotalPrazo}</div>
-            <div className="of-stat-label">Impacto total de prazo (dias)</div>
+          <article className="of-stat-card" style={statCardStyle}>
+            <div className="of-stat-value" style={statValueStyle}>{impactoTotalPrazo}</div>
+            <div className="of-stat-label" style={statLabelStyle}>Impacto total de prazo (dias)</div>
           </article>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{money.format(impactoTotalCusto)}</div>
-            <div className="of-stat-label">Impacto total de custo</div>
+          <article className="of-stat-card" style={statCardStyle}>
+            <div className="of-stat-value" style={statValueStyle}>{money.format(impactoTotalCusto)}</div>
+            <div className="of-stat-label" style={statLabelStyle}>Impacto total de custo</div>
           </article>
         </div>
 
