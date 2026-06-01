@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { listApprovalRequests } from "@/lib/db/approvals";
 import { listObras } from "@/lib/db/obras";
 import { listMudancas } from "@/lib/db/mudancas";
+import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { approveMudancaRequestAction, createMudancaAction, rejectMudancaRequestAction } from "./actions";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -45,10 +46,11 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   const statusFilter = firstParam(params.status);
   const query = firstParam(params.q).toLowerCase().trim();
 
-  const [obrasResult, mudancasResult, approvalsResult] = await Promise.allSettled([
+  const [obrasResult, mudancasResult, approvalsResult, profilesResult] = await Promise.allSettled([
     listObras(),
     listMudancas(),
     listApprovalRequests({ limit: 200 }),
+    listEmpresaProfiles(),
   ]);
   const warnings: string[] = [];
 
@@ -65,6 +67,11 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
       ? approvalsResult.value.filter((item) => item.entity_type === "cronograma_change")
       : (warnings.push("Falha ao carregar fila de aprovações para mudanças."), []);
   const pendingApprovals = changeApprovals.filter((item) => item.status === "pending");
+  const profiles =
+    profilesResult.status === "fulfilled"
+      ? profilesResult.value
+      : (warnings.push("Falha ao carregar perfis para identificar aprovadores."), []);
+  const profileNameById = new Map(profiles.map((profile) => [profile.id, profile.nome || profile.email]));
 
   const decisionByChangeId = new Map(
     changeApprovals
@@ -356,7 +363,12 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
                         {statusLabels[item.status] ?? item.status}
                       </span>
                     </td>
-                    <td className="of-mono">{decisionByChangeId.get(item.id)?.approved_by ?? "—"}</td>
+                    <td className="of-mono">
+                      {decisionByChangeId.get(item.id)?.approved_by
+                        ? profileNameById.get(String(decisionByChangeId.get(item.id)?.approved_by)) ??
+                          String(decisionByChangeId.get(item.id)?.approved_by)
+                        : "—"}
+                    </td>
                     <td className="of-mono">
                       {decisionByChangeId.get(item.id)?.approved_at
                         ? new Date(String(decisionByChangeId.get(item.id)?.approved_at)).toLocaleString("pt-BR")
