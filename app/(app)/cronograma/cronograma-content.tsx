@@ -180,7 +180,7 @@ export async function CronogramaContent({
   const tabLink = (tab: string) => `/cronograma?obra_id=${encodeURIComponent(selectedObraId)}&status=${encodeURIComponent(selectedStatus)}&date_from=${encodeURIComponent(selectedDateFrom)}&date_to=${encodeURIComponent(selectedDateTo)}&view=${encodeURIComponent(tab)}&page=1`;
 
   return (
-    <section className="of-page">
+    <section className="of-page of-cronograma-page">
       <PageHeader title="Cronograma" />
 
       {ok ? (
@@ -190,17 +190,17 @@ export async function CronogramaContent({
         </article>
       ) : null}
 
-      <article className="of-card">
-        <div className="of-page-head-actions" style={{ gap: 10 }}>
+      <article className="of-card of-crono-tabs">
+        <div className="of-page-head-actions of-crono-tabs-row" style={{ gap: 10 }}>
           <a href={tabLink("visao")} className={selectedView === "visao" ? "of-btn-primary" : "of-btn-ghost"}>Visão Gantt</a>
           <a href={tabLink("operacao")} className={selectedView === "operacao" ? "of-btn-primary" : "of-btn-ghost"}>Operação</a>
           <a href={tabLink("governanca")} className={selectedView === "governanca" ? "of-btn-primary" : "of-btn-ghost"}>Governança</a>
         </div>
       </article>
 
-      <article className="of-card">
+      <article className="of-card of-crono-filter-card">
         <div className="of-card-title">Filtros</div>
-        <form action="/cronograma" className="of-form-grid md:grid-cols-6" style={{ marginTop: 12 }}>
+        <form action="/cronograma" className="of-form-grid md:grid-cols-6 of-crono-filter-form" style={{ marginTop: 12 }}>
           <select name="obra_id" className="of-input" defaultValue={selectedObraId}>
             <option value="">Todas as obras</option>
             {obras.map((obra) => (
@@ -237,7 +237,7 @@ export async function CronogramaContent({
 
       {selectedView === "visao" ? (
         <>
-          <div className="of-gantt-controls">
+          <div className="of-gantt-controls of-crono-gantt-head">
             <span className="of-gantt-period">Timeline {months[0]} — {months[months.length - 1]} {new Date().getFullYear()}</span>
             <div className="of-gantt-legend">
               <span><i className="of-dot done" /> Concluído</span>
@@ -248,7 +248,7 @@ export async function CronogramaContent({
           </div>
           <GanttView items={ganttItems} months={months} currentMonthIndex={monthIndex} />
 
-          <article className="of-card">
+          <article className="of-card of-crono-baseline-card">
             <div className="of-card-title">Baseline vs Atual</div>
             <div className="of-table-wrap" style={{ border: 0 }}>
               <table className="of-table">
@@ -281,7 +281,7 @@ export async function CronogramaContent({
 
       {selectedView === "operacao" ? (
         <>
-          <div className="of-gantt-controls">
+          <div className="of-gantt-controls of-crono-create-card-wrap">
             <form action={createCronogramaAction} className="of-card of-form-grid md:grid-cols-5" style={{ flex: 1 }}>
               <input type="hidden" name="return_to" value={returnTo} />
               <div className="of-card-title md:col-span-5">Nova tarefa</div>
@@ -299,7 +299,7 @@ export async function CronogramaContent({
             </form>
           </div>
 
-          <article className="of-card">
+          <article className="of-card of-crono-edit-card">
             <div className="of-card-title">Tarefas (paginado)</div>
             <div className="of-crono-edit-list">
               {paginatedItems.map((item) => (
@@ -343,7 +343,7 @@ export async function CronogramaContent({
 
       {selectedView === "governanca" ? (
         <>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2 of-crono-govern-grid">
             <form action={createDependenciaAction} className="of-card of-form-grid md:grid-cols-2">
               <input type="hidden" name="return_to" value={returnTo} />
               <div className="of-card-title md:col-span-2">Dependências</div>

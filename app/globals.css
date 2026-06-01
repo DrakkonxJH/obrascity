@@ -2778,6 +2778,67 @@ html[data-device="mobile"] .of-main-content {
   background: rgba(22, 163, 74, 0.16);
 }
 
+/* Cronograma visual refinement */
+.of-cronograma-page {
+  gap: 16px;
+}
+
+.of-cronograma-page .of-card {
+  border-radius: 16px;
+}
+
+.of-cronograma-page .of-card-title {
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.of-crono-tabs {
+  padding: 10px;
+}
+
+.of-crono-tabs-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.of-crono-tabs-row > a {
+  justify-content: center;
+  min-height: 42px;
+}
+
+.of-crono-filter-card {
+  background:
+    radial-gradient(circle at 88% 10%, rgba(255, 107, 26, 0.11), transparent 42%),
+    linear-gradient(180deg, rgba(13, 18, 31, 0.96), rgba(10, 14, 24, 0.95));
+}
+
+.of-crono-filter-form {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(8, 12, 22, 0.8);
+}
+
+.of-crono-baseline-card .of-table td,
+.of-crono-baseline-card .of-table th {
+  font-size: 0.8rem;
+}
+
+.of-crono-edit-card .of-crono-edit-item {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle at 100% 0, rgba(255, 107, 26, 0.08), transparent 36%),
+    rgba(8, 12, 22, 0.78);
+}
+
+.of-cronograma-page .of-table thead th {
+  letter-spacing: 0.06em;
+}
+
+.of-cronograma-page .of-btn-primary,
+.of-cronograma-page .of-btn-ghost {
+  min-height: 42px;
+}
+
 .of-fin-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
