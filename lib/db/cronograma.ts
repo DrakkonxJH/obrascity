@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
-import { ensureObraAtiva, listActiveObraIds } from "@/lib/db/obras";
+import { ensureObraAtiva, listActiveObraIds, listObras } from "@/lib/db/obras";
 
 export type CronogramaItem = {
   id: string;
@@ -53,25 +53,42 @@ export type CronogramaBaselineLatestItem = {
 export async function listCronograma(): Promise<CronogramaItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
-  const activeObraIds = await listActiveObraIds();
-  const { data, error } = await supabase
+  const obrasAtivas = await listObras();
+  const activeObraIds = new Set(obrasAtivas.map((obra: { id: string }) => obra.id));
+  const obraNomeById = new Map(obrasAtivas.map((obra: { id: string; nome: string }) => [obra.id, obra.nome]));
+
+  const withJoin = await supabase
     .from("obras_tarefas")
     .select("id, obra_id, nome, inicio, fim, status, updated_at, obras(nome)")
     .eq("empresa_id", empresaId)
     .order("inicio", { ascending: true });
 
-  if (error) {
-    return [];
+  let sourceRows = (withJoin.data ?? []) as Array<Record<string, unknown>>;
+  if (withJoin.error) {
+    const fallback = await supabase
+      .from("obras_tarefas")
+      .select("id, obra_id, nome, inicio, fim, status, updated_at")
+      .eq("empresa_id", empresaId)
+      .order("inicio", { ascending: true });
+
+    if (fallback.error) {
+      return [];
+    }
+
+    sourceRows = (fallback.data ?? []) as Array<Record<string, unknown>>;
   }
 
-  const sourceRows = (data ?? []) as Array<Record<string, unknown>>;
   const activeRows = sourceRows.filter((item) => activeObraIds.has(String(item.obra_id ?? "")));
   const rowsToMap = activeRows.length > 0 || sourceRows.length === 0 ? activeRows : sourceRows;
 
   return rowsToMap.map((item) => ({
     id: item.id as string,
     obra_id: item.obra_id as string,
-    obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra sem nome",
+    obra_nome: String(
+      (item.obras as { nome?: string } | null)?.nome ??
+      obraNomeById.get(String(item.obra_id ?? "")) ??
+      "Obra sem nome",
+    ),
     nome: item.nome as string,
     inicio: item.inicio as string,
     fim: item.fim as string,
