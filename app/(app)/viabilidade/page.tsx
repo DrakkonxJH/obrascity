@@ -5,6 +5,7 @@ import { listViabilidade } from "@/lib/db/viabilidade";
 import { saveViabilidadeAction } from "./actions";
 import { RiskMatrix } from "./risk-matrix";
 import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 type StatusField = "status_tecnico" | "status_legal" | "status_economico";
 
@@ -187,6 +188,12 @@ export default async function ViabilidadePage() {
           eyebrow="Viabilidade"
           title="Estudos de viabilidade"
           subtitle="Análise técnica, legal e econômico-financeira dos empreendimentos."
+          actions={
+            <>
+              <Link href="/projetos" className="of-btn-ghost">Projetos</Link>
+              <Link href="/relatorios/viabilidade" className="of-btn-primary">Relatório</Link>
+            </>
+          }
         />
 
         {warnings.length > 0 ? (

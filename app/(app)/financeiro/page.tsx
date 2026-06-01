@@ -7,6 +7,7 @@ import { getEvmIndicadores, listMedicoes } from "@/lib/db/medicoes";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listFinanceiroTitulos, listFluxoCaixaMensal } from "@/lib/db/financeiro-corporativo";
 import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -56,6 +57,12 @@ export default async function FinanceiroPage() {
         eyebrow="Financeiro"
         title="Controle financeiro da operacao"
         subtitle="Monitore orcamento, fluxo de caixa, medicoes e titulos AP/AR em uma unica visao."
+        actions={
+          <>
+            <Link href="/relatorios/financeiro" className="of-btn-ghost">Ver relatório</Link>
+            <Link href="/dashboard" className="of-btn-primary">Voltar ao painel</Link>
+          </>
+        }
       />
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>

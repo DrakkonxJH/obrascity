@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { GanttView } from "@/components/cronograma/gantt-view";
 import { PageHeader } from "@/components/ui/page-header";
 import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/cronograma/gantt-utils";
@@ -47,6 +48,7 @@ type CronogramaContentProps = {
 };
 
 const PAGE_SIZE = 12;
+const getCurrentTimeMs = () => Date.now();
 
 export async function CronogramaContent({
   obraId = "",
@@ -108,7 +110,7 @@ export async function CronogramaContent({
   const tarefasAtrasadas = filteredItems.filter((item) => item.status.toLowerCase() === "atrasado").length;
   const percentualConclusao = totalTarefas > 0 ? Math.round((tarefasConcluidas / totalTarefas) * 100) : 0;
 
-  const now = Date.now();
+  const now = getCurrentTimeMs();
   const sevenDays = 7 * 86_400_000;
   const vencendo7dias = filteredItems.filter((item) => {
     const fim = new Date(item.fim).getTime();
@@ -181,7 +183,17 @@ export async function CronogramaContent({
 
   return (
     <section className="of-page of-cronograma-page">
-      <PageHeader title="Cronograma" />
+      <PageHeader
+        eyebrow="Planejamento"
+        title="Cronograma"
+        subtitle="Visualize timeline, operacionalize tarefas e mantenha governança de prazo em um único fluxo."
+        actions={
+          <>
+            <Link className="of-btn-ghost" href="/obras">Ver obras</Link>
+            <Link className="of-btn-primary" href={tabLink("visao")}>Abrir visão Gantt</Link>
+          </>
+        }
+      />
 
       {ok ? (
         <article className="of-card" style={{ borderColor: "var(--of-green)", background: "rgba(31, 208, 122, 0.09)" }}>
@@ -191,11 +203,12 @@ export async function CronogramaContent({
       ) : null}
 
       <article className="of-card of-crono-tabs">
-        <div className="of-page-head-actions of-crono-tabs-row" style={{ gap: 10 }}>
-          <a href={tabLink("visao")} className={selectedView === "visao" ? "of-btn-primary" : "of-btn-ghost"}>Visão Gantt</a>
-          <a href={tabLink("operacao")} className={selectedView === "operacao" ? "of-btn-primary" : "of-btn-ghost"}>Operação</a>
-          <a href={tabLink("governanca")} className={selectedView === "governanca" ? "of-btn-primary" : "of-btn-ghost"}>Governança</a>
-        </div>
+        <div className="of-card-title">Modo de trabalho</div>
+        <nav className="of-page-head-actions of-crono-tabs-row" style={{ gap: 10 }} aria-label="Alternar modo do cronograma">
+          <a href={tabLink("visao")} aria-current={selectedView === "visao" ? "page" : undefined} className={selectedView === "visao" ? "of-btn-primary" : "of-btn-ghost"}>Visão Gantt</a>
+          <a href={tabLink("operacao")} aria-current={selectedView === "operacao" ? "page" : undefined} className={selectedView === "operacao" ? "of-btn-primary" : "of-btn-ghost"}>Operação</a>
+          <a href={tabLink("governanca")} aria-current={selectedView === "governanca" ? "page" : undefined} className={selectedView === "governanca" ? "of-btn-primary" : "of-btn-ghost"}>Governança</a>
+        </nav>
       </article>
 
       <article className="of-card of-crono-filter-card">
@@ -215,8 +228,8 @@ export async function CronogramaContent({
             <option value="atrasado">Atrasado</option>
             <option value="cancelado">Cancelado</option>
           </select>
-          <input name="date_from" type="date" className="of-input" defaultValue={selectedDateFrom} />
-          <input name="date_to" type="date" className="of-input" defaultValue={selectedDateTo} />
+          <input name="date_from" type="date" className="of-input" aria-label="Data inicial" defaultValue={selectedDateFrom} />
+          <input name="date_to" type="date" className="of-input" aria-label="Data final" defaultValue={selectedDateTo} />
           <input type="hidden" name="view" value={selectedView} />
           <button type="submit" className="of-btn-primary">Aplicar</button>
         </form>

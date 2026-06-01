@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "tsx --test tests/**/*.test.ts tests/**/*.test.tsx",
     "worker:dev": "tsx worker/src/index.ts",
     "worker:start": "NODE_ENV=production tsx worker/src/index.ts",
     "worker:health": "node scripts/worker-healthcheck.mjs",

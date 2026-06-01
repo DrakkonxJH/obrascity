@@ -874,12 +874,13 @@ export default function CrmPage() {
     }
   }, []);
 
-  const loadCustomTabs = useCallback(async () => {
+  const loadCustomTabs = useCallback(async (workspaceId) => {
     try {
-      const res = await fetch("/api/crm/tabs", { method: "GET", headers: { Accept: "application/json" } });
+      const query = workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : "";
+      const res = await fetch(`/api/crm/tabs${query}`, { method: "GET", headers: { Accept: "application/json" } });
       const data = await res.json();
-      if (res.ok && data?.ok && Array.isArray(data.tabs)) {
-        setCustomTabs(data.tabs);
+      if (res.ok && data?.success && Array.isArray(data.data)) {
+        setCustomTabs(data.data);
         setSelectedTab(null);
       }
     } catch {
@@ -1008,8 +1009,10 @@ export default function CrmPage() {
           setLossReasons(reasonsRes.ok && reasonsData?.ok && Array.isArray(reasonsData.reasons) ? reasonsData.reasons : []);
           if (workspacesRes.ok && workspacesData?.success && Array.isArray(workspacesData.data)) {
             setWorkspaces(workspacesData.data);
-            if (workspacesData.data.length > 0 && !selectedWorkspace) {
-              setSelectedWorkspace(workspacesData.data[0].id);
+            if (workspacesData.data.length > 0) {
+              const firstWorkspaceId = workspacesData.data[0].id;
+              setSelectedWorkspace(firstWorkspaceId);
+              loadCustomTabs(firstWorkspaceId);
             }
           }
           setSyncError("");
@@ -1030,13 +1033,7 @@ export default function CrmPage() {
     return () => {
       active = false;
     };
-  }, []);
-
-  useEffect(() => {
-    if (selectedWorkspace) {
-      loadCustomTabs();
-    }
-  }, [selectedWorkspace, loadCustomTabs]);
+  }, [loadCustomTabs]);
 
   const handleDrop = useCallback(async (targetEtapa) => {
     const id = draggingId.current;
@@ -1281,11 +1278,24 @@ export default function CrmPage() {
       )}
 
       {/* ── Workspaces (Abas de contexto) ── */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto" }}>
+      <div role="tablist" aria-label="Abas de contexto do CRM" style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto" }}>
         {workspaces.map((ws) => (
           <div
             key={ws.id}
-            onClick={() => setSelectedWorkspace(ws.id)}
+            role="tab"
+            aria-selected={selectedWorkspace === ws.id}
+            tabIndex={0}
+            onClick={() => {
+              setSelectedWorkspace(ws.id);
+              loadCustomTabs(ws.id);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setSelectedWorkspace(ws.id);
+                loadCustomTabs(ws.id);
+              }
+            }}
             style={{
               padding: "12px 16px",
               cursor: "pointer",
@@ -1307,6 +1317,7 @@ export default function CrmPage() {
         ))}
         <button
           onClick={() => setShowNewWorkspace(true)}
+          aria-label="Criar nova aba de contexto"
           style={{
             padding: "12px 16px",
             border: "none",
@@ -1553,18 +1564,19 @@ export default function CrmPage() {
       <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "10px 24px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.muted }}>{Ico.search}</span>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar empresa, contato, obra..."
+          <input value={search} onChange={e => setSearch(e.target.value)} aria-label="Buscar empresa, contato ou obra"
+            placeholder="Buscar empresa, contato, obra..."
             style={{ width: "100%", background: C.faint, border: `1px solid ${C.border}`, borderRadius: 7, padding: "8px 12px 8px 32px", color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
         </div>
-        <select value={fEtapa} onChange={e => setFEtapa(e.target.value)} style={{ ...selStyle, minWidth: 140 }}>
+        <select value={fEtapa} onChange={e => setFEtapa(e.target.value)} aria-label="Filtrar por etapa" style={{ ...selStyle, minWidth: 140 }}>
           <option value="">Todas as etapas</option>
           {ETAPAS.map(e => <option key={e} value={e}>{e}</option>)}
         </select>
-        <select value={fPrio} onChange={e => setFPrio(e.target.value)} style={{ ...selStyle, minWidth: 140 }}>
+        <select value={fPrio} onChange={e => setFPrio(e.target.value)} aria-label="Filtrar por prioridade" style={{ ...selStyle, minWidth: 140 }}>
           <option value="">Todas as prioridades</option>
           {["Alta", "Média", "Baixa"].map(p => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select value={fOrigem} onChange={e => setFOrigem(e.target.value)} style={{ ...selStyle, minWidth: 160 }}>
+        <select value={fOrigem} onChange={e => setFOrigem(e.target.value)} aria-label="Filtrar por origem" style={{ ...selStyle, minWidth: 160 }}>
           <option value="">Todas as origens</option>
           {[...new Set(leads.map((lead) => lead.origem).filter(Boolean))].sort().map((origem) => (
             <option key={origem} value={origem}>{origem}</option>

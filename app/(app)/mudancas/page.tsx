@@ -6,6 +6,7 @@ import { listObras } from "@/lib/db/obras";
 import { listMudancas } from "@/lib/db/mudancas";
 import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { approveMudancaRequestAction, createMudancaAction, rejectMudancaRequestAction } from "./actions";
+import Link from "next/link";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -149,7 +150,17 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
-        <PageHeader title="Mudanças" />
+        <PageHeader
+          eyebrow="Gestão"
+          title="Mudanças"
+          subtitle="Solicitações com impacto de prazo/custo e fluxo de aprovação por alçada."
+          actions={
+            <>
+              <Link href="/cronograma" className="of-btn-ghost">Cronograma</Link>
+              <Link href="/relatorios/mudancas" className="of-btn-primary">Relatório</Link>
+            </>
+          }
+        />
 
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>

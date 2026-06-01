@@ -144,6 +144,12 @@ export default async function RelatóriosPage() {
         eyebrow="Relatorios"
         title="Central de relatorios"
         subtitle="Gere, acompanhe e exporte relatorios gerenciais das suas obras."
+        actions={
+          <>
+            <Link href="/dashboard" className="of-btn-ghost">Voltar ao painel</Link>
+            <Link href="/financeiro" className="of-btn-primary">Abrir financeiro</Link>
+          </>
+        }
       />
 
       <div className="of-rel-grid">

@@ -43,7 +43,7 @@ import {
 type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number };
 type NavSection = { title: string; items: NavItem[] };
 
-function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: boolean): NavSection[] {
+export function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: boolean): NavSection[] {
   if (adminManagementOnly) {
     return [
       {

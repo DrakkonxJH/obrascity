@@ -927,7 +927,7 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
   }
   
   // Filter out profiles from master company - ALWAYS, regardless of user's company
-  let filtered = (data ?? []).filter(p => !masterIds.has(p.empresa_id));
+  const filtered = (data ?? []).filter(p => !masterIds.has(p.empresa_id));
   
   return filtered.map((item) => ({
     id: String(item.id),

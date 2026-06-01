@@ -1,4 +1,5 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { escalateGarantiaSlaBreaches, listGarantiaChamados, listGarantiaInteracoes } from "@/lib/db/garantia";
 import {
@@ -6,6 +7,7 @@ import {
   createGarantiaInteracaoAction,
   updateGarantiaStatusAction,
 } from "./actions";
+import Link from "next/link";
 
 export default async function GarantiaPage() {
   const [obrasResult, chamadosResult, escalonamentoResult] = await Promise.allSettled([
@@ -48,6 +50,17 @@ export default async function GarantiaPage() {
   return (
     <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
+        <PageHeader
+          eyebrow="Pós-entrega"
+          title="Garantia e assistência"
+          subtitle="Acompanhe chamados, SLA, escalonamento e comunicação de pós-obra."
+          actions={
+            <>
+              <Link href="/entrega" className="of-btn-ghost">Voltar para entrega</Link>
+              <Link href="/suporte" className="of-btn-primary">Abrir suporte</Link>
+            </>
+          }
+        />
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
             <div className="of-card-title">Dados carregados parcialmente</div>

@@ -98,6 +98,9 @@ export function AppShell({
   return (
     <AppUiProvider trashEnabled={trashEnabled}>
       <div className="of-app-shell">
+        <a href="#of-main-content" className="of-skip-link">
+          Pular para o conteúdo principal
+        </a>
         <Sidebar
           summary={summary}
           canAccessControlTotal={canAccessControlTotal}
@@ -105,7 +108,7 @@ export function AppShell({
         />
         <div className="of-main-shell">
           <Topbar summary={summary} adminManagementOnly={adminManagementOnly} />
-          <main className="of-main-content of-page-enter">{blockedByAdminView ? null : children}</main>
+          <main id="of-main-content" className="of-main-content of-page-enter">{blockedByAdminView ? null : children}</main>
         </div>
       </div>
       <NotificationPanel 

@@ -1,5 +1,6 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
 import { listProjetosConflitos, listProjetosDocumentos } from "@/lib/db/projetos";
 import { createProjetoConflitoAction, createProjetoDocumentoAction } from "./actions";
@@ -73,6 +74,12 @@ export default async function ProjetosPage() {
           eyebrow="Engenharia e compatibilização"
           title="Projetos"
           subtitle="Consolide documentos técnicos, conflitos de interface e status de aprovação por obra."
+          actions={
+            <>
+              <Link href="/obras" className="of-btn-ghost">Obras</Link>
+              <Link href="/relatorios" className="of-btn-primary">Relatórios</Link>
+            </>
+          }
         />
 
         {warnings.length > 0 ? (

@@ -1,7 +1,9 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 import { listComissionamento, listEntregas } from "@/lib/db/entrega";
 import { listObras } from "@/lib/db/obras";
 import { createComissionamentoAction, saveEntregaAction } from "./actions";
+import Link from "next/link";
 
 export default async function EntregaPage() {
   const [obrasResult, comissionamentosResult, entregasResult] = await Promise.allSettled([
@@ -30,6 +32,17 @@ export default async function EntregaPage() {
   return (
     <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
+        <PageHeader
+          eyebrow="Pós-obra"
+          title="Entrega técnica e aceite"
+          subtitle="Comissionamento, gate de entrega e formalização com o cliente."
+          actions={
+            <>
+              <Link href="/qualidade" className="of-btn-ghost">Ir para qualidade</Link>
+              <Link href="/garantia" className="of-btn-primary">Abrir garantia</Link>
+            </>
+          }
+        />
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
             <div className="of-card-title">Dados carregados parcialmente</div>

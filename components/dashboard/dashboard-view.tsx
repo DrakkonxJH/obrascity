@@ -98,6 +98,12 @@ export function DashboardView({
         eyebrow="Operacao"
         title="Resumo executivo da operacao"
         subtitle="Acompanhe obras, progresso, alertas e consumo de orcamento em tempo real."
+        actions={
+          <>
+            <Link href="/obras" className="of-btn-ghost">Ver obras</Link>
+            <Link href="/cronograma" className="of-btn-primary">Abrir cronograma</Link>
+          </>
+        }
       />
       <div className="of-kpi-grid">
         <article className="of-metric-card blue">
@@ -167,6 +173,11 @@ export function DashboardView({
               </div>
             );
           })}
+          {obrasOrdenadas.length === 0 ? (
+            <p className="of-empty-text">
+              Nenhuma obra ativa ainda. Cadastre uma obra para liberar o monitoramento executivo.
+            </p>
+          ) : null}
         </article>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

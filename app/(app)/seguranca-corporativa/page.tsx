@@ -1,7 +1,9 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 import { PROFILE_ROLE_OPTIONS } from "@/lib/auth/roles";
 import { getTenantSecurityPolicy, listTenantAuthSessions } from "@/lib/db/seguranca-corporativa";
 import { revokeTenantSessionAction, saveTenantSecurityPolicyAction } from "./actions";
+import Link from "next/link";
 
 export default async function SegurancaCorporativaPage() {
   const [policyResult, sessionsResult] = await Promise.allSettled([
@@ -35,6 +37,17 @@ export default async function SegurancaCorporativaPage() {
   return (
     <FeatureGateWrapper feature="segurança_enterprise">
       <section className="of-page">
+        <PageHeader
+          eyebrow="Sistema"
+          title="Segurança corporativa"
+          subtitle="Controle SSO, MFA por perfil, timeout de sessão e revogação de dispositivos."
+          actions={
+            <>
+              <Link href="/governanca" className="of-btn-ghost">Governança</Link>
+              <Link href="/contas" className="of-btn-primary">Contas</Link>
+            </>
+          }
+        />
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
             <div className="of-card-title">Dados carregados parcialmente</div>

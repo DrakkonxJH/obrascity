@@ -1,6 +1,8 @@
 import { listObras } from "@/lib/db/obras";
 import { listDiarios } from "@/lib/db/diario";
 import { createDiarioAction } from "./actions";
+import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 function formatDate(value: string) {
   const date = new Date(`${value}T00:00:00`);
@@ -37,6 +39,17 @@ export default async function DiarioPage() {
 
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Execução"
+        title="Diário de obra"
+        subtitle="Registro diário operacional com clima, efetivo, evidências e ocorrências de campo."
+        actions={
+          <>
+            <Link href="/relatorios/diario" className="of-btn-ghost">Ver relatório</Link>
+            <Link href="/obras" className="of-btn-primary">Ver obras</Link>
+          </>
+        }
+      />
       {warnings.length > 0 ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
           <div className="of-card-title">Dados carregados parcialmente</div>

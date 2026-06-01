@@ -1,4 +1,4 @@
-import { listCrmCustomTabs, createCrmCustomTab, updateCrmCustomTab, deleteCrmCustomTab } from "@/lib/db/crm";
+import { listCrmCustomTabs, createCrmCustomTab } from "@/lib/db/crm";
 
 export const dynamic = "force-dynamic";
 

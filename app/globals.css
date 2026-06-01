@@ -1027,6 +1027,24 @@ html[data-device="mobile"] .of-main-content {
   font-size: 0.92rem;
 }
 
+.of-skip-link {
+  position: absolute;
+  left: 12px;
+  top: -44px;
+  z-index: 9999;
+  border: 1px solid var(--of-blue);
+  border-radius: 8px;
+  background: var(--of-bg-2);
+  color: var(--of-text);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  transition: top 0.15s ease;
+}
+
+.of-skip-link:focus {
+  top: 12px;
+}
+
 /* Public pages aligned with landing aesthetics */
 .oc-public {
   max-width: 1180px;

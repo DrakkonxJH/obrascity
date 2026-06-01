@@ -18,6 +18,7 @@ import {
 } from "./actions";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 type QualidadePageProps = {
   searchParams: Promise<{
@@ -105,6 +106,12 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
         eyebrow="Qualidade"
         title="Qualidade e SSMA"
         subtitle="CAPA, indicadores, inspeções, evidências e rastreabilidade completa da operação."
+        actions={
+          <>
+            <Link href="/relatorios/qualidade" className="of-btn-ghost">Ver relatório</Link>
+            <Link href="/governanca" className="of-btn-primary">Abrir governança</Link>
+          </>
+        }
       />
 
       <form className="of-card of-form-grid md:grid-cols-7" style={{ marginBottom: 16 }}>
@@ -139,8 +146,8 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
             </option>
           ))}
         </select>
-        <input name="from" type="date" defaultValue={filters.from ?? ""} className="of-input" />
-        <input name="to" type="date" defaultValue={filters.to ?? ""} className="of-input" />
+        <input name="from" type="date" aria-label="Data inicial" defaultValue={filters.from ?? ""} className="of-input" />
+        <input name="to" type="date" aria-label="Data final" defaultValue={filters.to ?? ""} className="of-input" />
         <button type="submit" className="of-btn-primary">
           Aplicar filtros
         </button>

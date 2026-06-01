@@ -6,6 +6,7 @@ import { useAppUi } from "@/components/shell/app-ui-provider";
 import { ObraLifecycleActions } from "./obra-lifecycle-actions";
 import { Search } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 type ObraWithBudget = Obra & { budgetPct: number };
 
@@ -72,6 +73,9 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
         eyebrow="Execucao"
         title="Carteira de obras"
         subtitle="Controle status, progresso e saude de orcamento das obras ativas e da lixeira operacional."
+        actions={
+          <Link className="of-btn-ghost" href="/cronograma">Ir para cronograma</Link>
+        }
       />
       <div className="of-kpi-grid" style={{ marginTop: -2 }}>
         <article className="of-metric-card blue">
@@ -98,6 +102,7 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
           <span className="of-search-icon" aria-hidden><Search size={14} /></span>
           <input
             className="of-search-input"
+            aria-label="Buscar por nome da obra ou cliente"
             placeholder="Buscar obras, clientes..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -144,7 +149,8 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
                 })
               }
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
                   openDetail({
                     title: obra.nome,
                     obra,
@@ -157,6 +163,7 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
                   });
                 }
               }}
+              aria-label={`Abrir detalhes da obra ${obra.nome}`}
             >
               <div className="of-obra-top">
                 <div>
@@ -197,7 +204,11 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
               </div>
             </article>
           ))}
-          {filteredAtivas.length === 0 ? <p className="of-empty-text">Nenhuma obra encontrada.</p> : null}
+          {filteredAtivas.length === 0 ? (
+            <p className="of-empty-text">
+              Nenhuma obra encontrada para esse filtro. Ajuste a busca ou cadastre uma nova obra.
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="of-obras-grid">

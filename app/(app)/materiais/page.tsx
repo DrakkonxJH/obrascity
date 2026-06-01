@@ -21,6 +21,7 @@ import { MaterialImportButton } from "@/components/materiais/material-import-but
 import { PurchaseOrderModal } from "@/components/materiais/purchase-order-modal";
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -65,6 +66,7 @@ export default async function MateriaisPage() {
         subtitle="Estoque geral por obra, cotações multi-fornecedor e pedidos operacionais."
         actions={
           <>
+            <Link href="/relatorios/materiais" className="of-btn-ghost">Ver relatório</Link>
             <MaterialImportButton />
             <PurchaseOrderModal
               materiais={materiais.map((material) => ({ id: material.id, nome: material.nome }))}

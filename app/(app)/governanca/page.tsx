@@ -1,6 +1,8 @@
 import { listApprovalRequests } from "@/lib/db/approvals";
 import { getTenantRetentionPolicy, listExecutiveAlerts, listRecentAuditLogs, listTenantObservabilityEvents } from "@/lib/db/governanca";
 import { approveRequestAction, rejectRequestAction, requestExternalSyncAction, saveRetentionPolicyAction } from "./actions";
+import { PageHeader } from "@/components/ui/page-header";
+import Link from "next/link";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -89,6 +91,17 @@ export default async function GovernancaPage() {
 
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Sistema"
+        title="Governança enterprise"
+        subtitle="Aprovações por alçada, auditoria imutável, retenção e observabilidade por tenant."
+        actions={
+          <>
+            <Link href="/seguranca-corporativa" className="of-btn-ghost">Segurança</Link>
+            <Link href="/configuracoes" className="of-btn-primary">Configurações</Link>
+          </>
+        }
+      />
       <article className="of-card" style={{ marginBottom: 16 }}>
         <div className="of-card-title">Governança enterprise</div>
         <p className="of-empty-text">

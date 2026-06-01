@@ -5,6 +5,7 @@ import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { listPortalShares } from "@/lib/db/portal-shares";
 import { getAppOrigin } from "@/lib/validations/env";
 import { createPortalShareAction, revokePortalShareAction } from "./actions";
+import { PageHeader } from "@/components/ui/page-header";
 
 function getTimestamp(value: string | null | undefined) {
   if (!value) return 0;
@@ -51,6 +52,17 @@ export default async function PortalPage() {
 
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Sistema"
+        title="Portal do cliente"
+        subtitle="Compartilhamento externo com token, escopo por obra e trilha de atividade."
+        actions={
+          <>
+            <Link href="/relatorios" className="of-btn-ghost">Relatórios</Link>
+            <Link href="/planos" className="of-btn-primary">Planos</Link>
+          </>
+        }
+      />
       <p className="of-empty-text" style={{ marginBottom: 16 }}>
         Portal externo para contratantes (somente leitura), com links públicos segregados por token.
       </p>

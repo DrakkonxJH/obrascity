@@ -1,4 +1,5 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { listMobileSyncConflicts, listMobileSyncJobs } from "@/lib/db/mobile-campo";
 import {
@@ -6,6 +7,7 @@ import {
   createMobileSyncJobAction,
   resolveMobileSyncConflictAction,
 } from "./actions";
+import Link from "next/link";
 
 function directionLabel(direction: string) {
   if (direction === "upload") return "Campo → nuvem";
@@ -57,6 +59,17 @@ export default async function MobileCampoPage() {
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
+        <PageHeader
+          eyebrow="Sistema"
+          title="Mobile campo"
+          subtitle="Sincronização operacional, pendências e resolução de conflitos entre app e nuvem."
+          actions={
+            <>
+              <Link href="/diario" className="of-btn-ghost">Abrir diário</Link>
+              <Link href="/governanca" className="of-btn-primary">Ir para governança</Link>
+            </>
+          }
+        />
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
             <div className="of-card-title">Dados carregados parcialmente</div>
