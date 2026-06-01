@@ -94,8 +94,23 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     }
   }
 
+  // Se ainda não há dados e há tarefas na empresa, carrega tudo (sem filtro de obra)
+  // para mostrar dados quando listObras() pode estar retornando vazio
+  if (sourceRows.length === 0) {
+    const allTasks = await supabase
+      .from("obras_tarefas")
+      .select("id, obra_id, nome, inicio, fim, status, updated_at, obras(nome)")
+      .eq("empresa_id", empresaId)
+      .order("inicio", { ascending: true });
+
+    if (!allTasks.error) {
+      sourceRows = (allTasks.data ?? []) as Array<Record<string, unknown>>;
+    }
+  }
+
   const activeRows = sourceRows.filter((item) => activeObraIds.has(String(item.obra_id ?? "")));
-  const rowsToMap = activeRows.length > 0 || sourceRows.length === 0 ? activeRows : sourceRows;
+  // Se há obras ativas, usa apenas as ativas; caso contrário, usa todas as tarefas
+  const rowsToMap = activeRows.length > 0 ? activeRows : sourceRows;
 
   return rowsToMap.map((item) => ({
     id: item.id as string,
