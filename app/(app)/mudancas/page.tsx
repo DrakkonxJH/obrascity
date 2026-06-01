@@ -1,4 +1,5 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { listMudancas } from "@/lib/db/mudancas";
 import { createMudancaAction } from "./actions";
@@ -10,6 +11,18 @@ const tipoLabels: Record<string, string> = {
   prazo: "Prazo",
   custo: "Custo",
   contratual: "Contratual",
+};
+
+const statusLabels: Record<string, string> = {
+  pendente: "Pendente",
+  aprovado: "Aprovado",
+  rejeitado: "Rejeitado",
+};
+
+const statusBadgeClass: Record<string, string> = {
+  pendente: "of-badge-warning",
+  aprovado: "of-badge-success",
+  rejeitado: "of-badge-error",
 };
 
 export default async function MudancasPage() {
@@ -36,6 +49,12 @@ export default async function MudancasPage() {
   return (
     <FeatureGateWrapper feature="automacoes_workflow">
       <section className="of-page">
+        <PageHeader
+          eyebrow="Governança de escopo"
+          title="Mudanças"
+          subtitle="Controle solicitações de escopo, prazo, custo e cláusulas contratuais com rastreabilidade operacional."
+        />
+
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
             <div className="of-card-title">Dados carregados parcialmente</div>
@@ -62,32 +81,49 @@ export default async function MudancasPage() {
           </article>
         </div>
 
-        <form action={createMudancaAction} className="of-card of-form-grid md:grid-cols-3">
-          <div className="of-card-title md:col-span-3">Gestão de mudanças (escopo, prazo, custo e contrato)</div>
-          <select name="obra_id" className="of-input" defaultValue="" required>
-            <option value="" disabled>
-              Obra
-            </option>
-            {obras.map((obra) => (
-              <option key={obra.id} value={obra.id}>
-                {obra.nome}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <form action={createMudancaAction} className="of-card of-form-grid md:grid-cols-3">
+            <div className="of-card-title md:col-span-3">Nova solicitação de mudança</div>
+            <select name="obra_id" className="of-input" defaultValue="" required>
+              <option value="" disabled>
+                Obra
               </option>
-            ))}
-          </select>
-          <select name="tipo" className="of-input" defaultValue="escopo">
-            <option value="escopo">Escopo</option>
-            <option value="prazo">Prazo</option>
-            <option value="custo">Custo</option>
-            <option value="contratual">Contratual</option>
-          </select>
-          <input name="titulo" className="of-input" placeholder="Título da mudança" required />
-          <input name="descricao" className="of-input md:col-span-3" placeholder="Descrição detalhada" required />
-          <input name="impacto_prazo_dias" type="number" min={0} className="of-input" placeholder="Impacto de prazo (dias)" />
-          <input name="impacto_custo" type="number" min={0} step="0.01" className="of-input" placeholder="Impacto de custo" />
-          <button type="submit" className="of-btn-primary">
-            Abrir solicitação
-          </button>
-        </form>
+              {obras.map((obra) => (
+                <option key={obra.id} value={obra.id}>
+                  {obra.nome}
+                </option>
+              ))}
+            </select>
+            <select name="tipo" className="of-input" defaultValue="escopo">
+              <option value="escopo">Escopo</option>
+              <option value="prazo">Prazo</option>
+              <option value="custo">Custo</option>
+              <option value="contratual">Contratual</option>
+            </select>
+            <input name="titulo" className="of-input" placeholder="Título da mudança" required />
+            <input name="descricao" className="of-input md:col-span-3" placeholder="Descrição detalhada" required />
+            <input name="impacto_prazo_dias" type="number" min={0} className="of-input" placeholder="Impacto de prazo (dias)" />
+            <input name="impacto_custo" type="number" min={0} step="0.01" className="of-input" placeholder="Impacto de custo" />
+            <button type="submit" className="of-btn-primary">
+              Abrir solicitação
+            </button>
+          </form>
+
+          <article className="of-card">
+            <div className="of-card-title">Distribuição por tipo</div>
+            <div className="of-stats-grid" style={{ marginTop: 12 }}>
+              {distribuicaoPorTipo.map((item) => (
+                <article key={item.tipo} className="of-stat-card">
+                  <div className="of-stat-value">{item.total}</div>
+                  <div className="of-stat-label">{tipoLabels[item.tipo] ?? item.tipo}</div>
+                </article>
+              ))}
+            </div>
+            <p className="of-empty-text" style={{ marginTop: 12 }}>
+              Priorize aprovações pendentes para evitar impacto acumulado de prazo e custo.
+            </p>
+          </article>
+        </div>
 
         <article className="of-card" style={{ marginTop: 20 }}>
           <div className="of-card-title">Solicitações registradas</div>
@@ -107,11 +143,17 @@ export default async function MudancasPage() {
                 {mudancas.map((item) => (
                   <tr key={item.id}>
                     <td>{item.obra_nome}</td>
-                    <td>{item.tipo}</td>
+                    <td>
+                      <span className="of-badge of-badge-default">{tipoLabels[item.tipo] ?? item.tipo}</span>
+                    </td>
                     <td>{item.titulo}</td>
                     <td className="of-mono">{item.impacto_prazo_dias} dias</td>
                     <td>{money.format(item.impacto_custo)}</td>
-                    <td>{item.status}</td>
+                    <td>
+                      <span className={`of-badge ${statusBadgeClass[item.status] ?? "of-badge-default"}`}>
+                        {statusLabels[item.status] ?? item.status}
+                      </span>
+                    </td>
                   </tr>
                 ))}
                 {mudancas.length === 0 ? (
@@ -123,18 +165,6 @@ export default async function MudancasPage() {
                 ) : null}
               </tbody>
             </table>
-          </div>
-        </article>
-
-        <article className="of-card" style={{ marginTop: 20 }}>
-          <div className="of-card-title">Distribuição por tipo</div>
-          <div className="of-stats-grid">
-            {distribuicaoPorTipo.map((item) => (
-              <article key={item.tipo} className="of-stat-card">
-                <div className="of-stat-value">{item.total}</div>
-                <div className="of-stat-label">{tipoLabels[item.tipo] ?? item.tipo}</div>
-              </article>
-            ))}
           </div>
         </article>
       </section>
