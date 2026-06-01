@@ -7,13 +7,11 @@ type PageHeaderProps = {
   actions?: ReactNode;
 };
 
-export function PageHeader({ eyebrow, title, subtitle, actions }: PageHeaderProps) {
+export function PageHeader({ title, actions }: PageHeaderProps) {
   return (
     <div className="of-page-head">
       <div className="of-page-head-main">
-        {eyebrow ? <p className="of-page-eyebrow">{eyebrow}</p> : null}
         <h1 className="of-page-title">{title}</h1>
-        {subtitle ? <p className="of-page-subtitle">{subtitle}</p> : null}
       </div>
       {actions ? <div className="of-page-head-actions">{actions}</div> : null}
     </div>
