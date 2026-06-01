@@ -1,4 +1,5 @@
 import { GanttView } from "@/components/cronograma/gantt-view";
+import { PageHeader } from "@/components/ui/page-header";
 import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/cronograma/gantt-utils";
 import {
   createCronogramaAction,
@@ -64,8 +65,37 @@ export async function CronogramaContent() {
     };
   });
 
+  const tarefasConcluidas = items.filter((item) => item.status.toLowerCase() === "concluido").length;
+  const tarefasAndamento = items.filter((item) => item.status.toLowerCase() === "andamento").length;
+  const tarefasAtrasadas = items.filter((item) => item.status.toLowerCase() === "atrasado").length;
+
   return (
     <section className="of-page">
+      <PageHeader
+        eyebrow="Planejamento e controle"
+        title="Cronograma"
+        subtitle="Acompanhe tarefas, caminho crítico, dependências e replanejamentos com visibilidade operacional."
+      />
+
+      <div className="of-stats-grid">
+        <article className="of-stat-card">
+          <div className="of-stat-value">{items.length}</div>
+          <div className="of-stat-label">Total de tarefas</div>
+        </article>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{tarefasConcluidas}</div>
+          <div className="of-stat-label">Concluídas</div>
+        </article>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{tarefasAndamento}</div>
+          <div className="of-stat-label">Em andamento</div>
+        </article>
+        <article className="of-stat-card">
+          <div className="of-stat-value">{tarefasAtrasadas}</div>
+          <div className="of-stat-label">Atrasadas</div>
+        </article>
+      </div>
+
       <div className="of-gantt-controls">
         <form action={createCronogramaAction} className="of-card of-form-grid md:grid-cols-5" style={{ flex: 1 }}>
           <div className="of-card-title md:col-span-5">Nova tarefa</div>
@@ -92,6 +122,7 @@ export async function CronogramaContent() {
             <button type="submit" className="of-btn-primary">
               Adicionar tarefa
             </button>
+            <span className="of-empty-text">Use datas realistas para não distorcer caminho crítico e baseline.</span>
           </div>
         </form>
       </div>

@@ -1,7 +1,46 @@
 import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
+import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { listProjetosConflitos, listProjetosDocumentos } from "@/lib/db/projetos";
 import { createProjetoConflitoAction, createProjetoDocumentoAction } from "./actions";
+
+const statusDocumentoLabels: Record<string, string> = {
+  em_revisao: "Em revisão",
+  compatibilizado: "Compatibilizado",
+  aprovado: "Aprovado",
+};
+
+const statusDocumentoBadgeClass: Record<string, string> = {
+  em_revisao: "of-badge-warning",
+  compatibilizado: "of-badge-default",
+  aprovado: "of-badge-success",
+};
+
+const severidadeLabels: Record<string, string> = {
+  baixa: "Baixa",
+  media: "Média",
+  alta: "Alta",
+  critica: "Crítica",
+};
+
+const severidadeBadgeClass: Record<string, string> = {
+  baixa: "of-badge-default",
+  media: "of-badge-warning",
+  alta: "of-badge-warning",
+  critica: "of-badge-error",
+};
+
+const statusConflitoLabels: Record<string, string> = {
+  aberto: "Aberto",
+  resolvido: "Resolvido",
+  em_analise: "Em análise",
+};
+
+const statusConflitoBadgeClass: Record<string, string> = {
+  aberto: "of-badge-warning",
+  resolvido: "of-badge-success",
+  em_analise: "of-badge-default",
+};
 
 export default async function ProjetosPage() {
   const [obrasResult, documentosResult, conflitosResult] = await Promise.allSettled([
@@ -30,6 +69,12 @@ export default async function ProjetosPage() {
   return (
     <FeatureGateWrapper feature="gestão_documentos">
       <section className="of-page">
+        <PageHeader
+          eyebrow="Engenharia e compatibilização"
+          title="Projetos"
+          subtitle="Consolide documentos técnicos, conflitos de interface e status de aprovação por obra."
+        />
+
         {warnings.length > 0 ? (
           <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-yellow)" }}>
             <div className="of-card-title">Dados carregados parcialmente</div>
@@ -106,6 +151,9 @@ export default async function ProjetosPage() {
             <button type="submit" className="of-btn-primary">
               Registrar conflito
             </button>
+            <p className="of-empty-text" style={{ margin: 0 }}>
+              Classifique severidade e prazo para manter priorização operacional clara no canteiro e escritório.
+            </p>
           </form>
         </div>
 
@@ -128,7 +176,11 @@ export default async function ProjetosPage() {
                     <td>{item.obra_nome}</td>
                     <td>{item.disciplina}</td>
                     <td>{item.revisao}</td>
-                    <td>{item.status}</td>
+                    <td>
+                      <span className={`of-badge ${statusDocumentoBadgeClass[item.status] ?? "of-badge-default"}`}>
+                        {statusDocumentoLabels[item.status] ?? item.status}
+                      </span>
+                    </td>
                     <td>{item.observacoes || "—"}</td>
                   </tr>
                 ))}
@@ -162,8 +214,16 @@ export default async function ProjetosPage() {
                   <tr key={item.id}>
                     <td>{item.obra_nome}</td>
                     <td>{item.titulo}</td>
-                    <td>{item.severidade}</td>
-                    <td>{item.status}</td>
+                    <td>
+                      <span className={`of-badge ${severidadeBadgeClass[item.severidade] ?? "of-badge-default"}`}>
+                        {severidadeLabels[item.severidade] ?? item.severidade}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`of-badge ${statusConflitoBadgeClass[item.status] ?? "of-badge-default"}`}>
+                        {statusConflitoLabels[item.status] ?? item.status}
+                      </span>
+                    </td>
                     <td>{item.prazo || "—"}</td>
                   </tr>
                 ))}
