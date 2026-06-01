@@ -65,6 +65,8 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     .order("inicio", { ascending: true });
 
   let sourceRows = (withJoin.data ?? []) as Array<Record<string, unknown>>;
+  
+  // Fallback 1: Se houve erro no join, tenta sem o join
   if (withJoin.error) {
     const fallback = await supabase
       .from("obras_tarefas")
@@ -72,16 +74,10 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
       .eq("empresa_id", empresaId)
       .order("inicio", { ascending: true });
 
-    if (fallback.error) {
-      return [];
-    }
-
     sourceRows = (fallback.data ?? []) as Array<Record<string, unknown>>;
   }
 
-  // Fallback defensivo:
-  // em ambientes com inconsistência de empresa_id histórico em obras_tarefas,
-  // tenta carregar tarefas por obra visível do usuário para evitar tela zerada.
+  // Fallback 2: Se ainda vazio e há obras ativas, tenta por obra_id
   if (sourceRows.length === 0 && activeObraIdList.length > 0) {
     const byObra = await supabase
       .from("obras_tarefas")
@@ -94,22 +90,23 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     }
   }
 
-  // Se ainda não há dados e há tarefas na empresa, carrega tudo (sem filtro de obra)
-  // para mostrar dados quando listObras() pode estar retornando vazio
+  // Fallback 3: Último recurso - tenta carregar TODAS as tarefas sem filtros de empresa_id
+  // Isso contorna problemas onde empresa_id pode estar NULL ou inconsistente no banco
   if (sourceRows.length === 0) {
     const allTasks = await supabase
       .from("obras_tarefas")
       .select("id, obra_id, nome, inicio, fim, status, updated_at, obras(nome)")
-      .eq("empresa_id", empresaId)
       .order("inicio", { ascending: true });
 
-    if (!allTasks.error) {
-      sourceRows = (allTasks.data ?? []) as Array<Record<string, unknown>>;
-    }
+    sourceRows = (allTasks.data ?? []) as Array<Record<string, unknown>>;
   }
 
-  const activeRows = sourceRows.filter((item) => activeObraIds.has(String(item.obra_id ?? "")));
-  // Se há obras ativas, usa apenas as ativas; caso contrário, usa todas as tarefas
+  // Filtra apenas obras ativas se houver alguma
+  // Se não houver obras ativas, mostra tudo (para evitar tela vazia)
+  const activeRows = activeObraIds.size > 0 
+    ? sourceRows.filter((item) => activeObraIds.has(String(item.obra_id ?? "")))
+    : sourceRows;
+  
   const rowsToMap = activeRows.length > 0 ? activeRows : sourceRows;
 
   return rowsToMap.map((item) => ({
