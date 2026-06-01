@@ -30,7 +30,11 @@ function cronogramaStatusTone(status: string) {
   return "planned";
 }
 
-export async function CronogramaContent() {
+type CronogramaContentProps = {
+  obraId?: string;
+};
+
+export async function CronogramaContent({ obraId = "" }: CronogramaContentProps) {
   const [items, obras, dependencias, caminhoCritico, replanejamentos] = await Promise.all([
     listCronograma(),
     listObras(),
@@ -38,16 +42,28 @@ export async function CronogramaContent() {
     listCaminhoCritico(),
     listReplanejamentos(),
   ]);
+  const selectedObraId = obraId.trim();
+  const filteredItems = selectedObraId ? items.filter((item) => item.obra_id === selectedObraId) : items;
+  const filteredCaminhoCritico = selectedObraId
+    ? caminhoCritico.filter((item) => item.obra_id === selectedObraId)
+    : caminhoCritico;
+  const filteredReplanejamentos = selectedObraId
+    ? replanejamentos.filter((item) => item.obra_id === selectedObraId)
+    : replanejamentos;
+  const tarefasIds = new Set(filteredItems.map((item) => item.id));
+  const filteredDependencias = dependencias.filter(
+    (item) => tarefasIds.has(item.tarefa_predecessora_id) || tarefasIds.has(item.tarefa_sucessora_id),
+  );
 
   const fallbackTime = new Date("2000-01-01").getTime();
-  const allDates = items.flatMap((item) => [new Date(item.inicio), new Date(item.fim)]);
+  const allDates = filteredItems.flatMap((item) => [new Date(item.inicio), new Date(item.fim)]);
   const startBoundary = allDates.length > 0 ? Math.min(...allDates.map((d) => d.getTime())) : fallbackTime;
   const endBoundary = allDates.length > 0 ? Math.max(...allDates.map((d) => d.getTime())) : fallbackTime + 1;
   const totalRange = Math.max(endBoundary - startBoundary, 1);
   const months = buildGanttMonths(startBoundary, endBoundary);
   const monthIndex = currentMonthIndex(months);
 
-  const ganttItems = items.map((item) => {
+  const ganttItems = filteredItems.map((item) => {
     const start = new Date(item.inicio).getTime();
     const end = new Date(item.fim).getTime();
     const left = ((start - startBoundary) / totalRange) * 100;
@@ -65,9 +81,9 @@ export async function CronogramaContent() {
     };
   });
 
-  const tarefasConcluidas = items.filter((item) => item.status.toLowerCase() === "concluido").length;
-  const tarefasAndamento = items.filter((item) => item.status.toLowerCase() === "andamento").length;
-  const tarefasAtrasadas = items.filter((item) => item.status.toLowerCase() === "atrasado").length;
+  const tarefasConcluidas = filteredItems.filter((item) => item.status.toLowerCase() === "concluido").length;
+  const tarefasAndamento = filteredItems.filter((item) => item.status.toLowerCase() === "andamento").length;
+  const tarefasAtrasadas = filteredItems.filter((item) => item.status.toLowerCase() === "atrasado").length;
 
   return (
     <section className="of-page">
@@ -79,7 +95,7 @@ export async function CronogramaContent() {
 
       <div className="of-stats-grid">
         <article className="of-stat-card">
-          <div className="of-stat-value">{items.length}</div>
+          <div className="of-stat-value">{filteredItems.length}</div>
           <div className="of-stat-label">Total de tarefas</div>
         </article>
         <article className="of-stat-card">
@@ -95,6 +111,26 @@ export async function CronogramaContent() {
           <div className="of-stat-label">Atrasadas</div>
         </article>
       </div>
+
+      <article className="of-card">
+        <div className="of-card-title">Filtro do gráfico</div>
+        <form action="/cronograma" className="of-form-grid md:grid-cols-4" style={{ marginTop: 12 }}>
+          <select name="obra_id" className="of-input" defaultValue={selectedObraId}>
+            <option value="">Todas as obras</option>
+            {obras.map((obra) => (
+              <option key={obra.id} value={obra.id}>
+                {obra.nome}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="of-btn-primary">Aplicar filtro</button>
+          {selectedObraId ? (
+            <a href="/cronograma" className="of-btn-ghost" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              Limpar filtro
+            </a>
+          ) : null}
+        </form>
+      </article>
 
       <div className="of-gantt-controls">
         <form action={createCronogramaAction} className="of-card of-form-grid md:grid-cols-5" style={{ flex: 1 }}>
@@ -150,7 +186,7 @@ export async function CronogramaContent() {
       <article className="of-card">
         <div className="of-card-title">Tarefas do cronograma (edição rápida)</div>
         <div className="of-crono-edit-list">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <div className="of-crono-edit-item" key={item.id}>
               <div className="of-crono-edit-head">
                 <p className="of-crono-edit-obra">{item.obra_nome}</p>
@@ -203,7 +239,7 @@ export async function CronogramaContent() {
               </form>
             </div>
           ))}
-          {items.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <p className="of-empty-text" style={{ margin: 0 }}>
               Nenhuma tarefa cadastrada.
             </p>
@@ -225,7 +261,7 @@ export async function CronogramaContent() {
                 </tr>
               </thead>
               <tbody>
-                {caminhoCritico.map((item) => (
+                {filteredCaminhoCritico.map((item) => (
                   <tr key={item.tarefa_id}>
                     <td>{item.obra_nome}</td>
                     <td>{item.nome}</td>
@@ -233,7 +269,7 @@ export async function CronogramaContent() {
                     <td className="of-mono">{item.dependencias}</td>
                   </tr>
                 ))}
-                {caminhoCritico.length === 0 ? (
+                {filteredCaminhoCritico.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="of-empty-text">
                       Cadastre tarefas para calcular o caminho crítico.
@@ -286,12 +322,12 @@ export async function CronogramaContent() {
           <div className="of-replan-divider" />
 
           <div className="of-replan-header">
-            <h4 className="of-replan-title">Histórico ({replanejamentos.length})</h4>
+            <h4 className="of-replan-title">Histórico ({filteredReplanejamentos.length})</h4>
           </div>
 
-          {replanejamentos.length > 0 ? (
+          {filteredReplanejamentos.length > 0 ? (
             <div className="of-replan-list">
-              {replanejamentos.map((item) => (
+              {filteredReplanejamentos.map((item) => (
                 <div className="of-replan-item" key={item.id}>
                   <div className="of-replan-head">
                     <p className="of-replan-obra">{item.obra_nome}</p>
@@ -330,7 +366,7 @@ export async function CronogramaContent() {
             <option value="" disabled>
               Tarefa predecessora
             </option>
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.obra_nome} · {item.nome}
               </option>
@@ -340,7 +376,7 @@ export async function CronogramaContent() {
             <option value="" disabled>
               Tarefa sucessora
             </option>
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.obra_nome} · {item.nome}
               </option>
@@ -371,7 +407,7 @@ export async function CronogramaContent() {
             Gerar snapshot baseline
           </button>
           <p className="of-empty-text">
-            Dependências registradas: <strong>{dependencias.length}</strong>
+            Dependências registradas: <strong>{filteredDependencias.length}</strong>
           </p>
         </form>
       </div>
