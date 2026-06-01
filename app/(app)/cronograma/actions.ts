@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   createCronogramaItem,
   createDependenciaCronograma,
   createReplanejamento,
   deleteCronogramaItem,
+  listDependenciasCronograma,
   snapshotBaseline,
   updateCronogramaItem,
 } from "@/lib/db/cronograma";
@@ -16,6 +18,12 @@ import { requiresApprovalForAmount, resolveRequiredRoleByAmount } from "@/lib/ap
 import { createServerClient } from "@/lib/supabase/server";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 import { deleteCrmLeadFromCronogramaTask, upsertCrmLeadFromCronogramaTask } from "@/lib/db/crm";
+
+function getReturnTo(formData: FormData) {
+  const returnTo = String(formData.get("return_to") ?? "/cronograma").trim();
+  if (!returnTo.startsWith("/cronograma")) return "/cronograma";
+  return returnTo;
+}
 
 export async function createCronogramaAction(formData: FormData) {
   const obra_id = String(formData.get("obra_id") ?? "").trim();
@@ -53,6 +61,7 @@ export async function createCronogramaAction(formData: FormData) {
 
   revalidatePath("/cronograma");
   revalidatePath("/crm");
+  redirect(`${getReturnTo(formData)}&ok=tarefa_criada`);
 }
 
 export async function updateCronogramaAction(formData: FormData) {
@@ -98,12 +107,17 @@ export async function updateCronogramaAction(formData: FormData) {
 
   revalidatePath("/cronograma");
   revalidatePath("/crm");
+  redirect(`${getReturnTo(formData)}&ok=tarefa_atualizada`);
 }
 
 export async function deleteCronogramaAction(formData: FormData) {
   const tarefa_id = String(formData.get("tarefa_id") ?? "").trim();
+  const confirmDelete = String(formData.get("confirm_delete") ?? "").trim();
   if (!tarefa_id) {
     throw new Error("ID da tarefa é obrigatório para remoção");
+  }
+  if (confirmDelete !== "yes") {
+    throw new Error("Confirmação obrigatória para excluir tarefa.");
   }
 
   await deleteCronogramaItem(tarefa_id);
@@ -111,6 +125,7 @@ export async function deleteCronogramaAction(formData: FormData) {
 
   revalidatePath("/cronograma");
   revalidatePath("/crm");
+  redirect(`${getReturnTo(formData)}&ok=tarefa_excluida`);
 }
 
 export async function createDependenciaAction(formData: FormData) {
@@ -121,9 +136,39 @@ export async function createDependenciaAction(formData: FormData) {
   if (!tarefa_predecessora_id || !tarefa_sucessora_id) {
     throw new Error("Dependencia requer predecessor e sucessor");
   }
+  if (tarefa_predecessora_id === tarefa_sucessora_id) {
+    throw new Error("Dependência inválida: predecessor e sucessor não podem ser a mesma tarefa.");
+  }
+
+  const deps = await listDependenciasCronograma();
+  const graph = new Map<string, Set<string>>();
+  for (const dep of deps) {
+    if (!graph.has(dep.tarefa_predecessora_id)) graph.set(dep.tarefa_predecessora_id, new Set());
+    graph.get(dep.tarefa_predecessora_id)?.add(dep.tarefa_sucessora_id);
+  }
+  if (!graph.has(tarefa_predecessora_id)) graph.set(tarefa_predecessora_id, new Set());
+  graph.get(tarefa_predecessora_id)?.add(tarefa_sucessora_id);
+
+  const seen = new Set<string>();
+  const stack = [tarefa_sucessora_id];
+  let hasCycle = false;
+  while (stack.length > 0 && !hasCycle) {
+    const node = stack.pop()!;
+    if (node === tarefa_predecessora_id) {
+      hasCycle = true;
+      break;
+    }
+    if (seen.has(node)) continue;
+    seen.add(node);
+    for (const next of graph.get(node) ?? []) stack.push(next);
+  }
+  if (hasCycle) {
+    throw new Error("Dependência inválida: criação geraria ciclo no cronograma.");
+  }
 
   await createDependenciaCronograma({ tarefa_predecessora_id, tarefa_sucessora_id, tipo });
   revalidatePath("/cronograma");
+  redirect(`${getReturnTo(formData)}&ok=dependencia_criada`);
 }
 
 export async function gerarBaselineAction(formData: FormData) {
@@ -134,6 +179,7 @@ export async function gerarBaselineAction(formData: FormData) {
 
   await snapshotBaseline(obra_id);
   revalidatePath("/cronograma");
+  redirect(`${getReturnTo(formData)}&ok=baseline_gerada`);
 }
 
 export async function createReplanejamentoAction(formData: FormData) {
@@ -175,4 +221,5 @@ export async function createReplanejamentoAction(formData: FormData) {
 
   revalidatePath("/cronograma");
   revalidatePath("/governanca");
+  redirect(`${getReturnTo(formData)}&ok=replanejamento_registrado`);
 }

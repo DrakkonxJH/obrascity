@@ -10,6 +10,7 @@ export type CronogramaItem = {
   inicio: string;
   fim: string;
   status: string;
+  updated_at: string | null;
 };
 
 export type CronogramaDependencia = {
@@ -41,13 +42,21 @@ export type CaminhoCriticoItem = {
   dependencias: number;
 };
 
+export type CronogramaBaselineLatestItem = {
+  tarefa_id: string;
+  obra_id: string;
+  baseline_inicio: string;
+  baseline_fim: string;
+  versao: number;
+};
+
 export async function listCronograma(): Promise<CronogramaItem[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
   const activeObraIds = await listActiveObraIds();
   const { data, error } = await supabase
     .from("obras_tarefas")
-    .select("id, obra_id, nome, inicio, fim, status, obras(nome)")
+    .select("id, obra_id, nome, inicio, fim, status, updated_at, obras(nome)")
     .eq("empresa_id", empresaId)
     .order("inicio", { ascending: true });
 
@@ -65,6 +74,7 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
     inicio: item.inicio as string,
     fim: item.fim as string,
     status: item.status as string,
+    updated_at: item.updated_at ? String(item.updated_at) : null,
   }));
 }
 
@@ -300,4 +310,44 @@ export async function listCaminhoCritico(): Promise<CaminhoCriticoItem[]> {
     })
     .sort((a, b) => b.duracao_dias - a.duracao_dias || b.dependencias - a.dependencias)
     .slice(0, 15);
+}
+
+export async function listLatestBaseline(): Promise<CronogramaBaselineLatestItem[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const activeObraIds = await listActiveObraIds();
+
+  const { data: latestPerObra, error: latestError } = await supabase
+    .from("cronograma_baselines")
+    .select("obra_id, versao")
+    .eq("empresa_id", empresaId)
+    .order("versao", { ascending: false });
+
+  if (latestError || !latestPerObra) return [];
+
+  const latestVersionByObra = new Map<string, number>();
+  for (const row of latestPerObra as Array<{ obra_id: string; versao: number }>) {
+    if (!activeObraIds.has(row.obra_id)) continue;
+    if (!latestVersionByObra.has(row.obra_id)) latestVersionByObra.set(row.obra_id, Number(row.versao ?? 0));
+  }
+  if (!latestVersionByObra.size) return [];
+
+  const obraIds = Array.from(latestVersionByObra.keys());
+  const { data, error } = await supabase
+    .from("cronograma_baselines")
+    .select("tarefa_id, obra_id, baseline_inicio, baseline_fim, versao")
+    .eq("empresa_id", empresaId)
+    .in("obra_id", obraIds);
+
+  if (error || !data) return [];
+
+  return (data as Array<Record<string, unknown>>)
+    .filter((row) => Number(row.versao ?? 0) === (latestVersionByObra.get(String(row.obra_id ?? "")) ?? -1))
+    .map((row) => ({
+      tarefa_id: String(row.tarefa_id ?? ""),
+      obra_id: String(row.obra_id ?? ""),
+      baseline_inicio: String(row.baseline_inicio ?? ""),
+      baseline_fim: String(row.baseline_fim ?? ""),
+      versao: Number(row.versao ?? 0),
+    }));
 }
