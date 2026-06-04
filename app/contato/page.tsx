@@ -23,16 +23,16 @@ export default function ContatoPage() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 48 }}>
           {[
-            { icon: Megaphone, title: "Vendas", text: "Interessado em conhecer os planos? Fale com nosso time comercial.", link: "mailto:vendas@obrascity.com.br", label: "vendas@obrascity.com.br" },
+            { icon: Megaphone, title: "Vendas", text: "Interessado em conhecer os planos? Veja as opcoes e prossiga com o cadastro.", link: "/cadastro", label: "Comecar cadastro" },
             { icon: LifeBuoy, title: "Suporte", text: "Clientes com duvidas tecnicas ou problemas na plataforma devem usar o chat dentro do sistema.", link: "/suporte", label: "Abrir chat de suporte" },
-            { icon: UserRoundSearch, title: "Parcerias", text: "Integracoes, revendas e programas de parceiro.", link: "mailto:parcerias@obrascity.com.br", label: "parcerias@obrascity.com.br" },
-            { icon: Rocket, title: "Imprensa", text: "Jornalistas e veiculos de comunicacao.", link: "mailto:imprensa@obrascity.com.br", label: "imprensa@obrascity.com.br" },
+            { icon: UserRoundSearch, title: "Parcerias", text: "Integracoes, revendas e programas de parceiro podem ser avaliados com a equipe comercial.", link: "/sobre", label: "Conhecer a plataforma" },
+            { icon: Rocket, title: "Imprensa", text: "Jornalistas e veiculos de comunicacao encontram materiais institucionais sobre a empresa.", link: "/sobre", label: "Ver sobre a empresa" },
           ].map((item) => (
             <div key={item.title} style={{ background: "#0C1018", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 28 }}>
               <div style={{ marginBottom: 12 }}><item.icon size={28} aria-hidden /></div>
               <h3 style={{ fontWeight: 700, marginBottom: 8 }}>{item.title}</h3>
               <p style={{ color: "#8896B3", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 12 }}>{item.text}</p>
-              <a href={item.link} style={{ color: "#FF6B1A", fontSize: "0.9rem" }}>{item.label}</a>
+              <Link href={item.link} style={{ color: "#FF6B1A", fontSize: "0.9rem" }}>{item.label}</Link>
             </div>
           ))}
         </div>

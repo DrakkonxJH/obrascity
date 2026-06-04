@@ -139,7 +139,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
               <th>Cargo</th>
               <th>Equipe</th>
               <th>Status</th>
-              <th>Contato</th>
+              <th>Identificação</th>
             </tr>
           </thead>
           <tbody>
@@ -164,7 +164,7 @@ export function EquipesView({ equipes, membros, formSlot }: EquipesViewProps) {
                   <td>
                     <span className="of-badge of-badge-green">Ativo</span>
                   </td>
-                  <td>{membro.email ?? "Sem e-mail"}</td>
+                  <td>{membro.crea ? `CREA ${membro.crea}` : "Perfil interno"}</td>
                 </tr>
               );
             })}

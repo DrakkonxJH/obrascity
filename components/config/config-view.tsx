@@ -213,8 +213,7 @@ export function ConfigView({
                 <li key={item.id} className="of-list-item">
                   <p className="of-list-title">{item.nome}</p>
                   <p className="of-list-description">
-                    {item.email} · {item.cargo ?? "Sem cargo definido"} ·{" "}
-                    {PROFILE_ROLE_LABEL[item.role]}
+                    {item.cargo ?? "Sem cargo definido"} · {PROFILE_ROLE_LABEL[item.role]}
                   </p>
                   {canManageProfiles ? (
                     <form action={roleFormAction} className="of-form-grid" style={{ gap: 8, marginTop: 8 }}>
