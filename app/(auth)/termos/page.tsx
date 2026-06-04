@@ -66,7 +66,7 @@ export default function TermosPage() {
         <strong>Identificação legal e contato:</strong><br />
         Marca: ObrasCitY.<br />
         Razão social e CNPJ: sob responsabilidade do titular da conta empresarial e publicados no canal oficial de contato jurídico do site.<br />
-        Contato jurídico: <strong>juridico@obrascity.com.br</strong>.
+        Contato jurídico: utilize o canal oficial disponível em <a href="/contato" style={{ color: "#FF6B1A" }}>Contato</a>.
       </div>
       <p>
         A plataforma é acessível exclusivamente por meio do domínio oficial do ObrasCitY na internet,
@@ -83,7 +83,7 @@ export default function TermosPage() {
         <strong>📬 Como nos contatar formalmente?</strong><br />
         Para questões legais, contratuais, reclamações formais ou solicitações que exijam resposta
         por escrito, utilize o canal de suporte oficial disponível dentro da plataforma (ícone de
-        ajuda ou área de SAC) ou pelo e-mail disponível na seção de Contato do site.<br /><br />
+        ajuda ou área de SAC) ou o canal oficial disponível em <a href="/contato" style={{ color: "#FF6B1A" }}>Contato</a>.<br /><br />
         <strong>Importante:</strong> Toda e qualquer comunicação com efeito legal deve ser feita
         por escrito e de forma documentada. Comunicações verbais ou por redes sociais não têm valor
         contratual.

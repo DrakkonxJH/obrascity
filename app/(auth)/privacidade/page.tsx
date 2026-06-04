@@ -83,13 +83,12 @@ export default function PrivacidadePage() {
         <strong>Identificação do controlador:</strong><br />
         Marca: ObrasCitY.<br />
         Razão social e CNPJ: sob responsabilidade do titular da conta empresarial e publicados no canal oficial de contato jurídico do site.<br />
-        Contato jurídico e privacidade: <strong>privacidade@obrascity.com.br</strong>.<br /><br />
+        Contato jurídico e privacidade: use o canal oficial disponível em <a href="/contato" style={{ color: "#FF6B1A" }}>Contato</a>.<br /><br />
         <strong>Encarregado de Dados (DPO):</strong><br />
         O ObrasCitY designou um Encarregado pelo Tratamento de Dados Pessoais (Data Protection
         Officer — DPO), responsável por receber comunicações dos titulares de dados e das
         autoridades, e por garantir a conformidade com a LGPD.<br /><br />
-        Para contato com o DPO: envie e-mail para <strong>dpo@obrascity.com.br</strong>, ou
-        acesse Configurações → Segurança e LGPD → Contatar DPO.
+        Para contato com o DPO, utilize o canal formal disponível em <a href="/contato" style={{ color: "#FF6B1A" }}>Contato</a> ou acesse Configurações → Segurança e LGPD → Contatar DPO.
       </div>
 
       {/* 2 */}
