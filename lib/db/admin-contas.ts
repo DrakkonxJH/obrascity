@@ -94,11 +94,16 @@ type AssinaturaRow = {
 
 const ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
 
-async function fetchAllPages(
-  buildPage: (from: number, to: number) => any,
+type PageResult<Row> = {
+  data: Row[] | null;
+  error: { message?: string } | null;
+};
+
+async function fetchAllPages<Row>(
+  buildPage: (from: number, to: number) => PromiseLike<PageResult<Row>> | PageResult<Row>,
   pageSize = 500,
 ) {
-  const rows: any[] = [];
+  const rows: Row[] = [];
   for (let from = 0; ; from += pageSize) {
     const to = from + pageSize - 1;
     const result = await buildPage(from, to);
@@ -108,7 +113,7 @@ async function fetchAllPages(
       }
       throw new Error(result.error.message ?? "Erro ao carregar dados administrativos");
     }
-    const pageRows = (result.data ?? []) as any[];
+    const pageRows = (result.data ?? []) as Row[];
     rows.push(...pageRows);
     if (pageRows.length < pageSize) {
       break;

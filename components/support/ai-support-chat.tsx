@@ -22,7 +22,7 @@ export function AiSupportChat() {
     {
       role: "assistant",
       content:
-        "Olá! Sou o assistente de suporte do ObrasCitY. Me descreva o problema e eu te guio no diagnóstico. Se precisar, posso abrir ticket automaticamente.",
+        "Olá! Sou o assistente de suporte do ObrasCitY. Me descreva o problema e eu te guio no diagnóstico. Todo atendimento de cliente fica centralizado neste chat, sem exposição de e-mails internos. Se precisar, posso abrir ticket automaticamente.",
     },
   ]);
   const [lastMeta, setLastMeta] = useState<Omit<ApiResponse, "answer"> | null>(null);
@@ -71,7 +71,7 @@ export function AiSupportChat() {
     <article className="of-card" style={{ marginBottom: 20 }}>
       <div className="of-card-title">Chat de suporte com IA</div>
       <p className="of-list-description" style={{ marginBottom: 12 }}>
-        Tire dúvidas de uso, receba diagnóstico guiado e, se necessário, abra ticket para atendimento humano.
+        Tire dúvidas de uso, receba diagnóstico guiado e, se necessário, abra ticket para atendimento humano. O canal oficial para clientes é este chat.
       </p>
 
       <div

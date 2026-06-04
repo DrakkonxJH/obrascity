@@ -24,7 +24,7 @@ export default function ContatoPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 48 }}>
           {[
             { icon: Megaphone, title: "Vendas", text: "Interessado em conhecer os planos? Fale com nosso time comercial.", link: "mailto:vendas@obrascity.com.br", label: "vendas@obrascity.com.br" },
-            { icon: LifeBuoy, title: "Suporte", text: "Clientes com duvidas tecnicas ou problemas na plataforma.", link: "mailto:suporte@obrascity.com.br", label: "suporte@obrascity.com.br" },
+            { icon: LifeBuoy, title: "Suporte", text: "Clientes com duvidas tecnicas ou problemas na plataforma devem usar o chat dentro do sistema.", link: "/suporte", label: "Abrir chat de suporte" },
             { icon: UserRoundSearch, title: "Parcerias", text: "Integracoes, revendas e programas de parceiro.", link: "mailto:parcerias@obrascity.com.br", label: "parcerias@obrascity.com.br" },
             { icon: Rocket, title: "Imprensa", text: "Jornalistas e veiculos de comunicacao.", link: "mailto:imprensa@obrascity.com.br", label: "imprensa@obrascity.com.br" },
           ].map((item) => (

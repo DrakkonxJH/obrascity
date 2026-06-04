@@ -17,14 +17,11 @@ export function isControlTotalOwner(profile: ProfileLike | null | undefined) {
   const profileEmail = normalizeEmail(profile.email);
   const hasOwnerBinding = Boolean(ownerId || ownerEmail);
   const role = String(profile.role ?? "").trim().toLowerCase();
-  const defaultOwnerEmail = "master@obrascity.com.br";
 
   // Com binding explícito, o match de ID/e-mail do owner é a fonte de verdade.
   if (ownerId && profileId && ownerId === profileId) return true;
   if (ownerEmail && profileEmail && ownerEmail === profileEmail) return true;
   if (hasOwnerBinding) return false;
-
-  if (profileEmail === defaultOwnerEmail) return true;
 
   // Sem binding explícito (ex: localhost), fallback para a role master.
   if (role === "master") return true;

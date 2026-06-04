@@ -3,27 +3,6 @@ import { listGuias } from "./guia/data";
 import { AiSupportChat } from "@/components/support/ai-support-chat";
 import { PageHeader } from "@/components/ui/page-header";
 
-const canais = [
-  {
-    titulo: "Atendimento prioritario",
-    descricao: "Suporte para incidentes que impactam a operacao da obra.",
-    disponibilidade: "Seg a Sex · 08h as 18h",
-    contato: "suporte@obrascity.com.br",
-  },
-  {
-    titulo: "Suporte comercial",
-    descricao: "Dvidas sobre plano, upgrade, perfis adicionais e condicoes comerciais.",
-    disponibilidade: "Seg a Sex · 09h as 18h",
-    contato: "comercial@obrascity.com.br",
-  },
-  {
-    titulo: "Onboarding e treinamento",
-    descricao: "Acompanhamento para adocao da plataforma com o seu time.",
-    disponibilidade: "Agendamento",
-    contato: "onboarding@obrascity.com.br",
-  },
-];
-
 export default function SuportePage() {
   const totalGuias = listGuias().length;
 
@@ -35,25 +14,15 @@ export default function SuportePage() {
         subtitle="Central de atendimento e orientacoes praticas para sua equipe usar o ObrasCitY com segurança e produtividade."
       />
 
-      <div className="of-dashboard-grid" style={{ marginBottom: 20 }}>
-        {canais.map((canal) => (
-          <article key={canal.titulo} className="of-card">
-            <div className="of-card-title">{canal.titulo}</div>
-            <p className="of-list-description" style={{ marginBottom: 8 }}>
-              {canal.descricao}
-            </p>
-            <p className="of-list-description">
-              <strong>Disponibilidade:</strong> {canal.disponibilidade}
-            </p>
-            <p className="of-list-description">
-              <strong>Contato:</strong>{" "}
-              <a href={`mailto:${canal.contato}`} style={{ color: "#ff9445" }}>
-                {canal.contato}
-              </a>
-            </p>
-          </article>
-        ))}
-      </div>
+      <article className="of-card" style={{ marginBottom: 20 }}>
+        <div className="of-card-title">Canal oficial de atendimento</div>
+        <p className="of-list-description" style={{ marginBottom: 12 }}>
+          Para clientes cadastrados, o atendimento ocorre exclusivamente pelo chat abaixo. Use esse canal para relatar erros, dúvidas de uso e incidentes operacionais. Não exibimos e-mail direto de administração ou conta master.
+        </p>
+        <p className="of-list-description">
+          Se o caso exigir análise humana, a conversa pode ser convertida em ticket a partir do próprio chat.
+        </p>
+      </article>
 
       <article className="of-card" style={{ marginBottom: 20 }}>
         <div className="of-card-title">Guia completo da plataforma</div>
