@@ -2,13 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
-import {
-  createBillingPortalSession,
-  createSubscriptionCheckoutSession,
-} from "@/lib/billing/stripe-checkout-server";
 import { createMercadoPagoSubscription } from "@/lib/billing/mercadopago-checkout";
-import { createAsaasSubscription } from "@/lib/billing/asaas-checkout";
-import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
@@ -45,34 +39,20 @@ export async function startCheckoutAction(formData: FormData) {
       throw new Error("Ciclo de cobranca invalido.");
     }
     const billingCycle = rawCycle as BillingCycle;
-    const gateway = String(formData.get("gateway") ?? "stripe").trim().toLowerCase();
+    const gateway = String(formData.get("gateway") ?? "mercadopago").trim().toLowerCase();
 
     const empresaId = await getEmpresaIdFromProfile();
 
-    if (gateway === "mercadopago") {
-      checkoutUrl = await createMercadoPagoSubscription({
-        empresaId,
-        customerEmail: String(profile.email),
-        plan,
-        billingCycle,
-      });
-    } else if (gateway === "asaas") {
-      const result = await createAsaasSubscription({
-        empresaId,
-        customerEmail: String(profile.email),
-        customerName: String(profile.nome ?? profile.email),
-        plan,
-        billingCycle,
-      });
-      checkoutUrl = result.paymentUrl;
-    } else {
-      checkoutUrl = await createSubscriptionCheckoutSession({
-        empresaId,
-        customerEmail: String(profile.email),
-        plan,
-        billingCycle,
-      });
+    if (gateway !== "mercadopago") {
+      throw new Error("Stripe e Asaas estão temporariamente desativados. Use Mercado Pago.");
     }
+
+    checkoutUrl = await createMercadoPagoSubscription({
+      empresaId,
+      customerEmail: String(profile.email),
+      plan,
+      billingCycle,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Nao foi possivel abrir o checkout.";
@@ -83,29 +63,12 @@ export async function startCheckoutAction(formData: FormData) {
 }
 
 export async function openBillingPortalAction() {
-  let portalUrl: string;
   try {
     await requireBillingProfile();
-
-    const assinatura = await getAssinaturaAtual();
-    const customerId = assinatura?.external_customer_id;
-    if (!customerId) {
-      throw new Error(
-        "Nenhum cliente Stripe vinculado. Conclua uma assinatura pelo checkout para habilitar o portal.",
-      );
-    }
-    if (customerId.startsWith("mp_") || customerId.startsWith("asaas_")) {
-      throw new Error(
-        "Sua assinatura PIX é gerenciada fora do portal Stripe. Use o checkout abaixo para trocar de plano e acompanhe a confirmação pelo gateway escolhido.",
-      );
-    }
-
-    portalUrl = await createBillingPortalSession(customerId);
+    throw new Error("Portal Stripe desativado temporariamente. Use Mercado Pago.");
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Nao foi possivel abrir o portal.";
     errorRedirect(message);
   }
-
-  redirect(portalUrl);
 }

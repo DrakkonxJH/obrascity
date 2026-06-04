@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { BadgeCheck, CreditCard, QrCode, ShieldCheck, type LucideIcon } from "lucide-react";
+import { BadgeCheck, QrCode, type LucideIcon } from "lucide-react";
 import styles from "./gateway-selector.module.css";
 
-type Gateway = "stripe" | "mercadopago" | "asaas";
+type Gateway = "mercadopago";
 
 const GATEWAYS: Array<{ id: Gateway; label: string; desc: string; badge?: string; Icon: LucideIcon }> = [
-  { id: "stripe", label: "Cartão", desc: "Crédito via Stripe", badge: "Instantâneo", Icon: CreditCard },
-  { id: "mercadopago", label: "PIX MP", desc: "Mercado Pago", badge: "Rápido", Icon: QrCode },
-  { id: "asaas", label: "PIX Asaas", desc: "Confirmação segura", badge: "Seguro", Icon: ShieldCheck },
+  { id: "mercadopago", label: "PIX Mercado Pago", desc: "Pagamento via Mercado Pago", badge: "Ativo", Icon: QrCode },
 ];
 
 export function GatewayCheckoutForm({
@@ -22,11 +20,10 @@ export function GatewayCheckoutForm({
   plan: string;
   billingCycle: string;
   planName: string;
-  currentPlan: string;
   isUpgrade: boolean;
   startCheckoutAction: (fd: FormData) => Promise<void>;
 }) {
-  const [gateway, setGateway] = useState<Gateway>("stripe");
+  const gateway: Gateway = "mercadopago";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -53,13 +50,11 @@ export function GatewayCheckoutForm({
           const selected = gateway === gw.id;
           const Icon = gw.Icon;
           return (
-            <button
+            <div
               key={gw.id}
-              type="button"
-              onClick={() => setGateway(gw.id)}
+              role="group"
               className={`${styles.gatewayCard} ${selected ? styles.selected : ""}`}
-              aria-label={`Selecionar ${gw.label}`}
-              aria-pressed={selected}
+              aria-label={gw.label}
             >
               <div className={styles.cardContent}>
                 <div className={styles.iconWrapper}>
@@ -72,7 +67,7 @@ export function GatewayCheckoutForm({
               </div>
               {gw.badge ? <span className={styles.badge}>{gw.badge}</span> : null}
               {selected ? <BadgeCheck className={styles.selectedIcon} size={16} aria-hidden /> : null}
-            </button>
+            </div>
           );
         })}
       </div>

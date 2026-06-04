@@ -6,7 +6,7 @@ import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 import { CheckCircle2, CircleDollarSign, CreditCard, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
-import { openBillingPortalAction, startCheckoutAction } from "./actions";
+import { startCheckoutAction } from "./actions";
 import { GatewayCheckoutForm } from "./gateway-selector";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -93,8 +93,8 @@ function statusLabel(status: string | null | undefined) {
 
 function getBillingProviderLabel(subscriptionRef: string | null | undefined) {
   if ((subscriptionRef ?? "").startsWith("mp_")) return "Mercado Pago";
-  if ((subscriptionRef ?? "").startsWith("asaas_")) return "Asaas";
-  return "Stripe";
+  if ((subscriptionRef ?? "").startsWith("asaas_")) return "Asaas (desativado)";
+  return "Stripe (desativado)";
 }
 
 export default async function PlanosPage({
@@ -177,10 +177,7 @@ export default async function PlanosPage({
     params.checkout === "success"
       ? {
           kind: "success" as const,
-          text:
-            params.gateway === "mp" || params.gateway === "asaas"
-              ? "Assinatura iniciada. Confirme o PIX para ativar o plano; a atualização ocorre automaticamente após o webhook."
-              : "Pagamento processado. Seu plano sera atualizado em instantes.",
+          text: "Assinatura iniciada no Mercado Pago. Confirme o PIX para ativar o plano; a atualização ocorre automaticamente após o webhook.",
         }
       : params.checkout === "cancel"
         ? { kind: "info" as const, text: "Checkout cancelado. Nenhuma cobranca foi feita." }
@@ -211,6 +208,9 @@ export default async function PlanosPage({
             <p className="of-list-description">
               Gateway ativo: <strong>{billingProvider}</strong>
             </p>
+            <p className="of-list-description" style={{ marginTop: 4 }}>
+              Stripe e Asaas permanecem desativados até nova liberação.
+            </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <Link href="/planos?billing=monthly" className={billingCycle === "monthly" ? "of-btn-primary" : "of-btn-ghost"}>
@@ -219,11 +219,6 @@ export default async function PlanosPage({
             <Link href="/planos?billing=annual" className={billingCycle === "annual" ? "of-btn-primary" : "of-btn-ghost"}>
               Anual
             </Link>
-            {canManageBilling && billingProvider === "Stripe" ? (
-              <form action={openBillingPortalAction}>
-                <button type="submit" className="of-btn-ghost">Portal de cobrança</button>
-              </form>
-            ) : null}
           </div>
         </div>
       </article>
@@ -381,7 +376,6 @@ export default async function PlanosPage({
                       plan={item.id}
                       billingCycle={billingCycle}
                       planName={item.name}
-                      currentPlan={currentPlan}
                       isUpgrade={currentPlan !== "trial"}
                       startCheckoutAction={startCheckoutAction}
                     />
@@ -418,25 +412,17 @@ export default async function PlanosPage({
 
       <div className="of-dashboard-grid" style={{ gridTemplateColumns: "2fr 1fr", gap: 16 }}>
         {canManageBilling ? (
-          <article className="of-card">
-            <div className="of-card-title">Gerenciar cobrança</div>
-            <p className="of-list-description mb-4">
-              {billingProvider === "Stripe"
-                ? "Atualize cartão, gerencie PIX, cancele ou altere o plano no portal seguro do Stripe."
-                : `Sua assinatura atual usa ${billingProvider}. Confirme o PIX recorrente e acompanhe a ativação automática pelos webhooks.`}
-            </p>
-            {billingProvider === "Stripe" ? (
-              <form action={openBillingPortalAction}>
-                <button type="submit" className="of-btn-ghost" style={{ width: "100%", maxWidth: 320 }}>
-                  Abrir portal do cliente Stripe
-                </button>
-              </form>
-            ) : (
-              <p className="of-list-description">
-                Para trocar de plano ou gerar um novo PIX, inicie um novo checkout na grade de planos acima.
-              </p>
-            )}
-          </article>
+        <article className="of-card">
+          <div className="of-card-title">Gerenciar cobrança</div>
+          <p className="of-list-description mb-4">
+              {billingProvider === "Mercado Pago"
+                ? "Confirme o PIX recorrente e acompanhe a ativação automática pelos webhooks do Mercado Pago."
+                : `Sua assinatura atual usa ${billingProvider}. Novos checkouts permanecem no Mercado Pago enquanto Stripe e Asaas estão desativados.`}
+          </p>
+          <p className="of-list-description">
+            Para trocar de plano ou gerar um novo PIX, inicie um novo checkout na grade de planos acima.
+          </p>
+        </article>
         ) : (
           <article className="of-card">
             <div className="of-card-title">Acesso à cobrança</div>
@@ -465,10 +451,7 @@ export default async function PlanosPage({
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600 }}>
-                Cartão de crédito
-              </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, background: "var(--of-bg-secondary)", border: "1px solid var(--of-border)", fontSize: "0.78rem", fontWeight: 600, opacity: 0.55 }} title="PIX em breve — disponível após ativação pelo Stripe">
-                PIX (em breve)
+                PIX Mercado Pago
               </span>
             </div>
           </div>
