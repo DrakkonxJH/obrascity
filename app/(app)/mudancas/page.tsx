@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import { listApprovalRequests } from "@/lib/db/approvals";
 import { listObras } from "@/lib/db/obras";
@@ -7,6 +6,8 @@ import { listMudancas } from "@/lib/db/mudancas";
 import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { approveMudancaRequestAction, createMudancaAction, rejectMudancaRequestAction } from "./actions";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -41,6 +42,11 @@ function firstParam(value: string | string[] | undefined, fallback = "") {
 }
 
 export default async function MudancasPage({ searchParams }: MudancasPageProps) {
+  const { access } = await getCurrentTenantFeatureAccess("automacoes_workflow");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Mudanças" status={access} />;
+  }
+
   const params = searchParams ? await searchParams : {};
   const obraFilter = firstParam(params.obra_id);
   const tipoFilter = firstParam(params.tipo);
@@ -148,8 +154,7 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   };
 
   return (
-    <FeatureGateWrapper feature="automacoes_workflow">
-      <section className="of-page">
+    <section className="of-page">
         <PageHeader
           eyebrow="Gestão"
           title="Mudanças"
@@ -397,6 +402,5 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
           </div>
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

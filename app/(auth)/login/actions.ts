@@ -14,6 +14,8 @@ import { resolvePublicAppOrigin } from "@/lib/validations/env";
 import { provisionTrialTenant } from "@/lib/auth/provision-tenant";
 import { createTenantAuthSession, getTenantSecurityPolicyByEmpresa } from "@/lib/db/seguranca-corporativa";
 
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
 export type LoginActionState = {
   ok: boolean;
   message: string;
@@ -204,7 +206,7 @@ export async function signInAction(
           cookieStore.set("of_tenant_session", authSessionId, {
             httpOnly: true,
             sameSite: "lax",
-            secure: true,
+            secure: IS_PRODUCTION,
             path: "/",
             maxAge: 60 * 60 * 24 * 30,
           });

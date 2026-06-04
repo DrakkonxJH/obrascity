@@ -1,11 +1,17 @@
 import { createEquipeAction, createEquipeAlocacaoAction } from "./actions";
 import { listEquipes, listMembros } from "@/lib/db/equipes";
 import { EquipesView } from "@/components/equipes/equipes-view";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listObras } from "@/lib/db/obras";
 import { listEquipeAlocacoes, listEquipeCapacidade } from "@/lib/db/mobilizacao";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 export default async function EquipesPage() {
+  const { access } = await getCurrentTenantFeatureAccess("equipes_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Equipes" status={access} />;
+  }
+
   const [equipes, membros, obras, alocacoes, capacidade] = await Promise.all([
     listEquipes(),
     listMembros(),
@@ -26,9 +32,8 @@ export default async function EquipesPage() {
   );
 
   return (
-    <FeatureGateWrapper feature="equipes_basic">
-      <section className="of-page">
-        <EquipesView equipes={equipes} membros={membros} formSlot={formSlot} />
+    <section className="of-page">
+      <EquipesView equipes={equipes} membros={membros} formSlot={formSlot} />
 
         <div className="grid gap-4 lg:grid-cols-2" style={{ marginTop: 20 }}>
           <form action={createEquipeAlocacaoAction} className="of-card of-form-grid">
@@ -155,6 +160,5 @@ export default async function EquipesPage() {
           </div>
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

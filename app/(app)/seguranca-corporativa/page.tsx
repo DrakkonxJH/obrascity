@@ -1,11 +1,17 @@
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import { PROFILE_ROLE_OPTIONS } from "@/lib/auth/roles";
 import { getTenantSecurityPolicy, listTenantAuthSessions } from "@/lib/db/seguranca-corporativa";
 import { revokeTenantSessionAction, saveTenantSecurityPolicyAction } from "./actions";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 export default async function SegurancaCorporativaPage() {
+  const { access } = await getCurrentTenantFeatureAccess("segurança_enterprise");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Segurança Corporativa" status={access} />;
+  }
+
   const [policyResult, sessionsResult] = await Promise.allSettled([
     getTenantSecurityPolicy(),
     listTenantAuthSessions(),
@@ -35,8 +41,7 @@ export default async function SegurancaCorporativaPage() {
   const timeoutResumo = `${policy.session_timeout_minutes} min`;
 
   return (
-    <FeatureGateWrapper feature="segurança_enterprise">
-      <section className="of-page">
+    <section className="of-page">
         <PageHeader
           eyebrow="Sistema"
           title="Segurança corporativa"
@@ -193,6 +198,5 @@ export default async function SegurancaCorporativaPage() {
           </div>
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

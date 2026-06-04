@@ -19,9 +19,10 @@ import { MaterialCardEditor } from "@/components/materiais/material-card-editor"
 import { buildMaterialSuggestions } from "@/lib/materials/catalog";
 import { MaterialImportButton } from "@/components/materiais/material-import-button";
 import { PurchaseOrderModal } from "@/components/materiais/purchase-order-modal";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -45,6 +46,11 @@ function pedidoBadge(status: string) {
 }
 
 export default async function MateriaisPage() {
+  const { access } = await getCurrentTenantFeatureAccess("materiais_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Materiais" status={access} />;
+  }
+
   const [materiais, pedidos, obras, cotacoes, fornecedores, rodadas, contratos] = await Promise.all([
     listMateriais(),
     listPedidosCompra(),
@@ -58,7 +64,6 @@ export default async function MateriaisPage() {
   const materialSuggestions = buildMaterialSuggestions(materiais.map((material) => material.nome));
 
   return (
-    <FeatureGateWrapper feature="materiais_basic">
       <section className="of-page">
       <PageHeader
         eyebrow="Suprimentos"
@@ -396,6 +401,5 @@ export default async function MateriaisPage() {
         </div>
       </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

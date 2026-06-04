@@ -12,8 +12,9 @@ import { listMudancas } from "@/lib/db/mudancas";
 import { listViabilidade } from "@/lib/db/viabilidade";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "../actions";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 type ReportType = "progresso" | "financeiro" | "equipes" | "materiais" | "diario" | "executivo" | "qualidade" | "mudancas" | "viabilidade";
 
@@ -56,6 +57,11 @@ function formatDate(value: string | null | undefined) {
 export default async function ReportTypePage({ params }: PageParams) {
   const { tipo } = await params;
   if (!isReportType(tipo)) notFound();
+
+  const { access } = await getCurrentTenantFeatureAccess("relatórios_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Relatórios" status={access} />;
+  }
 
   const meta = reportMeta[tipo];
   const relatórios = await listRelatorios();
@@ -628,8 +634,7 @@ export default async function ReportTypePage({ params }: PageParams) {
   }
 
   return (
-    <FeatureGateWrapper feature="relatórios_basic">
-      <section className="of-page">
+    <section className="of-page">
       <PageHeader
         eyebrow="Relatorio"
         title={meta.title}
@@ -695,6 +700,5 @@ export default async function ReportTypePage({ params }: PageParams) {
         </p>
       </div>
       </section>
-    </FeatureGateWrapper>
   );
 }

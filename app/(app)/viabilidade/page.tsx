@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listObras } from "@/lib/db/obras";
 import { listViabilidade } from "@/lib/db/viabilidade";
 import { saveViabilidadeAction } from "./actions";
 import { RiskMatrix } from "./risk-matrix";
 import { PageHeader } from "@/components/ui/page-header";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 type StatusField = "status_tecnico" | "status_legal" | "status_economico";
 
@@ -137,6 +138,11 @@ function formatUpdatedAt(value: string) {
 }
 
 export default async function ViabilidadePage() {
+  const { access } = await getCurrentTenantFeatureAccess("obras_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Viabilidade" status={access} />;
+  }
+
   const [obrasResult, estudosResult] = await Promise.allSettled([listObras(), listViabilidade()]);
   const warnings: string[] = [];
   const obras =
@@ -182,7 +188,6 @@ export default async function ViabilidadePage() {
   const resumoEconomico = getResumoStatus("status_economico");
 
   return (
-    <FeatureGateWrapper feature="obras_basic">
       <section className="of-page">
         <PageHeader
           eyebrow="Viabilidade"
@@ -587,6 +592,5 @@ export default async function ViabilidadePage() {
           })}
         </div>
       </section>
-    </FeatureGateWrapper>
   );
 }

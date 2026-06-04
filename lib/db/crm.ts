@@ -858,64 +858,18 @@ export async function listCrmLossReasonsReport() {
 export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
-  
-  // Get all master companies first (to exclude them)
-  let { data: masterCompanies } = await supabase
+  const { data: masterCompanies, error: masterError } = await supabase
     .from("companies")
     .select("id")
     .eq("is_master", true);
-  
-  // If no master is marked yet, try to auto-detect it
-  if (!masterCompanies || masterCompanies.length === 0) {
-    // Check if there's a company with "Master" in the name
-    const { data: potentialMaster } = await supabase
-      .from("companies")
-      .select("id, nome")
-      .ilike("nome", "%master%")
-      .limit(1);
-    
-    if (potentialMaster && potentialMaster.length > 0) {
-      const masterId = potentialMaster[0].id;
-      // Try to mark it (this will fail silently if RLS blocks it, but that's OK)
-      try {
-        await supabase
-          .from("companies")
-          .update({ is_master: true })
-          .eq("id", masterId);
-      } catch {
-        // Ignore errors - filtering will still work
-      }
-      
-      masterCompanies = [{ id: masterId }];
-    } else {
-      // Fallback: get the oldest company
-      const { data: oldestCompany } = await supabase
-        .from("companies")
-        .select("id")
-        .order("created_at", { ascending: true })
-        .limit(1);
-      
-      if (oldestCompany && oldestCompany.length > 0) {
-        const masterId = oldestCompany[0].id;
-        // Try to mark it as master
-        try {
-          await supabase
-            .from("companies")
-            .update({ is_master: true })
-            .eq("id", masterId);
-        } catch {
-          // Ignore errors - filtering will still work
-        }
-        
-        masterCompanies = [{ id: masterId }];
-      }
-    }
+
+  if (masterError) {
+    throw new Error(`Erro ao identificar contas master: ${masterError.message}`);
   }
-    
-  const masterIds = new Set((masterCompanies ?? []).map(c => c.id));
-  
+
+  const masterIds = new Set((masterCompanies ?? []).map((c) => c.id));
+
   // Query: Get profiles from current company only
-  // Exclude ANY profiles from master accounts
   const { data, error } = await supabase
     .from("profiles")
     .select("id, nome, email, role, empresa_id")
@@ -926,8 +880,7 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
     throw new Error(`Erro ao listar perfis comerciais: ${error.message}`);
   }
   
-  // Filter out profiles from master company - ALWAYS, regardless of user's company
-  const filtered = (data ?? []).filter(p => !masterIds.has(p.empresa_id));
+  const filtered = masterIds.size > 0 ? (data ?? []).filter((p) => !masterIds.has(p.empresa_id)) : (data ?? []);
   
   return filtered.map((item) => ({
     id: String(item.id),

@@ -1,4 +1,3 @@
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { listMobileSyncConflicts, listMobileSyncJobs } from "@/lib/db/mobile-campo";
@@ -8,6 +7,8 @@ import {
   resolveMobileSyncConflictAction,
 } from "./actions";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 function directionLabel(direction: string) {
   if (direction === "upload") return "Campo → nuvem";
@@ -31,6 +32,11 @@ function conflictStatusLabel(status: string) {
 }
 
 export default async function MobileCampoPage() {
+  const { access } = await getCurrentTenantFeatureAccess("automacoes_workflow");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Mobile Campo" status={access} />;
+  }
+
   const [obrasResult, jobsResult, conflictsResult] = await Promise.allSettled([
     listObras(),
     listMobileSyncJobs(),
@@ -57,8 +63,7 @@ export default async function MobileCampoPage() {
   );
 
   return (
-    <FeatureGateWrapper feature="automacoes_workflow">
-      <section className="of-page">
+    <section className="of-page">
         <PageHeader
           eyebrow="Sistema"
           title="Mobile campo"
@@ -261,6 +266,5 @@ export default async function MobileCampoPage() {
           </div>
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

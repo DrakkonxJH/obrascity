@@ -4,10 +4,11 @@ import { listObras } from "@/lib/db/obras";
 import { createFinanceiroAction, createFinanceiroTituloAction, settleFinanceiroTituloAction } from "./actions";
 import { createMedicaoAction } from "./medicoes-actions";
 import { getEvmIndicadores, listMedicoes } from "@/lib/db/medicoes";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { listFinanceiroTitulos, listFluxoCaixaMensal } from "@/lib/db/financeiro-corporativo";
 import { PageHeader } from "@/components/ui/page-header";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -24,6 +25,11 @@ function statusLabel(consumo: number) {
 }
 
 export default async function FinanceiroPage() {
+  const { access } = await getCurrentTenantFeatureAccess("financeiro_avancado");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Financeiro" status={access} />;
+  }
+
   let rows: Awaited<ReturnType<typeof listFinanceiro>> = [];
   let obras: Awaited<ReturnType<typeof listObras>> = [];
   let medicoes: Awaited<ReturnType<typeof listMedicoes>> = [];
@@ -51,7 +57,6 @@ export default async function FinanceiroPage() {
   const receitaContratada = medicoes.reduce((acc, item) => acc + item.valor + item.aditivo - item.retencao, 0);
 
   return (
-    <FeatureGateWrapper feature="financeiro_avancado">
       <section className="of-page">
       <PageHeader
         eyebrow="Financeiro"
@@ -348,6 +353,5 @@ export default async function FinanceiroPage() {
         </article>
       </div>
       </section>
-    </FeatureGateWrapper>
   );
 }

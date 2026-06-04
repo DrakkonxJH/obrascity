@@ -1,5 +1,6 @@
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { CronogramaContent } from "./cronograma-content";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 type CronogramaPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -11,6 +12,11 @@ function firstParam(value: string | string[] | undefined) {
 }
 
 export default async function CronogramaPage({ searchParams }: CronogramaPageProps) {
+  const { access } = await getCurrentTenantFeatureAccess("cronograma");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Cronograma" status={access} />;
+  }
+
   const params = searchParams ? await searchParams : {};
   const obraId = firstParam(params.obra_id);
   const status = firstParam(params.status);
@@ -21,16 +27,14 @@ export default async function CronogramaPage({ searchParams }: CronogramaPagePro
   const ok = firstParam(params.ok);
 
   return (
-    <FeatureGateWrapper feature="cronograma">
-      <CronogramaContent
-        obraId={obraId}
-        status={status}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        page={page}
-        view={view}
-        ok={ok}
-      />
-    </FeatureGateWrapper>
+    <CronogramaContent
+      obraId={obraId}
+      status={status}
+      dateFrom={dateFrom}
+      dateTo={dateTo}
+      page={page}
+      view={view}
+      ok={ok}
+    />
   );
 }

@@ -1,9 +1,10 @@
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
 import { listProjetosConflitos, listProjetosDocumentos } from "@/lib/db/projetos";
 import { createProjetoConflitoAction, createProjetoDocumentoAction } from "./actions";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 const statusDocumentoLabels: Record<string, string> = {
   em_revisao: "Em revisão",
@@ -44,6 +45,11 @@ const statusConflitoBadgeClass: Record<string, string> = {
 };
 
 export default async function ProjetosPage() {
+  const { access } = await getCurrentTenantFeatureAccess("gestão_documentos");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Projetos" status={access} />;
+  }
+
   const [obrasResult, documentosResult, conflitosResult] = await Promise.allSettled([
     listObras(),
     listProjetosDocumentos(),
@@ -68,8 +74,7 @@ export default async function ProjetosPage() {
   const conflitosCriticos = conflitos.filter((item) => item.severidade === "critica").length;
 
   return (
-    <FeatureGateWrapper feature="gestão_documentos">
-      <section className="of-page">
+    <section className="of-page">
         <PageHeader
           eyebrow="Engenharia e compatibilização"
           title="Projetos"
@@ -246,6 +251,5 @@ export default async function ProjetosPage() {
           </div>
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

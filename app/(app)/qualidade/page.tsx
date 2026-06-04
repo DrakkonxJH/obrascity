@@ -16,9 +16,10 @@ import {
   updateNaoConformidadeAction,
   updatePlanoAcaoStatusAction,
 } from "./actions";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 type QualidadePageProps = {
   searchParams: Promise<{
@@ -60,6 +61,11 @@ function formatDate(value: string | null) {
 }
 
 export default async function QualidadePage({ searchParams }: QualidadePageProps) {
+  const { access } = await getCurrentTenantFeatureAccess("qualidade_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Qualidade" status={access} />;
+  }
+
   const params = await searchParams;
   const filters = {
     obraId: params.obra || undefined,
@@ -94,7 +100,6 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
   const kpis = buildQualidadeKpis(ncRows);
 
   return (
-    <FeatureGateWrapper feature="qualidade_basic">
       <section className="of-page">
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
@@ -503,6 +508,5 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
         </div>
       </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

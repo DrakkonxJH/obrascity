@@ -17,6 +17,8 @@ import {
   upsertTenantFeatureFlag,
 } from "@/lib/db/master-admin";
 
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
 const SECURITY_ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
 const VALID_PLANS = new Set(["trial", "starter", "pro", "enterprise"]);
 
@@ -633,7 +635,7 @@ export async function iniciarAcessoAssistidoAction(formData: FormData) {
   cookieStore.set("of_support_preview_empresa_id", empresaId, {
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: IS_PRODUCTION,
     path: "/",
     maxAge: 60 * 60 * 8,
   });
@@ -641,7 +643,7 @@ export async function iniciarAcessoAssistidoAction(formData: FormData) {
     cookieStore.set("of_support_preview_profile_id", profileId, {
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: IS_PRODUCTION,
       path: "/",
       maxAge: 60 * 60 * 8,
     });
@@ -650,7 +652,7 @@ export async function iniciarAcessoAssistidoAction(formData: FormData) {
     cookieStore.set("of_support_preview_session_id", sessionId, {
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: IS_PRODUCTION,
       path: "/",
       maxAge: 60 * 60 * 8,
     });

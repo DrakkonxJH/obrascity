@@ -94,6 +94,29 @@ type AssinaturaRow = {
 
 const ALERT_STATUSES = new Set(["open", "in_progress", "resolved", "ignored"]);
 
+async function fetchAllPages(
+  buildPage: (from: number, to: number) => any,
+  pageSize = 500,
+) {
+  const rows: any[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const to = from + pageSize - 1;
+    const result = await buildPage(from, to);
+    if (result.error) {
+      if (isMissingRelation(result.error.message ?? "")) {
+        return rows;
+      }
+      throw new Error(result.error.message ?? "Erro ao carregar dados administrativos");
+    }
+    const pageRows = (result.data ?? []) as any[];
+    rows.push(...pageRows);
+    if (pageRows.length < pageSize) {
+      break;
+    }
+  }
+  return rows;
+}
+
 function pickCurrentSubscription(rows: AssinaturaRow[]) {
   const activeRows = rows.filter((row) => ["active", "trialing"].includes(String(row.status).toLowerCase()));
   const source = activeRows.length > 0 ? activeRows : rows;
@@ -103,55 +126,50 @@ function pickCurrentSubscription(rows: AssinaturaRow[]) {
 export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   const admin = createAdminClient();
 
-  const [
-    empresasRes,
-    assinaturasRes,
-    profilesRes,
-    obrasRes,
-    fotosRes,
-    relatoriosRes,
-    diariosRes,
-    sessionsRes,
-    overridesRes,
-    flagsRes,
-  ] = await Promise.all([
-    admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }),
-    admin
-      .from("assinaturas")
-      .select("empresa_id, id, plano, status, periodo_fim, created_at")
-      .order("created_at", { ascending: false }),
-    admin.from("profiles").select("empresa_id"),
-    admin.from("obras").select("empresa_id, status, created_at"),
-    admin.from("fotos_obra").select("empresa_id, created_at"),
-    admin.from("relatorios").select("empresa_id, created_at"),
-    admin.from("diario_obra").select("empresa_id, created_at"),
-    admin.from("tenant_auth_sessions").select("empresa_id, last_seen_at"),
-    admin
-      .from("tenant_admin_overrides")
-      .select("empresa_id, profile_limit_override, report_daily_limit_override"),
-    admin.from("tenant_feature_flags").select("empresa_id"),
-  ]);
-
-  const errors = [
-    empresasRes.error,
-    assinaturasRes.error,
-    profilesRes.error,
-    obrasRes.error,
-    fotosRes.error,
-    relatoriosRes.error,
-    diariosRes.error,
-    sessionsRes.error,
-    overridesRes.error,
-    flagsRes.error,
-  ].filter((error) => Boolean(error) && !isMissingRelation((error as { message?: string }).message ?? "")) as Array<{
-    message?: string;
-  }>;
-  if (errors.length > 0) {
-    throw new Error((errors[0] as { message?: string }).message ?? "Erro ao carregar empresas");
-  }
+  const [empresas, assinaturas, profiles, obras, fotos, relatorios, diarios, sessions, overrides, flags] =
+    await Promise.all([
+      fetchAllPages((from, to) =>
+        admin.from("empresas").select("id, nome, created_at").order("created_at", { ascending: false }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin
+          .from("assinaturas")
+          .select("empresa_id, id, plano, status, periodo_fim, created_at")
+          .order("created_at", { ascending: false })
+          .range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("profiles").select("empresa_id, role").order("empresa_id", { ascending: true }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("obras").select("empresa_id, status, created_at").order("created_at", { ascending: false }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("fotos_obra").select("empresa_id, created_at").order("created_at", { ascending: false }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("relatorios").select("empresa_id, created_at").order("created_at", { ascending: false }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("diario_obra").select("empresa_id, created_at").order("created_at", { ascending: false }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("tenant_auth_sessions").select("empresa_id, last_seen_at").order("last_seen_at", { ascending: false }).range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin
+          .from("tenant_admin_overrides")
+          .select("empresa_id, profile_limit_override, report_daily_limit_override")
+          .order("updated_at", { ascending: false })
+          .range(from, to),
+      ),
+      fetchAllPages((from, to) =>
+        admin.from("tenant_feature_flags").select("empresa_id").order("updated_at", { ascending: false }).range(from, to),
+      ),
+    ]);
 
   const assinMap = new Map<string, AssinaturaRow[]>();
-  for (const a of assinaturasRes.data ?? []) {
+  for (const a of assinaturas) {
     const list = assinMap.get(a.empresa_id) ?? [];
     list.push({
       empresa_id: a.empresa_id,
@@ -165,14 +183,14 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   }
 
   const profileCountMap = new Map<string, number>();
-  for (const p of profilesRes.data ?? []) {
+  for (const p of profiles) {
     if (String((p as { role?: string }).role ?? "").toLowerCase() === "master") continue;
     profileCountMap.set(p.empresa_id, (profileCountMap.get(p.empresa_id) ?? 0) + 1);
   }
 
   const obraCountMap = new Map<string, number>();
   const activeObraCountMap = new Map<string, number>();
-  for (const obra of obrasRes.data ?? []) {
+  for (const obra of obras) {
     obraCountMap.set(obra.empresa_id, (obraCountMap.get(obra.empresa_id) ?? 0) + 1);
     if (String(obra.status ?? "").toLowerCase() !== "concluida") {
       activeObraCountMap.set(obra.empresa_id, (activeObraCountMap.get(obra.empresa_id) ?? 0) + 1);
@@ -180,14 +198,14 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   }
 
   const lastActivityMap = new Map<string, string>();
-  for (const session of sessionsRes.data ?? []) {
+  for (const session of sessions) {
     const lastSeen = String(session.last_seen_at ?? "");
     const current = lastActivityMap.get(session.empresa_id);
     if (!current || new Date(lastSeen).getTime() > new Date(current).getTime()) {
       lastActivityMap.set(session.empresa_id, lastSeen);
     }
   }
-  for (const obra of obrasRes.data ?? []) {
+  for (const obra of obras) {
     const updatedAt = String(obra.created_at ?? "");
     const current = lastActivityMap.get(obra.empresa_id);
     if (!current || new Date(updatedAt).getTime() > new Date(current).getTime()) {
@@ -199,12 +217,12 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   const addEstimate = (empresaId: string, mb: number) => {
     storageEstimateMap.set(empresaId, (storageEstimateMap.get(empresaId) ?? 0) + mb);
   };
-  for (const item of fotosRes.data ?? []) addEstimate(item.empresa_id, 1.8);
-  for (const item of relatoriosRes.data ?? []) addEstimate(item.empresa_id, 0.9);
-  for (const item of diariosRes.data ?? []) addEstimate(item.empresa_id, 0.25);
+  for (const item of fotos) addEstimate(item.empresa_id, 1.8);
+  for (const item of relatorios) addEstimate(item.empresa_id, 0.9);
+  for (const item of diarios) addEstimate(item.empresa_id, 0.25);
 
   const overrideMap = new Map<string, { profile_limit_override: number | null; report_daily_limit_override: number | null }>();
-  for (const row of overridesRes.data ?? []) {
+  for (const row of overrides) {
     overrideMap.set(row.empresa_id, {
       profile_limit_override: row.profile_limit_override ?? null,
       report_daily_limit_override: row.report_daily_limit_override ?? null,
@@ -212,11 +230,11 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
   }
 
   const featureFlagCountMap = new Map<string, number>();
-  for (const row of flagsRes.data ?? []) {
+  for (const row of flags) {
     featureFlagCountMap.set(row.empresa_id, (featureFlagCountMap.get(row.empresa_id) ?? 0) + 1);
   }
 
-  return (empresasRes.data ?? []).map((e) => {
+  return empresas.map((e) => {
     const assinatura = pickCurrentSubscription(assinMap.get(e.id) ?? []);
     const override = overrideMap.get(e.id);
     return {
@@ -242,29 +260,40 @@ export async function listAllEmpresas(): Promise<AdminEmpresa[]> {
 export async function listAllProfiles(): Promise<AdminProfile[]> {
   const admin = createAdminClient();
 
-  const [profilesRes, empresasRes, authRes] = await Promise.all([
-    admin
-      .from("profiles")
-      .select("id, nome, email, role, cargo, empresa_id, created_at")
-      .neq("role", "master")
-      .order("created_at", { ascending: false }),
-    admin.from("empresas").select("id, nome"),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  const [profiles, empresas] = await Promise.all([
+    fetchAllPages((from, to) =>
+      admin
+        .from("profiles")
+        .select("id, nome, email, role, cargo, empresa_id, created_at")
+        .neq("role", "master")
+        .order("created_at", { ascending: false })
+        .range(from, to),
+    ),
+    fetchAllPages((from, to) => admin.from("empresas").select("id, nome").order("created_at", { ascending: false }).range(from, to)),
   ]);
 
-  if (profilesRes.error) throw new Error(profilesRes.error.message);
+  const authUsers = [];
+  const pageSize = 1000;
+  for (let page = 1; ; page += 1) {
+    const authRes = await admin.auth.admin.listUsers({ page, perPage: pageSize });
+    if (authRes.error) throw new Error(authRes.error.message);
+    authUsers.push(...(authRes.data?.users ?? []));
+    if ((authRes.data?.users ?? []).length < pageSize) {
+      break;
+    }
+  }
 
   const empresaMap = new Map<string, string>();
-  for (const e of empresasRes.data ?? []) {
+  for (const e of empresas) {
     empresaMap.set(e.id, e.nome);
   }
 
   const authMap = new Map<string, string | null>();
-  for (const u of authRes.data?.users ?? []) {
+  for (const u of authUsers) {
     authMap.set(u.id, u.last_sign_in_at ?? null);
   }
 
-  return (profilesRes.data ?? []).map((p) => {
+  return profiles.map((p) => {
     return {
       id: p.id,
       nome: p.nome,

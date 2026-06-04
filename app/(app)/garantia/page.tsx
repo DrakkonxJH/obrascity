@@ -1,4 +1,3 @@
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import { listObras } from "@/lib/db/obras";
 import { escalateGarantiaSlaBreaches, listGarantiaChamados, listGarantiaInteracoes } from "@/lib/db/garantia";
@@ -8,8 +7,15 @@ import {
   updateGarantiaStatusAction,
 } from "./actions";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 export default async function GarantiaPage() {
+  const { access } = await getCurrentTenantFeatureAccess("qualidade_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Garantia" status={access} />;
+  }
+
   const [obrasResult, chamadosResult, escalonamentoResult] = await Promise.allSettled([
     listObras(),
     listGarantiaChamados(),
@@ -48,8 +54,7 @@ export default async function GarantiaPage() {
     : "0";
 
   return (
-    <FeatureGateWrapper feature="qualidade_basic">
-      <section className="of-page">
+    <section className="of-page">
         <PageHeader
           eyebrow="Pós-entrega"
           title="Garantia e assistência"
@@ -236,6 +241,5 @@ export default async function GarantiaPage() {
           )}
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }

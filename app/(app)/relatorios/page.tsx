@@ -2,7 +2,6 @@ import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
 import { listRelatorioExecucoes, listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "./actions";
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   BarChart3,
@@ -16,6 +15,8 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 const reportCards: Array<{
   tipo: string;
@@ -120,6 +121,11 @@ const reportCards: Array<{
 ];
 
 export default async function RelatóriosPage() {
+  const { access } = await getCurrentTenantFeatureAccess("relatórios_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Relatórios" status={access} />;
+  }
+
   let relatórios: Awaited<ReturnType<typeof listRelatorios>> = [];
   let execuções: Awaited<ReturnType<typeof listRelatorioExecucoes>> = [];
   let obras: Awaited<ReturnType<typeof listObras>> = [];
@@ -132,7 +138,6 @@ export default async function RelatóriosPage() {
   }
 
   return (
-    <FeatureGateWrapper feature="relatórios_basic">
       <section className="of-page">
       {loadError ? (
         <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
@@ -276,6 +281,5 @@ export default async function RelatóriosPage() {
         </table>
       </div>
       </section>
-    </FeatureGateWrapper>
   );
 }

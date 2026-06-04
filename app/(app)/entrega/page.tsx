@@ -1,11 +1,17 @@
-import { FeatureGateWrapper } from "@/components/feature-gate-wrapper";
 import { PageHeader } from "@/components/ui/page-header";
 import { listComissionamento, listEntregas } from "@/lib/db/entrega";
 import { listObras } from "@/lib/db/obras";
 import { createComissionamentoAction, saveEntregaAction } from "./actions";
 import Link from "next/link";
+import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
+import { PremiumFeatureBlock } from "@/components/premium-feature-block";
 
 export default async function EntregaPage() {
+  const { access } = await getCurrentTenantFeatureAccess("qualidade_basic");
+  if (access.level !== "allowed") {
+    return <PremiumFeatureBlock featureName="Entrega" status={access} />;
+  }
+
   const [obrasResult, comissionamentosResult, entregasResult] = await Promise.allSettled([
     listObras(),
     listComissionamento(),
@@ -30,8 +36,7 @@ export default async function EntregaPage() {
   const chavesEntregues = entregas.filter((item) => item.chaves_entregues).length;
 
   return (
-    <FeatureGateWrapper feature="qualidade_basic">
-      <section className="of-page">
+    <section className="of-page">
         <PageHeader
           eyebrow="Pós-obra"
           title="Entrega técnica e aceite"
@@ -200,6 +205,5 @@ export default async function EntregaPage() {
           </div>
         </article>
       </section>
-    </FeatureGateWrapper>
   );
 }
