@@ -29,7 +29,7 @@ export type CrmDealSummary = {
   status: string;
   priority: string;
   valor: number;
-   probability: number;
+  probability: number;
   company_name: string;
   contact_name: string;
   owner_profile_id: string | null;
@@ -42,6 +42,12 @@ export type CrmDealSummary = {
   loss_reason: string;
   custom_fields: Record<string, string>;
   playbook_items: Array<{ id: string; label: string; done: boolean }>;
+  fvs_signed: boolean;
+  fvs_signed_by: string | null;
+  fvs_signed_date: string | null;
+  fvs_hash: string | null;
+  comments: any[];
+  logs: any[];
 };
 
 export type CrmDealActivity = {
@@ -113,6 +119,12 @@ type UpdateCrmDealInput = {
   loss_reason?: string;
   custom_fields?: Record<string, string>;
   playbook_items?: CrmDealPlaybookItem[];
+  fvs_signed?: boolean;
+  fvs_signed_by?: string | null;
+  fvs_signed_date?: string | null;
+  fvs_hash?: string | null;
+  comments?: any[];
+  logs?: any[];
 };
 
 type CreateCrmDealInput = {
@@ -128,6 +140,12 @@ type CreateCrmDealInput = {
   loss_reason?: string;
   custom_fields?: Record<string, string>;
   playbook_items?: CrmDealPlaybookItem[];
+  fvs_signed?: boolean;
+  fvs_signed_by?: string | null;
+  fvs_signed_date?: string | null;
+  fvs_hash?: string | null;
+  comments?: any[];
+  logs?: any[];
   company_name?: string;
   contact_name?: string;
   contact_email?: string;
@@ -568,7 +586,7 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
   const dealsRes = await supabase
     .from("crm_deals")
     .select(
-      "id, nome, stage, status, priority, probability, valor, last_activity_at, next_activity_at, tags, owner_profile_id, loss_reason, custom_fields, playbook_items, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome), owner:profiles!crm_deals_owner_profile_id_fkey(nome)",
+      "id, nome, stage, status, priority, probability, valor, last_activity_at, next_activity_at, tags, owner_profile_id, loss_reason, custom_fields, playbook_items, fvs_signed, fvs_signed_by, fvs_signed_date, fvs_hash, comments, logs, company:crm_companies!crm_deals_company_id_fkey(nome), contact:crm_contacts!crm_deals_contact_id_fkey(nome), owner:profiles!crm_deals_owner_profile_id_fkey(nome)",
     )
     .eq("empresa_id", empresaId)
     .order("updated_at", { ascending: false })
@@ -627,6 +645,12 @@ export async function listCrmDealsSummary(): Promise<CrmDealSummary[]> {
       loss_reason: String(row.loss_reason ?? ""),
       custom_fields: normalizeCustomFields((row as { custom_fields?: unknown }).custom_fields),
       playbook_items: normalizePlaybookItems((row as { playbook_items?: unknown }).playbook_items, String(row.stage ?? "novos")),
+      fvs_signed: Boolean(row.fvs_signed),
+      fvs_signed_by: row.fvs_signed_by ? String(row.fvs_signed_by) : null,
+      fvs_signed_date: row.fvs_signed_date ? String(row.fvs_signed_date) : null,
+      fvs_hash: row.fvs_hash ? String(row.fvs_hash) : null,
+      comments: Array.isArray(row.comments) ? row.comments : [],
+      logs: Array.isArray(row.logs) ? row.logs : [],
     } satisfies CrmDealSummary;
   });
 }
@@ -985,7 +1009,6 @@ export async function listCrmLossReasonsReport() {
   }
   return Array.from(grouped.values()).sort((a, b) => b.total - a.total);
 }
-
 export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> {
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
@@ -1006,13 +1029,13 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
     .select("id, nome, email, role, empresa_id")
     .eq("empresa_id", empresaId)
     .order("nome", { ascending: true });
-    
+
   if (error) {
     throw new Error(`Erro ao listar perfis comerciais: ${error.message}`);
   }
-  
+
   const filtered = masterIds.size > 0 ? (data ?? []).filter((p) => !masterIds.has(p.empresa_id)) : (data ?? []);
-  
+
   return filtered.map((item) => ({
     id: String(item.id),
     nome: String(item.nome ?? ""),
@@ -1413,6 +1436,12 @@ export async function listCrmDealsByWorkspace(workspaceId?: string): Promise<Crm
         Array.isArray(row.playbook_items)
           ? (row.playbook_items as CrmDealSummary["playbook_items"])
           : [],
+      fvs_signed: Boolean(row.fvs_signed),
+      fvs_signed_by: row.fvs_signed_by ? String(row.fvs_signed_by) : null,
+      fvs_signed_date: row.fvs_signed_date ? String(row.fvs_signed_date) : null,
+      fvs_hash: row.fvs_hash ? String(row.fvs_hash) : null,
+      comments: Array.isArray(row.comments) ? row.comments : [],
+      logs: Array.isArray(row.logs) ? row.logs : [],
     };
   });
 }
@@ -1551,4 +1580,87 @@ export async function deleteCrmCustomTab(id: string): Promise<void> {
   if (error) {
     throw new Error(`Erro ao deletar aba customizada: ${error.message}`);
   }
+}
+
+export type CrmSector = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  budget_limit: number;
+  empresa_id: string;
+};
+
+export type CrmWorkflowStep = {
+  id?: string;
+  step_order: number;
+  sector_id: string;
+  stage_name: string;
+  color: string;
+  icon: string;
+  subtasks: string[];
+  empresa_id: string;
+};
+
+export async function listCrmSectors(): Promise<CrmSector[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("crm_sectors")
+    .select("*")
+    .eq("empresa_id", empresaId)
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(`Erro ao listar setores do CRM: ${error.message}`);
+  return (data ?? []) as CrmSector[];
+}
+
+export async function upsertCrmSector(sector: Partial<CrmSector>) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const payload = {
+    ...sector,
+    empresa_id: empresaId,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("crm_sectors")
+    .upsert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Erro ao salvar setor no CRM: ${error.message}`);
+  return data as CrmSector;
+}
+
+export async function listCrmWorkflowSteps(): Promise<CrmWorkflowStep[]> {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("crm_workflow_steps")
+    .select("*")
+    .eq("empresa_id", empresaId)
+    .order("step_order", { ascending: true });
+
+  if (error) throw new Error(`Erro ao listar etapas do workflow CRM: ${error.message}`);
+  return (data ?? []) as CrmWorkflowStep[];
+}
+
+export async function upsertCrmWorkflowSteps(steps: Omit<CrmWorkflowStep, "empresa_id">[]) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const payload = steps.map(step => ({
+    ...step,
+    empresa_id: empresaId,
+  }));
+
+  const { error } = await supabase
+    .from("crm_workflow_steps")
+    .upsert(payload);
+
+  if (error) throw new Error(`Erro ao salvar etapas do workflow CRM: ${error.message}`);
+  return { success: true };
 }

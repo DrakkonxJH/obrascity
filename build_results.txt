@@ -1,0 +1,23 @@
+
+> obrascity@0.1.0 build
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.4min
+  Running TypeScript ...
+Failed to type check.
+
+./components/CRMBoard.tsx:351:24
+Type error: Block-scoped variable 'async' used before its declaration.
+
+  [90m349 |[0m     };
+  [90m350 |[0m
+[31m[1m>[0m [90m351 |[0m     [36mconst[0m handleDrop = [36masync[0m [36masync[0m (e: [33mReact[0m.[33mDragEvent[0m, targetStepIndex: number) => {
+  [90m    |[0m                        [31m[1m^[0m
+  [90m352 |[0m         e.preventDefault();
+  [90m353 |[0m         [36mif[0m (!draggedCardId) [36mreturn[0m;
+  [90m354 |[0m
+Next.js build worker exited with code: 1 and signal: null
