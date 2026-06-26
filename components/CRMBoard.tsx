@@ -5,7 +5,7 @@
 // Integrates seamless sequential POP, Custom Kanban columns, and MS Project-style dependency lines in pure SVG!
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Card, WorkflowStep, Sector, Subtask, Comment, AuditLog, Attachment, SOP_TEMPLATES } from '../app/actions/crmActions';
+import { Card, WorkflowStep, Sector, Subtask, Comment, AuditLog, Attachment, SOP_TEMPLATES, saveCardAction, saveWorkflowPipelineAction, saveSectorAction } from '@/app/actions/crmActions';
 
 interface CRMBoardProps {
   initialCards?: Card[];
@@ -20,13 +20,11 @@ export default function CRMBoard({
   initialCards = [],
   initialWorkflow = [],
   initialSectors = [],
-  onSaveCardsServer,
-  onSaveWorkflowServer
 }: {
   initialCards?: Card[];
-  initialWorkflow?: any[];
-  onSaveCards?: any;
-} & any) {
+  initialWorkflow?: WorkflowStep[];
+  initialSectors?: Sector[];
+}) {
 
     // ----------------------------------------------------
     // LOCAL STATES & PERSISTENCE
@@ -191,25 +189,39 @@ export default function CRMBoard({
         // Sync initial data if needed, or handle dynamic updates
     }, []);
 
-    // Sync with Server Actions (Replacing localStorage)
-    const persistData = async (newCards: Card[], newWorkflow?: WorkflowStep[]) => {
-        setAllCards(newCards);
-        if (newWorkflow) setWorkflow(newWorkflow);
-
+    // Sync with Server Actions
+    const saveSingleCard = async (card: Card) => {
         try {
-            // If workflow changed, save it
-            if (newWorkflow) {
-                await saveWorkflowPipelineAction(newWorkflow, newCards);
-            }
-
-            // Save any card that was modified (this is a simplified sync)
-            // In a real app, we'd only send the diff.
-            for (const card of newCards) {
-                await saveCardAction(card);
-            }
+            await saveCardAction(card);
         } catch (err) {
-            console.error("Failed to sync CRM data to server:", err);
+            console.error("Failed to save card:", err);
         }
+    };
+
+    const saveWorkflow = async (newWorkflow: WorkflowStep[], cards: Card[]) => {
+        try {
+            await saveWorkflowPipelineAction(newWorkflow, cards);
+        } catch (err) {
+            console.error("Failed to save workflow:", err);
+        }
+    };
+
+    const saveSector = async (sector: Sector) => {
+        try {
+            await saveSectorAction(sector);
+        } catch (err) {
+            console.error("Failed to save sector:", err);
+        }
+    };
+
+    const persistCards = (newCards: Card[]) => {
+        setAllCards(newCards);
+        return newCards;
+    };
+
+    const persistWorkflow = (newWorkflow: WorkflowStep[]) => {
+        setWorkflow(newWorkflow);
+        return newWorkflow;
     };
 
 
@@ -276,12 +288,21 @@ export default function CRMBoard({
         };
     }, [viewMode, selectedGanttCardId, workflow, allCards]);
 
+interface WorkflowDateRange {
+    step: number;
+    startDateStr: string;
+    endDateStr: string;
+    startDate: Date;
+    endDate: Date;
+    duration: number;
+}
+
     const getSequentialDatesForWorkflow = (card: Card) => {
-        let dates = [];
+        let dates: WorkflowDateRange[] = [];
         let currentStart = new Date(card.startDate || new Date().toISOString());
 
         workflow.forEach((step) => {
-            let durationDays = 4; // default
+            let durationDays = 4; // standard duration
             if (step.step === 1) durationDays = 3;
             if (step.step === 3) durationDays = 5;
             if (step.step === 5) durationDays = 5;
@@ -306,7 +327,9 @@ export default function CRMBoard({
         return dates;
     };
 
-    const gStart = new Date("2026-06-25T00:00:00");
+    const gStart = allCards.length > 0
+        ? new Date(Math.min(...allCards.map(c => new Date(c.startDate || "2026-06-25").getTime())))
+        : new Date("2026-06-25T00:00:00");
 
     // ----------------------------------------------------
     // METRICS CALCULATORS
@@ -334,7 +357,7 @@ export default function CRMBoard({
         setDraggedCardId(cardId);
     };
 
-    const handleDrop = (e: React.DragEvent, targetStepIndex: number) => {
+    const handleDrop = async (e: React.DragEvent, targetStepIndex: number) => {
         e.preventDefault();
         if (!draggedCardId) return;
 
@@ -369,11 +392,13 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
+        const cards = persistCards(updatedCards);
+        const movedCard = cards.find(c => c.id === draggedCardId);
+        if (movedCard) await saveSingleCard(movedCard);
         setDraggedCardId(null);
     };
 
-    const handleSaveNewCard = (e: React.FormEvent) => {
+    const handleSaveNewCard = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingCard || !editingCard.title) return;
 
@@ -381,17 +406,24 @@ export default function CRMBoard({
         const step = workflow[targetStepIndex];
 
         let updatedCards: Card[];
+        let savedCard: Card | null = null;
 
         if (editingCard.id) {
             // Update
             updatedCards = allCards.map(c => {
                 if (c.id === editingCard.id) {
                     const changedStep = c.currentStepIndex !== targetStepIndex;
-                    return {
+                    const updated = {
                         ...c,
                         ...(editingCard as Card),
-                        subtasks: changedStep && step ? step.subtasks.map((t, i) => ({ id: `sub-${Date.now()}-${i}`, title: t, done: false })) : c.subtasks
+                        subtasks: changedStep && step ? step.subtasks.map((t, i) => ({ id: `sub-${Date.now()}-${i}`, title: t, done: false })) : c.subtasks,
+                        logs: [
+                            { text: `Informações do card atualizadas`, date: getCurrentTimestamp() },
+                            ...c.logs
+                        ]
                     };
+                    savedCard = updated;
+                    return updated;
                 }
                 return c;
             });
@@ -415,16 +447,25 @@ export default function CRMBoard({
                 attachments: []
             };
             updatedCards = [...allCards, newCard];
+            savedCard = newCard;
             setActiveSectorId(step.sectorId);
         }
 
-        persistData(updatedCards);
+        persistCards(updatedCards);
+        if (savedCard) await saveSingleCard(savedCard);
         setIsCardModalOpen(false);
         setEditingCard(null);
     };
 
-    const promoteCard = () => {
+    const promoteCard = async () => {
         if (!selectedDetailCard) return;
+
+        // Quality Gate: All subtasks must be done AND fvsSigned must be true
+        const allDone = selectedDetailCard.subtasks.length > 0 && selectedDetailCard.subtasks.every(s => s.done);
+        if (!allDone || !selectedDetailCard.fvsSigned) {
+            alert(`⚠️ Bloqueio de Qualidade (FVS): Você precisa concluir 100% dos procedimentos obrigatórios da fase "${workflow[selectedDetailCard.currentStepIndex]?.stageName}" e ter a assinatura digital da FVS para promover este projeto!`);
+            return;
+        }
 
         const nextStepIndex = selectedDetailCard.currentStepIndex + 1;
         if (nextStepIndex >= workflow.length) return;
@@ -447,14 +488,17 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
+        const cards = persistCards(updatedCards);
+        const promotedCard = cards.find(c => c.id === selectedDetailCard.id);
+        if (promotedCard) await saveSingleCard(promotedCard);
+
         setIsDetailModalOpen(false);
         setSelectedDetailCard(null);
         setActiveSectorId(nextStep.sectorId);
         alert(`Sucesso! O projeto foi transferido para o setor "${nextStep.sectorId.toUpperCase()}" na etapa "${nextStep.stageName}".`);
     };
 
-    const signFVS = () => {
+    const signFVS = async () => {
         if (!selectedDetailCard) return;
 
         const updatedCards = allCards.map(c => {
@@ -474,13 +518,15 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
+        const cards = persistCards(updatedCards);
+        const signedCard = cards.find(c => c.id === selectedDetailCard.id);
+        if (signedCard) await saveSingleCard(signedCard);
+
         // Refresh detail modal
-        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
-        if (target) setSelectedDetailCard(target);
+        if (signedCard) setSelectedDetailCard(signedCard);
     };
 
-    const unsignFVS = () => {
+    const unsignFVS = async () => {
         if (!selectedDetailCard || !confirm("Deseja realmente desfazer a assinatura digital de qualidade desta FVS?")) return;
 
         const updatedCards = allCards.map(c => {
@@ -500,12 +546,14 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
-        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
-        if (target) setSelectedDetailCard(target);
+        const cards = persistCards(updatedCards);
+        const unsignedCard = cards.find(c => c.id === selectedDetailCard.id);
+        if (unsignedCard) await saveSingleCard(unsignedCard);
+
+        if (unsignedCard) setSelectedDetailCard(unsignedCard);
     };
 
-    const handleAddSubtask = () => {
+    const handleAddSubtask = async () => {
         if (!selectedDetailCard || !newSubtaskTitle.trim()) return;
 
         const updatedCards = allCards.map(c => {
@@ -520,13 +568,15 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
+        const cards = persistCards(updatedCards);
+        const updatedCard = cards.find(c => c.id === selectedDetailCard.id);
+        if (updatedCard) await saveSingleCard(updatedCard);
+
         setNewSubtaskInput("");
-        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
-        if (target) setSelectedDetailCard(target);
+        if (updatedCard) setSelectedDetailCard(updatedCard);
     };
 
-    const handleToggleSubtask = (subId: string) => {
+    const handleToggleSubtask = async (subId: string) => {
         if (!selectedDetailCard || selectedDetailCard.fvsSigned) return;
 
         const updatedCards = allCards.map(c => {
@@ -547,12 +597,14 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
-        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
-        if (target) setSelectedDetailCard(target);
+        const cards = persistCards(updatedCards);
+        const updatedCard = cards.find(c => c.id === selectedDetailCard.id);
+        if (updatedCard) await saveSingleCard(updatedCard);
+
+        if (updatedCard) setSelectedDetailCard(updatedCard);
     };
 
-    const handleAddComment = () => {
+    const handleAddComment = async () => {
         if (!selectedDetailCard || !newCommentText.trim()) return;
 
         const updatedCards = allCards.map(c => {
@@ -567,10 +619,12 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards);
+        const cards = persistCards(updatedCards);
+        const updatedCard = cards.find(c => c.id === selectedDetailCard.id);
+        if (updatedCard) await saveSingleCard(updatedCard);
+
         setNewCommentText("");
-        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
-        if (target) setSelectedDetailCard(target);
+        if (updatedCard) setSelectedDetailCard(updatedCard);
     };
 
     // ----------------------------------------------------
@@ -578,7 +632,7 @@ export default function CRMBoard({
     // ----------------------------------------------------
     const [newSOPStepTitle, setNewSOPStepTitle] = useState("");
 
-    const movePipelineStep = (idx: number, direction: number) => {
+    const movePipelineStep = async (idx: number, direction: number) => {
         const targetIdx = idx + direction;
         if (targetIdx < 0 || targetIdx >= workflow.length) return;
 
@@ -598,10 +652,18 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards, list);
+        const cards = persistCards(updatedCards);
+        const wf = persistWorkflow(list);
+
+        await saveWorkflow(wf, cards);
+        // Save only modified cards
+        const modifiedCards = cards.filter(c => c.currentStepIndex === idx || c.currentStepIndex === targetIdx);
+        for (const card of modifiedCards) {
+            await saveSingleCard(card);
+        }
     };
 
-    const handleAddSOPItem = (stepIndex: number, text: string) => {
+    const handleAddSOPItem = async (stepIndex: number, text: string) => {
         if (!text.trim()) return;
         const list = [...workflow];
         list[stepIndex].subtasks.push(text.trim());
@@ -621,10 +683,17 @@ export default function CRMBoard({
             return card;
         });
 
-        persistData(updatedCards, list);
+        const cards = persistCards(updatedCards);
+        const wf = persistWorkflow(list);
+
+        await saveWorkflow(wf, cards);
+        const affectedCards = cards.filter(c => c.currentStepIndex === stepIndex);
+        for (const card of affectedCards) {
+            await saveSingleCard(card);
+        }
     };
 
-    const handleRemoveSOPItem = (stepIndex: number, subIndex: number) => {
+    const handleRemoveSOPItem = async (stepIndex: number, subIndex: number) => {
         const list = [...workflow];
         list[stepIndex].subtasks.splice(subIndex, 1);
 
@@ -642,10 +711,17 @@ export default function CRMBoard({
             return card;
         });
 
-        persistData(updatedCards, list);
+        const cards = persistCards(updatedCards);
+        const wf = persistWorkflow(list);
+
+        await saveWorkflow(wf, cards);
+        const affectedCards = cards.filter(c => c.currentStepIndex === stepIndex);
+        for (const card of affectedCards) {
+            await saveSingleCard(card);
+        }
     };
 
-    const handleAddNewPipelineStep = () => {
+    const handleAddNewPipelineStep = async () => {
         if (!newSOPStepTitle.trim()) return;
         const nextStep = workflow.length + 1;
         const newStep: WorkflowStep = {
@@ -657,11 +733,12 @@ export default function CRMBoard({
             subtasks: ["Procedimento padrão 1", "Procedimento padrão 2"]
         };
         const list = [...workflow, newStep];
-        persistData(allCards, list);
+        const wf = persistWorkflow(list);
+        await saveWorkflow(wf, allCards);
         setNewSOPStepTitle("");
     };
 
-    const handleRemovePipelineStep = (idx: number) => {
+    const handleRemovePipelineStep = async (idx: number) => {
         if (workflow.length <= 1) {
             alert("O fluxo programado corporativo deve conter pelo menos uma fase sequencial ativa.");
             return;
@@ -680,7 +757,14 @@ export default function CRMBoard({
             return c;
         });
 
-        persistData(updatedCards, list);
+        const cards = persistCards(updatedCards);
+        const wf = persistWorkflow(list);
+
+        await saveWorkflow(wf, cards);
+        const affectedCards = cards.filter(c => c.currentStepIndex >= list.length - 1); // Those that were pushed back
+        for (const card of affectedCards) {
+            await saveSingleCard(card);
+        }
     };
 
     // ----------------------------------------------------
@@ -747,6 +831,7 @@ export default function CRMBoard({
                 ...editingCard,
                 title: template.title,
                 desc: template.desc,
+                subtasks: template.subtasks.map((t, i) => ({ id: `sub-tpl-${Date.now()}-${i}`, title: t, done: false }))
             });
         }
     };
@@ -757,7 +842,15 @@ export default function CRMBoard({
     // ----------------------------------------------------
     return (
         <div className="h-screen flex overflow-hidden relative font-sans text-light bg-void">
-            
+            {/* Background Noise Overlay to match prototype aesthetic */}
+            <div
+                className="fixed inset-0 pointer-events-none opacity-3 z-0"
+                style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E")`,
+                    backgroundSize: '180px'
+                }}
+            />
+
             {/* SIDEBAR */}
             <aside className="w-64 bg-dark text-light flex flex-col justify-between z-30 flex-shrink-0 shadow-2xl border-r border-steel relative">
                 <div>
@@ -768,7 +861,7 @@ export default function CRMBoard({
                             </div>
                             <div>
                                 <span className="font-extrabold text-lg text-white font-condensed tracking-wide">ObrasCit<span className="text-fire">Y</span></span>
-                                <span class="block text-[9px] text-muted font-medium uppercase tracking-wider">Gestão Inteligente</span>
+                                <span className="block text-[9px] text-muted font-medium uppercase tracking-wider">Gestão Inteligente</span>
                             </div>
                         </div>
                     </div>
@@ -777,7 +870,7 @@ export default function CRMBoard({
                         <div className="flex items-center justify-between text-xs font-semibold text-muted uppercase tracking-wider mb-3 px-2">
                             <span>Setores / Áreas</span>
                             <button onClick={() => { setEditingSector({}); setIsSectorModalOpen(true); }} className="text-fire hover:text-fire-hover transition">
-                                <i class="fa-solid fa-plus-circle text-base"></i>
+                                <i className="fa-solid fa-plus-circle text-base"></i>
                             </button>
                         </div>
                         
@@ -848,7 +941,7 @@ export default function CRMBoard({
                                 <span>Kanban</span>
                             </button>
                             <button onClick={() => setViewName('gantt')} className={`relative z-10 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all duration-300 flex items-center space-x-1.5 h-7 ${viewMode === 'gantt' ? 'bg-gradient-to-r from-fire to-fire-hover text-white shadow-[0_2px_8px_rgba(255,107,26,0.3)]' : 'text-muted'}`}>
-                                <i class="fa-solid fa-chart-gantt text-[10px]"></i>
+                                <i className="fa-solid fa-chart-gantt text-[10px]"></i>
                                 <span>Gantt / Prazo</span>
                             </button>
                         </div>
@@ -886,18 +979,18 @@ export default function CRMBoard({
                             <span className="text-base font-bold font-condensed tracking-wide text-white">R$ {totalCost.toLocaleString('pt-BR')}</span>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
-                        <div class="p-2.5 rounded bg-steel text-cyan-400"><i class="fa-solid fa-chart-line"></i></div>
+                    <div className="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
+                        <div className="p-2.5 rounded bg-steel text-cyan-400"><i className="fa-solid fa-chart-line"></i></div>
                         <div>
-                            <span class="block text-[9px] uppercase font-bold text-muted tracking-wider">Taxa de Entrega</span>
-                            <span class="text-base font-bold font-condensed tracking-wide text-white">{completionRate}%</span>
+                            <span className="block text-[9px] uppercase font-bold text-muted tracking-wider">Taxa de Entrega</span>
+                            <span className="text-base font-bold font-condensed tracking-wide text-white">{completionRate}%</span>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
-                        <div class="p-2.5 rounded bg-steel text-rose-500"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    <div className="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
+                        <div className="p-2.5 rounded bg-steel text-rose-500"><i className="fa-solid fa-circle-exclamation"></i></div>
                         <div>
-                            <span class="block text-[9px] uppercase font-bold text-muted tracking-wider">Alta Prioridade</span>
-                            <span class="text-base font-bold font-condensed tracking-wide text-rose-500 animate-pulse">{urgentCount}</span>
+                            <span className="block text-[9px] uppercase font-bold text-muted tracking-wider">Alta Prioridade</span>
+                            <span className="text-base font-bold font-condensed tracking-wide text-rose-500 animate-pulse">{urgentCount}</span>
                         </div>
                     </div>
                 </section>
@@ -979,7 +1072,7 @@ export default function CRMBoard({
                                 <span className="text-xs text-muted font-bold uppercase tracking-wider">Visualizar Obra:</span>
                                 <div className="flex items-center space-x-1.5 p-1 bg-dark rounded-lg border border-steel">
                                     {allCards.map(c => (
-                                        <button key={c.id} onClick={() => selectGanttActiveProject(c.id)} className={`px-3.5 py-1 rounded text-xs font-bold transition ${c.id === selectedGanttCardId ? 'bg-fire text-white' : 'text-muted hover:text-white'}`}>
+                                        <button key={c.id} onClick={() => setSelectedGanttCardId(c.id)} className={`px-3.5 py-1 rounded text-xs font-bold transition ${c.id === selectedGanttCardId ? 'bg-fire text-white' : 'text-muted hover:text-white'}`}>
                                             {c.title.split(' - ')[0]}
                                         </button>
                                     ))}
@@ -992,9 +1085,15 @@ export default function CRMBoard({
                                     <div className="grid grid-cols-[240px_1fr] bg-dark2/30 border-b border-steel text-center text-[10px] font-bold text-muted uppercase tracking-wider">
                                         <div className="text-left p-3 border-r border-steel">Fase / Atividade</div>
                                         <div className="grid font-mono" style={{ gridTemplateColumns: 'repeat(21, minmax(0, 1fr))' }}>
-                                            {Array.from({ length: 21 }).map((_, i) => (
-                                                <div key={i} className="p-3 border-r border-steel/30">{i + 25}/06</div>
-                                            ))}
+                                            {Array.from({ length: 21 }).map((_, i) => {
+                                                const date = new Date(gStart);
+                                                date.setDate(date.getDate() + i);
+                                                return (
+                                                    <div key={i} className="p-3 border-r border-steel/30">
+                                                        {String(date.getDate()).padStart(2, '0')}/{String(date.getMonth() + 1).padStart(2, '0')}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
@@ -1181,8 +1280,149 @@ export default function CRMBoard({
                 </div>
             )}
 
+            {/* POP WORKFLOW CONFIG MODAL */}
+            {isPOPModalOpen && (
+                <div className="fixed inset-0 bg-void/90 flex items-center justify-center z-50 p-4 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-dark rounded-xl shadow-[0_10px_50px_rgba(0,0,0,0.95)] border border-steel max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel flex-shrink-0">
+                            <h3 className="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2.5">
+                                <i className="fa-solid fa-route text-fire animate-pulse"></i>
+                                <span>PROGRAMADOR DE PROCESSOS E PROCEDIMENTOS (POP UNIFICADO)</span>
+                            </h3>
+                            <button onClick={() => setIsPOPModalOpen(false)} className="text-muted hover:text-white transition">
+                                <i className="fa-solid fa-times text-lg"></i>
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                            <div className="bg-dark2/50 border border-steel/60 p-3.5 rounded-lg text-xs text-muted leading-relaxed flex items-start space-x-2">
+                                <i className="fa-solid fa-circle-info text-fire mt-0.5"></i>
+                                <div>
+                                    Monte a sequência de <strong>Processos e Procedimentos</strong> que regem o andamento dos projetos da sua empresa.
+                                    Indique o setor responsável, o nome da etapa e descreva a lista de procedimentos obrigatórios (um por linha).
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                {workflow.map((step, idx) => (
+                                    <div key={step.step} className="p-4 rounded-xl bg-dark2 border border-steel flex items-start space-x-4 group">
+                                        <div className="flex flex-col items-center space-y-2">
+                                            <span className="text-[10px] font-bold text-fire bg-fire/10 px-2 py-0.5 rounded">Etapa {step.step}</span>
+                                            <div className="flex flex-col space-y-1">
+                                                <button onClick={() => movePipelineStep(idx, -1)} className="p-1 text-muted hover:text-white transition"><i className="fa-solid fa-chevron-up text-[10px]"></i></button>
+                                                <button onClick={() => movePipelineStep(idx, 1)} className="p-1 text-muted hover:text-white transition"><i className="fa-solid fa-chevron-down text-[10px]"></i></button>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <input
+                                                    value={step.stageName}
+                                                    onChange={(e) => {
+                                                        const list = [...workflow];
+                                                        list[idx].stageName = e.target.value;
+                                                        setWorkflow(list);
+                                                    }}
+                                                    className="p-2 rounded bg-void border border-steel text-xs text-white focus:border-fire outline-none"
+                                                    placeholder="Nome da Etapa"
+                                                />
+                                                <select
+                                                    value={step.sectorId}
+                                                    onChange={(e) => {
+                                                        const list = [...workflow];
+                                                        list[idx].sectorId = e.target.value;
+                                                        setWorkflow(list);
+                                                    }}
+                                                    className="p-2 rounded bg-void border border-steel text-xs text-white focus:border-fire outline-none"
+                                                >
+                                                    {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Procedimentos Obrigatórios (FVS)</span>
+                                                    <button onClick={() => {
+                                                        const text = prompt("Novo procedimento:");
+                                                        if(text) handleAddSOPItem(idx, text);
+                                                    }} className="text-fire text-[10px] font-bold hover:underline"><i className="fa-solid fa-plus mr-1"></i>Adicionar</button>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-1">
+                                                    {step.subtasks.map((sub, sIdx) => (
+                                                        <div key={sIdx} className="flex items-center justify-between p-2 rounded bg-void border border-steel/30 text-[11px] text-light group/sub">
+                                                            <span>{sub}</span>
+                                                            <button onClick={() => handleRemoveSOPItem(idx, sIdx)} className="text-muted hover:text-rose-500 opacity-0 group-hover/sub:opacity-100 transition"><i className="fa-solid fa-trash text-[10px]"></i></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleRemovePipelineStep(idx)} className="p-2 text-muted hover:text-rose-500 transition"><i className="fa-solid fa-trash"></i></button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex items-center space-x-2 pt-4">
+                                <input
+                                    value={newSOPStepTitle}
+                                    onChange={(e) => setNewSOPStepTitle(e.target.value)}
+                                    placeholder="Nome da nova etapa..."
+                                    className="flex-1 p-2 rounded bg-void border border-steel text-xs text-white focus:border-fire outline-none"
+                                />
+                                <button onClick={handleAddNewPipelineStep} className="px-4 py-2 bg-fire hover:bg-fire-hover text-white text-xs font-bold rounded-lg transition shadow-md">Adicionar Etapa</button>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-steel bg-dark2/25 flex justify-end">
+                            <button onClick={() => setIsPOPModalOpen(false)} className="px-6 py-2.5 bg-fire hover:bg-fire-hover text-white rounded-lg text-xs font-bold transition shadow-md">Fechar e Salvar Processos</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SECTOR MODAL */}
+            {isSectorModalOpen && (
+                <div className="fixed inset-0 bg-void/85 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-dark rounded-xl shadow-2xl border border-steel max-w-md w-full overflow-hidden">
+                        <div className="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel">
+                            <h3 className="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2">
+                                <i className="fa-solid fa-folder-tree text-fire"></i>
+                                <span>{editingSector?.name ? 'EDITAR SETOR' : 'NOVO SETOR / ÁREA'}</span>
+                            </h3>
+                            <button onClick={() => setIsSectorModalOpen(false)} className="text-muted hover:text-white transition text-xl">&times;</button>
+                        </div>
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const updatedSectors = sectors.map(s => s.id === editingSector?.id ? { ...s, ...editingSector } : s);
+                            let newSector: Sector | null = null;
+                            if (!editingSector?.id) {
+                                newSector = { ...editingSector as Sector, id: `sec-${Date.now()}` };
+                                updatedSectors.push(newSector);
+                            } else {
+                                newSector = updatedSectors.find(s => s.id === editingSector?.id) || null;
+                            }
+                            setSectors(updatedSectors);
+                            if (newSector) await saveSector(newSector);
+                            setIsSectorModalOpen(false);
+                            setEditingSector(null);
+                        }} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Nome do Setor / Área *</label>
+                                <input
+                                    type="text"
+                                    value={editingSector?.name || ""}
+                                    onChange={(e) => setEditingSector({...editingSector, name: e.target.value})}
+                                    required
+                                    placeholder="Ex: Compras, Operacional, etc."
+                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:ring-1 focus:ring-fire focus:outline-none transition"
+                                />
+                            </div>
+                            <div className="pt-4 border-t border-steel flex justify-end space-x-2">
+                                <button type="button" onClick={() => setIsSectorModalOpen(false)} className="px-4 py-2 border border-steel hover:bg-steel rounded-lg text-sm font-semibold text-light hover:text-white transition">Cancelar</button>
+                                <button type="submit" className="px-5 py-2 bg-fire hover:bg-fire-hover text-white rounded-lg text-sm font-bold shadow-md transition">Salvar Setor</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* DETAIL VIEW MODAL */}
             {isDetailModalOpen && selectedDetailCard && (
+
                 <div className="fixed inset-0 bg-void/90 flex items-center justify-center z-50 p-4 backdrop-blur-md">
                     <div className="bg-dark border border-steel w-full max-w-5xl h-full max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300">
                         {/* Modal Header */}
