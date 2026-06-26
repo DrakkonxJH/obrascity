@@ -101,14 +101,38 @@ type CrmDealPlaybookItem = {
 };
 
 type UpdateCrmDealInput = {
+  nome?: string;
+  descricao?: string;
   stage?: string;
   status?: string;
   priority?: string;
   probability?: number;
+  valor?: number;
   owner_profile_id?: string | null;
+  workspace_id?: string | null;
   loss_reason?: string;
   custom_fields?: Record<string, string>;
   playbook_items?: CrmDealPlaybookItem[];
+};
+
+type CreateCrmDealInput = {
+  nome: string;
+  descricao?: string;
+  stage?: string;
+  status?: string;
+  priority?: string;
+  probability?: number;
+  valor?: number;
+  owner_profile_id?: string | null;
+  workspace_id?: string | null;
+  loss_reason?: string;
+  custom_fields?: Record<string, string>;
+  playbook_items?: CrmDealPlaybookItem[];
+  company_name?: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  contact_role?: string;
 };
 
 type CrmProfileSummary = {
@@ -776,6 +800,14 @@ export async function updateCrmDeal(dealId: string, patch: UpdateCrmDealInput) {
     updated_at: new Date().toISOString(),
   };
 
+  if (typeof patch.nome === "string") {
+    const nome = patch.nome.trim();
+    if (!nome) throw new Error("Nome do negócio é obrigatório.");
+    updatePayload.nome = nome;
+  }
+  if (typeof patch.descricao === "string") {
+    updatePayload.descricao = patch.descricao.trim();
+  }
   if (patch.stage) {
     updatePayload.stage = nextStage;
     updatePayload.probability = defaultDealProbability(nextStage);
@@ -788,8 +820,14 @@ export async function updateCrmDeal(dealId: string, patch: UpdateCrmDealInput) {
     const bounded = Math.max(0, Math.min(100, Math.round(patch.probability)));
     updatePayload.probability = bounded;
   }
+  if (typeof patch.valor === "number" && Number.isFinite(patch.valor)) {
+    updatePayload.valor = Math.max(0, patch.valor);
+  }
   if (patch.owner_profile_id !== undefined) {
     updatePayload.owner_profile_id = patch.owner_profile_id ? String(patch.owner_profile_id) : null;
+  }
+  if (patch.workspace_id !== undefined) {
+    updatePayload.workspace_id = patch.workspace_id ? String(patch.workspace_id) : null;
   }
   if (patch.loss_reason !== undefined) {
     updatePayload.loss_reason = nextLossReason;
@@ -826,6 +864,99 @@ export async function updateCrmDeal(dealId: string, patch: UpdateCrmDealInput) {
 
   await ensureDealAutomationFollowup(supabase, empresaId, dealId, nextStage, currentRes.data.nome);
   return update.data;
+}
+
+export async function createCrmDeal(input: CreateCrmDealInput) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const profile = await getCurrentProfile();
+  const supabase = await createServerClient();
+
+  const nome = String(input.nome ?? "").trim();
+  if (!nome) {
+    throw new Error("Nome do negócio é obrigatório.");
+  }
+
+  const stage = normalizeDealStage(String(input.stage ?? "novos"));
+  const inferredStatus =
+    stage === "ganho" ? "ganho" : stage === "perdido" ? "perdido" : "aberto";
+  const status = String(input.status ?? inferredStatus).trim().toLowerCase();
+  const priority = normalizeDealPriority(String(input.priority ?? "media"));
+  const probability =
+    typeof input.probability === "number" && Number.isFinite(input.probability)
+      ? Math.max(0, Math.min(100, Math.round(input.probability)))
+      : defaultDealProbability(stage);
+
+  const companyId = input.company_name?.trim()
+    ? await ensureCompanyId(supabase, empresaId, input.company_name)
+    : null;
+  const contactId = input.contact_name?.trim()
+    ? await ensureContactId(
+        supabase,
+        empresaId,
+        input.contact_name,
+        input.contact_email ?? "",
+        input.contact_phone ?? "",
+        input.contact_role ?? "",
+        companyId,
+      )
+    : null;
+
+  const payload = {
+    empresa_id: empresaId,
+    company_id: companyId,
+    contact_id: contactId,
+    owner_profile_id:
+      input.owner_profile_id !== undefined
+        ? input.owner_profile_id
+          ? String(input.owner_profile_id)
+          : null
+        : (profile?.id ?? null),
+    workspace_id: input.workspace_id ? String(input.workspace_id) : null,
+    nome,
+    descricao: String(input.descricao ?? "").trim(),
+    stage,
+    status,
+    priority,
+    valor: typeof input.valor === "number" && Number.isFinite(input.valor) ? Math.max(0, input.valor) : 0,
+    probability,
+    last_activity_at: new Date().toISOString(),
+    next_activity_at: null,
+    loss_reason: String(input.loss_reason ?? "").trim(),
+    custom_fields: normalizeCustomFields(input.custom_fields),
+    playbook_items: normalizePlaybookItems(input.playbook_items, stage),
+    tags: ["novo-crm"],
+  };
+
+  const insert = await supabase.from("crm_deals").insert(payload).select("id").single<{ id: string }>();
+  if (insert.error || !insert.data?.id) {
+    throw new Error(`Erro ao criar negócio CRM: ${insert.error?.message ?? "falha desconhecida"}`);
+  }
+
+  await ensureDealAutomationFollowup(supabase, empresaId, insert.data.id, stage, nome);
+  return insert.data;
+}
+
+export async function deleteCrmDeal(dealId: string) {
+  const empresaId = await getEmpresaIdFromProfile();
+  const supabase = await createServerClient();
+
+  const deleteActivities = await supabase
+    .from("crm_activities")
+    .delete()
+    .eq("empresa_id", empresaId)
+    .eq("deal_id", dealId);
+  if (deleteActivities.error) {
+    throw new Error(`Erro ao remover atividades do negócio: ${deleteActivities.error.message}`);
+  }
+
+  const deleteDeal = await supabase
+    .from("crm_deals")
+    .delete()
+    .eq("empresa_id", empresaId)
+    .eq("id", dealId);
+  if (deleteDeal.error) {
+    throw new Error(`Erro ao remover negócio CRM: ${deleteDeal.error.message}`);
+  }
 }
 
 export async function listCrmLossReasonsReport() {

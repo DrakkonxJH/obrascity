@@ -138,7 +138,7 @@
             <div class="p-4">
                 <div class="flex items-center justify-between text-xs font-semibold text-muted uppercase tracking-wider mb-3 px-2">
                     <span>Setores / Áreas</span>
-                    <button onclick="openNewSectorModal()" class="text-fire hover:text-fire-hover transition" title="Adicionar Novo Setor">
+                    <button id="new-sector-trigger" onclick="openNewSectorModal()" class="text-fire hover:text-fire-hover transition" title="Adicionar Novo Setor">
                         <i class="fa-solid fa-plus-circle text-base"></i>
                     </button>
                 </div>
@@ -150,7 +150,7 @@
 
                 <!-- WORKFLOW CONFIG BUTTON IN SIDEBAR -->
                 <div class="pt-2 border-t border-steel/60">
-                    <button onclick="openWorkflowConfigModal()" class="w-full py-2.5 px-3 rounded-lg bg-steel/30 hover:bg-steel/60 border border-steel hover:border-fire/30 text-left text-xs font-bold transition flex items-center justify-between group">
+                    <button id="workflow-config-trigger" onclick="openWorkflowConfigModal()" class="w-full py-2.5 px-3 rounded-lg bg-steel/30 hover:bg-steel/60 border border-steel hover:border-fire/30 text-left text-xs font-bold transition flex items-center justify-between group">
                         <span class="flex items-center space-x-2 text-white">
                             <i class="fa-solid fa-route text-fire animate-pulse"></i>
                             <span>Modelador de Processos (POP)</span>
@@ -164,15 +164,15 @@
         <!-- Sidebar Bottom (User Info / Return Link) -->
         <div class="p-4 border-t border-steel bg-void/50">
             <div class="flex items-center space-x-3 mb-3">
-                <div class="w-10 h-10 rounded-full bg-steel flex items-center justify-center font-bold text-white border border-[#FF6B1A]/40 shadow-[0_0_10px_rgba(255,107,26,0.2)]">
+                <div id="crm-user-avatar" class="w-10 h-10 rounded-full bg-steel flex items-center justify-center font-bold text-white border border-[#FF6B1A]/40 shadow-[0_0_10px_rgba(255,107,26,0.2)]">
                     RS
                 </div>
                 <div>
-                    <p class="text-sm font-semibold text-white">Ricardo Santos</p>
-                    <p class="text-xs text-muted">Diretor de Obras</p>
+                    <p id="crm-user-name" class="text-sm font-semibold text-white">Ricardo Santos</p>
+                    <p id="crm-user-role" class="text-xs text-muted">Diretor de Obras</p>
                 </div>
             </div>
-            <a href="https://www.obrascity.com.br/dashboard" class="flex items-center justify-center space-x-2 py-2 px-4 bg-steel hover:bg-steel/80 rounded-lg text-xs text-white font-semibold border border-steel hover:border-fire/40 transition duration-150 shadow-md">
+            <a href="/dashboard" class="flex items-center justify-center space-x-2 py-2 px-4 bg-steel hover:bg-steel/80 rounded-lg text-xs text-white font-semibold border border-steel hover:border-fire/40 transition duration-150 shadow-md">
                 <i class="fa-solid fa-arrow-left text-fire"></i>
                 <span>Voltar ao Site</span>
             </a>
@@ -602,7 +602,7 @@
 
                         <!-- Write Comment -->
                         <div class="flex items-start space-x-2">
-                            <div class="w-6 h-6 rounded-full bg-steel text-fire font-bold text-[10px] flex items-center justify-center border border-fire/10 flex-shrink-0 mt-1">RS</div>
+                            <div id="crm-comment-avatar" class="w-6 h-6 rounded-full bg-steel text-fire font-bold text-[10px] flex items-center justify-center border border-fire/10 flex-shrink-0 mt-1">RS</div>
                             <div class="flex-1 space-y-1.5">
                                 <textarea id="new-comment-textarea" rows="2" placeholder="Escreva uma anotação no diário..." class="w-full p-2 border border-steel bg-dark text-xs rounded-lg focus:outline-none text-white leading-relaxed resize-none"></textarea>
                                 <div class="flex justify-end">

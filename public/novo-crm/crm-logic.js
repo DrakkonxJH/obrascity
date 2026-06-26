@@ -125,6 +125,13 @@ let allCards = [
     }
 ];
 
+const CRM_REMOTE_ENDPOINT = "/api/crm/focused";
+const CRM_DEALS_ENDPOINT = "/api/crm/deals";
+const REMOTE_STAGE_SEQUENCE = ["novos", "qualificacao", "proposta", "negociacao", "ganho"];
+const REMOTE_STRUCTURE_LOCKED_MESSAGE = "A estrutura do pipeline do CRM focado ainda segue o backend atual. Edite cards e atividades; setores e POP ainda nao sao customizaveis por esta tela.";
+let CURRENT_USER = { name: "Usuario", role: "Equipe", initials: "OC" };
+let REMOTE_CAPABILITIES = { canEditStructure: false, canUploadAttachments: false };
+
 // Active selected card for Gantt view filtering (NEW MULTI-PROJECT FEATURE)
 let currentlySelectedGanttCardId = "card-1";
 
@@ -153,31 +160,166 @@ let currentlyDraggedCardId = null;
 let currentlyDraggedSourceColumn = null;
 let currentActiveView = "kanban";
 let activeModalTab = "workflow";
+let currentlySelectedDetailedCardId = null;
 
-function initApp() {
-    const savedCards = safeStorage.getItem("obrascity_all_cards");
-    const savedWorkflow = safeStorage.getItem("obrascity_programmed_workflow");
-    const savedSectors = safeStorage.getItem("obrascity_sectors_list");
+function mapPriorityToRemote(priority) {
+    if (priority === "Alta") return "alta";
+    if (priority === "Baixa") return "baixa";
+    return "media";
+}
+
+function mapStepToRemoteStage(stepIndex) {
+    return REMOTE_STAGE_SEQUENCE[stepIndex] || "novos";
+}
+
+function buildRemotePayloadFromCard(card) {
+    return {
+        nome: card.title,
+        descricao: card.desc || "",
+        stage: mapStepToRemoteStage(card.currentStepIndex),
+        status: mapStepToRemoteStage(card.currentStepIndex) === "ganho" ? "ganho" : "aberto",
+        priority: mapPriorityToRemote(card.priority),
+        valor: Number(card.cost || 0),
+        custom_fields: {
+            start_date: card.startDate || "",
+            end_date: card.date || "",
+            responsavel: card.responsible || ""
+        },
+        playbook_items: (card.subtasks || []).map((sub) => ({
+            id: sub.id,
+            label: sub.title,
+            done: Boolean(sub.done)
+        }))
+    };
+}
+
+async function apiRequest(url, options = {}) {
+    const response = await fetch(url, {
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        },
+        ...options
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.ok === false || payload.success === false) {
+        throw new Error(payload.message || payload.error || "Falha ao sincronizar CRM.");
+    }
+    return payload;
+}
+
+function applyCurrentUserUi() {
+    const avatar = document.getElementById("crm-user-avatar");
+    const name = document.getElementById("crm-user-name");
+    const role = document.getElementById("crm-user-role");
+    const commentAvatar = document.getElementById("crm-comment-avatar");
+    if (avatar) avatar.textContent = CURRENT_USER.initials || "OC";
+    if (name) name.textContent = CURRENT_USER.name || "Usuario";
+    if (role) role.textContent = CURRENT_USER.role || "Equipe";
+    if (commentAvatar) commentAvatar.textContent = CURRENT_USER.initials || "OC";
+}
+
+function applyCapabilitiesUi() {
+    const workflowTrigger = document.getElementById("workflow-config-trigger");
+    const newSectorTrigger = document.getElementById("new-sector-trigger");
+    if (!REMOTE_CAPABILITIES.canEditStructure) {
+        if (workflowTrigger) workflowTrigger.classList.add("hidden");
+        if (newSectorTrigger) newSectorTrigger.classList.add("hidden");
+    }
+}
+
+async function loadRemoteState(preferredCardId = null) {
+    const payload = await apiRequest(CRM_REMOTE_ENDPOINT);
+    PROGRAMMED_WORKFLOW_PIPELINE = payload.workflow || PROGRAMMED_WORKFLOW_PIPELINE;
+    sectors = payload.sectors || sectors;
+    allCards = payload.cards || [];
+    CURRENT_USER = payload.user || CURRENT_USER;
+    REMOTE_CAPABILITIES = payload.capabilities || REMOTE_CAPABILITIES;
+
     const savedActiveSec = safeStorage.getItem("obrascity_active_sec_id");
     const savedGanttCard = safeStorage.getItem("obrascity_gantt_card_id");
 
-    if (savedCards) allCards = JSON.parse(savedCards);
-    if (savedWorkflow) PROGRAMMED_WORKFLOW_PIPELINE = JSON.parse(savedWorkflow);
-    if (savedSectors) sectors = JSON.parse(savedSectors);
-    if (savedGanttCard && allCards.some(c => c.id === savedGanttCard)) {
+    if (preferredCardId && allCards.some((card) => card.id === preferredCardId)) {
+        currentlySelectedGanttCardId = preferredCardId;
+    } else if (savedGanttCard && allCards.some((card) => card.id === savedGanttCard)) {
         currentlySelectedGanttCardId = savedGanttCard;
     } else if (allCards.length > 0) {
         currentlySelectedGanttCardId = allCards[0].id;
     }
-    
-    if (savedActiveSec && sectors.some(s => s.id === savedActiveSec)) {
+
+    if (savedActiveSec && sectors.some((sector) => sector.id === savedActiveSec)) {
         activeSectorId = savedActiveSec;
-    } else if (sectors.length > 0) {
-        activeSectorId = sectors[0].id;
+    } else if (allCards.length > 0) {
+        const activeCard = allCards.find((card) => card.id === currentlySelectedGanttCardId) || allCards[0];
+        activeSectorId = PROGRAMMED_WORKFLOW_PIPELINE[activeCard.currentStepIndex]?.sectorId || sectors[0]?.id || "vendas";
+    } else {
+        activeSectorId = sectors[0]?.id || "vendas";
     }
 
+    applyCurrentUserUi();
+    applyCapabilitiesUi();
+    saveToLocalStorage();
     renderSectorsList();
-    renderActiveSectorBoard();
+    if (currentActiveView === "gantt") {
+        renderGanttTimeline();
+    } else {
+        renderActiveSectorBoard();
+    }
+}
+
+async function syncCardRemote(card, options = {}) {
+    const payload = buildRemotePayloadFromCard(card);
+    if (card.id && String(card.id).startsWith("card-")) {
+        throw new Error("Card local sem vinculo remoto nao pode ser sincronizado.");
+    }
+
+    if (card.id) {
+        await apiRequest(`${CRM_DEALS_ENDPOINT}/${card.id}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload)
+        });
+    } else {
+        await apiRequest(CRM_DEALS_ENDPOINT, {
+            method: "POST",
+            body: JSON.stringify({ intent: "create", ...payload })
+        });
+    }
+
+    await loadRemoteState(options.preferredCardId || card.id || null);
+}
+
+async function initApp() {
+    try {
+        await loadRemoteState();
+    } catch (error) {
+        console.error("Falha ao carregar CRM remoto:", error);
+        const savedCards = safeStorage.getItem("obrascity_all_cards");
+        const savedWorkflow = safeStorage.getItem("obrascity_programmed_workflow");
+        const savedSectors = safeStorage.getItem("obrascity_sectors_list");
+        const savedActiveSec = safeStorage.getItem("obrascity_active_sec_id");
+        const savedGanttCard = safeStorage.getItem("obrascity_gantt_card_id");
+
+        if (savedCards) allCards = JSON.parse(savedCards);
+        if (savedWorkflow) PROGRAMMED_WORKFLOW_PIPELINE = JSON.parse(savedWorkflow);
+        if (savedSectors) sectors = JSON.parse(savedSectors);
+        if (savedGanttCard && allCards.some(c => c.id === savedGanttCard)) {
+            currentlySelectedGanttCardId = savedGanttCard;
+        } else if (allCards.length > 0) {
+            currentlySelectedGanttCardId = allCards[0].id;
+        }
+        
+        if (savedActiveSec && sectors.some(s => s.id === savedActiveSec)) {
+            activeSectorId = savedActiveSec;
+        } else if (sectors.length > 0) {
+            activeSectorId = sectors[0].id;
+        }
+
+        renderSectorsList();
+        renderActiveSectorBoard();
+        alert("Nao foi possivel carregar o CRM real agora. A interface abriu com cache local.");
+    }
 }
 
 function saveToLocalStorage() {
@@ -795,7 +937,7 @@ function dragLeave() {
     this.classList.remove("drag-over");
 }
 
-function dragDrop(e) {
+async function dragDrop(e) {
     this.classList.remove("drag-over");
     const colElement = e.target.closest("[data-col-id]");
     if (!colElement) return;
@@ -839,12 +981,23 @@ function dragDrop(e) {
     saveToLocalStorage();
     renderActiveSectorBoard();
     renderSectorsList();
+
+    try {
+        await syncCardRemote(cardObj, { preferredCardId: cardObj.id });
+    } catch (error) {
+        console.error("Falha ao mover card remoto:", error);
+        alert(error.message || "Falha ao atualizar etapa do card no CRM real.");
+    }
 }
 
 // ==========================================
 // SINGLE WINDOW MASTER WORKFLOW CONFIGURATOR (SOP/POP TIMELINE)
 // ==========================================
 function openWorkflowConfigModal() {
+    if (!REMOTE_CAPABILITIES.canEditStructure) {
+        alert(REMOTE_STRUCTURE_LOCKED_MESSAGE);
+        return;
+    }
     renderMasterWorkflowBuilder();
     document.getElementById("workflow-config-modal").classList.remove("hidden");
 }
@@ -1124,7 +1277,7 @@ function closeNewCardModal() {
     document.getElementById("new-card-modal").classList.add("hidden");
 }
 
-function saveNewCard(e) {
+async function saveNewCard(e) {
     e.preventDefault();
     const activeSector = sectors.find(s => s.id === activeSectorId);
     if (!activeSector) return;
@@ -1141,6 +1294,7 @@ function saveNewCard(e) {
 
     const selectedStepObj = PROGRAMMED_WORKFLOW_PIPELINE[targetStepIndex];
 
+    let targetCardId = editCardId || null;
     if (editCardId) {
         const cardObj = allCards.find(c => c.id === editCardId);
         if (cardObj) {
@@ -1163,6 +1317,7 @@ function saveNewCard(e) {
 
             if (!cardObj.logs) cardObj.logs = [];
             cardObj.logs.unshift({ text: "Atividade atualizada por Ricardo Santos", date: getCurrentTimestamp() });
+            targetCardId = cardObj.id;
         }
     } else {
         const generatedSubtasks = selectedStepObj.subtasks.map((t, idx) => ({
@@ -1202,6 +1357,25 @@ function saveNewCard(e) {
         renderGanttTimeline();
     }
     renderSectorsList();
+
+    try {
+        if (targetCardId) {
+            const cardObj = allCards.find(c => c.id === targetCardId);
+            if (cardObj) {
+                await syncCardRemote(cardObj, { preferredCardId: targetCardId });
+            }
+        } else {
+            const latestCard = allCards[allCards.length - 1];
+            await apiRequest(CRM_DEALS_ENDPOINT, {
+                method: "POST",
+                body: JSON.stringify({ intent: "create", ...buildRemotePayloadFromCard(latestCard) })
+            });
+            await loadRemoteState();
+        }
+    } catch (error) {
+        console.error("Falha ao salvar card remoto:", error);
+        alert(error.message || "Falha ao salvar card no CRM real.");
+    }
 }
 
 function editCard(cardId) {
@@ -1230,7 +1404,7 @@ function editCard(cardId) {
     document.getElementById("new-card-modal").classList.remove("hidden");
 }
 
-function deleteCard(cardId) {
+async function deleteCard(cardId) {
     if (!confirm("Tem certeza que deseja excluir esta atividade de forma definitiva?")) return;
 
     const idx = allCards.findIndex(c => c.id === cardId);
@@ -1245,6 +1419,14 @@ function deleteCard(cardId) {
         renderGanttTimeline();
     }
     renderSectorsList();
+
+    try {
+        await apiRequest(`${CRM_DEALS_ENDPOINT}/${cardId}`, { method: "DELETE" });
+        await loadRemoteState();
+    } catch (error) {
+        console.error("Falha ao excluir card remoto:", error);
+        alert(error.message || "Falha ao excluir card no CRM real.");
+    }
 }
 
 // ==========================================
@@ -1263,12 +1445,20 @@ function switchActiveSector(sectorId) {
 }
 
 function openNewSectorModal() {
+    if (!REMOTE_CAPABILITIES.canEditStructure) {
+        alert(REMOTE_STRUCTURE_LOCKED_MESSAGE);
+        return;
+    }
     document.getElementById("edit-sector-id").value = "";
     document.getElementById("sector-name").value = "";
     document.getElementById("new-sector-modal").classList.remove("hidden");
 }
 
 function openEditSectorModal() {
+    if (!REMOTE_CAPABILITIES.canEditStructure) {
+        alert(REMOTE_STRUCTURE_LOCKED_MESSAGE);
+        return;
+    }
     const activeSector = sectors.find(s => s.id === activeSectorId);
     if (!activeSector) return;
 
@@ -1284,6 +1474,11 @@ function closeNewSectorModal() {
 }
 
 function saveSector(e) {
+    if (!REMOTE_CAPABILITIES.canEditStructure) {
+        e.preventDefault();
+        alert(REMOTE_STRUCTURE_LOCKED_MESSAGE);
+        return;
+    }
     e.preventDefault();
     const editSectorId = document.getElementById("edit-sector-id").value;
     const name = document.getElementById("sector-name").value.trim();
@@ -1316,6 +1511,10 @@ function saveSector(e) {
 }
 
 function deleteActiveSector() {
+    if (!REMOTE_CAPABILITIES.canEditStructure) {
+        alert(REMOTE_STRUCTURE_LOCKED_MESSAGE);
+        return;
+    }
     const activeSector = sectors.find(s => s.id === activeSectorId);
     if (!activeSector) return;
 
@@ -1524,7 +1723,7 @@ function renderDetailedSubtasks(cardObj) {
     });
 }
 
-function toggleSubtaskStatus(subId) {
+async function toggleSubtaskStatus(subId) {
     const card = getActiveCard();
     if (!card || card.fvsSigned) return;
 
@@ -1549,10 +1748,17 @@ function toggleSubtaskStatus(subId) {
         } else {
             renderGanttTimeline();
         }
+
+        try {
+            await syncCardRemote(card, { preferredCardId: card.id });
+        } catch (error) {
+            console.error("Falha ao atualizar checklist remoto:", error);
+            alert(error.message || "Falha ao atualizar checklist no CRM real.");
+        }
     }
 }
 
-function addSubtask() {
+async function addSubtask() {
     const input = document.getElementById("new-subtask-input");
     const title = input.value.trim();
     if (!title) return;
@@ -1587,9 +1793,16 @@ function addSubtask() {
     } else {
         renderGanttTimeline();
     }
+
+    try {
+        await syncCardRemote(card, { preferredCardId: card.id });
+    } catch (error) {
+        console.error("Falha ao adicionar subtarefa remota:", error);
+        alert(error.message || "Falha ao salvar subtarefa no CRM real.");
+    }
 }
 
-function deleteSubtask(subId) {
+async function deleteSubtask(subId) {
     const card = getActiveCard();
     if (!card || card.fvsSigned) return;
 
@@ -1613,6 +1826,13 @@ function deleteSubtask(subId) {
             renderActiveSectorBoard();
         } else {
             renderGanttTimeline();
+        }
+
+        try {
+            await syncCardRemote(card, { preferredCardId: card.id });
+        } catch (error) {
+            console.error("Falha ao excluir subtarefa remota:", error);
+            alert(error.message || "Falha ao excluir subtarefa no CRM real.");
         }
     }
 }
@@ -1790,7 +2010,7 @@ function renderFVSSignaturePanel(cardObj) {
             }
         }
 
-        function promoteCardToNextWorkflowStep() {
+        async function promoteCardToNextWorkflowStep() {
             const card = getActiveCard();
             if (!card) return;
 
@@ -1832,7 +2052,13 @@ function renderFVSSignaturePanel(cardObj) {
                 renderGanttTimeline();
             }
 
-            alert(`Sucesso! O card foi promovido para o setor "${activeSectorId.toUpperCase()}" na etapa "${nextStep.stageName}".`);
+            try {
+                await syncCardRemote(card, { preferredCardId: card.id });
+                alert(`Sucesso! O card foi promovido para o setor "${activeSectorId.toUpperCase()}" na etapa "${nextStep.stageName}".`);
+            } catch (error) {
+                console.error("Falha ao promover card remoto:", error);
+                alert(error.message || "Falha ao promover card no CRM real.");
+            }
         }
 
         // ==========================================
@@ -1867,7 +2093,7 @@ function renderFVSSignaturePanel(cardObj) {
             });
         }
 
-        function addComment() {
+        async function addComment() {
             const textarea = document.getElementById("new-comment-textarea");
             const text = textarea.value.trim();
             if (!text) return;
@@ -1899,6 +2125,24 @@ function renderFVSSignaturePanel(cardObj) {
                 renderActiveSectorBoard();
             } else {
                 renderGanttTimeline();
+            }
+
+            try {
+                await apiRequest(`${CRM_DEALS_ENDPOINT}/${card.id}/activities`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        type: "note",
+                        subject: `Comentario · ${card.title}`,
+                        body: text,
+                        channel: "manual",
+                        done: true
+                    })
+                });
+                await loadRemoteState(card.id);
+                openViewCardModal(card.id);
+            } catch (error) {
+                console.error("Falha ao salvar comentario remoto:", error);
+                alert(error.message || "Falha ao salvar comentario no CRM real.");
             }
         }
 
@@ -1953,38 +2197,7 @@ function renderFVSSignaturePanel(cardObj) {
         }
 
         function simulateAddAttachment() {
-            const card = getActiveCard();
-            if (!card) return;
-
-            const name = prompt("Digite o nome da foto ou arquivo (ex: Concretagem_Sapata.jpg):", "Registro_Canteiro_" + Date.now().toString().slice(-4) + ".jpg");
-            if (!name) return;
-
-            const images = [
-                "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=300&q=80",
-                "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=300&q=80",
-                "https://images.unsplash.com/photo-1581094288338-2314dddb7eed?auto=format&fit=crop&w=300&q=80",
-                "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=300&q=80"
-            ];
-            const randomUrl = images[Math.floor(Math.random() * images.length)];
-
-            if (!card.attachments) card.attachments = [];
-            card.attachments.push({ name, url: randomUrl });
-
-            if (!card.logs) card.logs = [];
-            card.logs.unshift({
-                text: `Anexou arquivo: "${name}"`,
-                date: getCurrentTimestamp()
-            });
-
-            saveToLocalStorage();
-            renderDetailedAttachments(card);
-            renderDetailedLogs(card);
-            
-            if (currentActiveView === "kanban") {
-                renderActiveSectorBoard();
-            } else {
-                renderGanttTimeline();
-            }
+            alert("Anexos ainda nao estao integrados ao backend deste CRM focado.");
         }
 
         function deleteAttachment(idx) {
