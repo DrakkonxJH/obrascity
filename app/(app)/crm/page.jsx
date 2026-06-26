@@ -1,5 +1,27 @@
-import { redirect } from "next/navigation";
+import { getCRMData } from "@/app/actions/crmActions";
+import CRMBoard from "@/components/crm/crm-board";
 
-export default function CrmPage() {
-  redirect("/crm-workspace");
+export const dynamic = "force-dynamic";
+
+export default async function CrmPage() {
+  const data = await getCRMData();
+
+  if (!data.success) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-void text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Erro ao carregar CRM</h1>
+          <p className="text-muted">{data.error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CRMBoard
+      initialCards={data.cards}
+      initialWorkflow={data.workflow}
+      initialSectors={data.sectors}
+    />
+  );
 }
