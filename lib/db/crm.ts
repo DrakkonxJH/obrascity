@@ -859,7 +859,7 @@ export async function listCrmAssignableProfiles(): Promise<CrmProfileSummary[]> 
   const empresaId = await getEmpresaIdFromProfile();
   const supabase = await createServerClient();
   const { data: masterCompanies, error: masterError } = await supabase
-    .from("companies")
+    .from("empresas")
     .select("id")
     .eq("is_master", true);
 
@@ -1293,7 +1293,7 @@ export async function listCrmDealsByWorkspace(workspaceId?: string): Promise<Crm
 async function isMasterAccount(empresaId: string): Promise<boolean> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from("companies")
+    .from("empresas")
     .select("is_master")
     .eq("id", empresaId)
     .single();
