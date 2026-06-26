@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCRMData } from "@/app/actions/crmActions";
-import CRMBoard from "@/components/CRMBoard";
+import CRMBoard from "@/components/crm/crm-board";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";

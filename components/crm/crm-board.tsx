@@ -1,6 +1,6 @@
 'use client';
 
-// components/CRMBoard.tsx
+// components/crm/crm-board.tsx
 // PRODUCTION READY REACT + TYPESCRIPT FRONTEND IMPLEMENTATION FOR NEXT.JS
 // Integrates seamless sequential POP, Custom Kanban columns, and MS Project-style dependency lines in pure SVG!
 
