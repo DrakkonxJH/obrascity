@@ -83,7 +83,7 @@ export function buildNavSections(canAccessControlTotal: boolean, adminManagement
       title: "Gestão",
       items: [
         { href: "/viabilidade", label: "Viabilidade", icon: Search },
-        { href: "/crm-workspace", label: "CRM", icon: Users2, newTab: true },
+        { href: "/crm", label: "CRM", icon: Users2 },
         { href: "/projetos", label: "Projetos", icon: FileText },
         { href: "/financeiro", label: "Financeiro", icon: CreditCard },
         { href: "/equipes", label: "Equipes", icon: Users },

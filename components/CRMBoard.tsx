@@ -5,7 +5,9 @@
 // Integrates seamless sequential POP, Custom Kanban columns, and MS Project-style dependency lines in pure SVG!
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Card, WorkflowStep, Sector, Subtask, Comment, AuditLog, Attachment, SOP_TEMPLATES, saveCardAction, saveWorkflowPipelineAction, saveSectorAction } from '@/app/actions/crmActions';
+import { SOP_TEMPLATES } from '@/lib/crm/board-shared';
+import type { AuditLog, Card, Sector, Subtask, WorkflowStep } from '@/lib/crm/board-shared';
+import { saveCardAction, saveWorkflowPipelineAction, saveSectorAction } from '@/app/actions/crmActions';
 
 interface CRMBoardProps {
   initialCards?: Card[];
