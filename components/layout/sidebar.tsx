@@ -40,7 +40,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number };
+type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number; newTab?: boolean };
 type NavSection = { title: string; items: NavItem[] };
 
 export function buildNavSections(canAccessControlTotal: boolean, adminManagementOnly: boolean): NavSection[] {
@@ -83,7 +83,7 @@ export function buildNavSections(canAccessControlTotal: boolean, adminManagement
       title: "Gestão",
       items: [
         { href: "/viabilidade", label: "Viabilidade", icon: Search },
-        { href: "/crm", label: "CRM", icon: Users2 },
+        { href: "/novo-crm/crm-dashboard.html", label: "CRM", icon: Users2, newTab: true },
         { href: "/projetos", label: "Projetos", icon: FileText },
         { href: "/financeiro", label: "Financeiro", icon: CreditCard },
         { href: "/equipes", label: "Equipes", icon: Users },
@@ -188,6 +188,8 @@ export function Sidebar({ summary, canAccessControlTotal, adminManagementOnly }:
                     href={item.href}
                     className={`of-nav-item ${active ? "active" : ""}`}
                     onClick={closeMobileSidebar}
+                    target={item.newTab ? "_blank" : undefined}
+                    rel={item.newTab ? "noopener noreferrer" : undefined}
                   >
                     <span className="of-nav-icon" aria-hidden>
                       <IconComponent size={18} strokeWidth={2} />

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM ObrasCitY — Central de Gestão Integrada</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Barlow, Barlow Condensed, JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=Barlow:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Barlow', 'sans-serif'],
+                        condensed: ['Barlow Condensed', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        void: '#060810',
+                        dark: '#0C1018',
+                        dark2: '#121620',
+                        steel: '#1A2030',
+                        fire: {
+                            DEFAULT: '#FF6B1A',
+                            hover: '#FF9445',
+                            light: 'rgba(255, 107, 26, 0.1)',
+                            glow: 'rgba(255, 107, 26, 0.25)',
+                            border: 'rgba(255, 107, 26, 0.3)',
+                        },
+                        muted: '#8896B3',
+                        light: '#F0F4FF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CSS Tokens matching the landing page */
+        :root {
+            --void: #060810;
+            --dark: #0C1018;
+            --dark2: #121620;
+            --steel: #1A2030;
+            --fire: #FF6B1A;
+            --fire2: #FF9445;
+            --fire3: #FFD166;
+            --white: #FFFFFF;
+            --text-light: #F0F4FF;
+            --text-muted: #8896B3;
+            --border-dark: rgba(255, 255, 255, 0.07);
+        }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background-color: var(--void);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* Noise overlay pattern from website */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: .03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 180px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--void);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--steel);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--fire);
+        }
+
+        /* Drag over effect with glow */
+        .drag-over {
+            border: 2px dashed var(--fire) !important;
+            background-color: rgba(255, 107, 26, 0.05) !important;
+            box-shadow: 0 0 15px rgba(255, 107, 26, 0.15);
+        }
+
+        .dragging {
+            opacity: 0.4;
+            transform: scale(0.97);
+            border: 2px dashed var(--fire) !important;
+        }
+
+        /* Input Styles Dark */
+        input, select, textarea {
+            background-color: var(--dark2) !important;
+            color: var(--text-light) !important;
+            border-color: var(--steel) !important;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--fire) !important;
+            outline: none;
+            box-shadow: 0 0 8px rgba(255, 107, 26, 0.4);
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden relative font-sans">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-dark text-light flex flex-col justify-between z-30 flex-shrink-0 shadow-2xl border-r border-steel relative">
+        <div>
+            <!-- Header Brand / Logo matching the landing page -->
+            <div class="p-6 border-b border-steel flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-fire to-[#CC5200] flex items-center justify-center text-white font-black text-base shadow-[0_4px_16px_rgba(255,107,26,0.4)]">
+                        OC
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-lg text-white font-condensed tracking-wide">ObrasCit<span class="text-fire">Y</span></span>
+                        <span class="block text-[9px] text-muted font-medium uppercase tracking-wider">Gestão Inteligente</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Setores Navigation -->
+            <div class="p-4">
+                <div class="flex items-center justify-between text-xs font-semibold text-muted uppercase tracking-wider mb-3 px-2">
+                    <span>Setores / Áreas</span>
+                    <button onclick="openNewSectorModal()" class="text-fire hover:text-fire-hover transition" title="Adicionar Novo Setor">
+                        <i class="fa-solid fa-plus-circle text-base"></i>
+                    </button>
+                </div>
+                
+                <!-- Sectors List container -->
+                <nav class="space-y-1.5 overflow-y-auto max-h-[calc(100vh-380px)] mb-4" id="sectors-nav-list">
+                    <!-- Dynamic Sectors rendered here -->
+                </nav>
+
+                <!-- WORKFLOW CONFIG BUTTON IN SIDEBAR -->
+                <div class="pt-2 border-t border-steel/60">
+                    <button onclick="openWorkflowConfigModal()" class="w-full py-2.5 px-3 rounded-lg bg-steel/30 hover:bg-steel/60 border border-steel hover:border-fire/30 text-left text-xs font-bold transition flex items-center justify-between group">
+                        <span class="flex items-center space-x-2 text-white">
+                            <i class="fa-solid fa-route text-fire animate-pulse"></i>
+                            <span>Modelador de Processos (POP)</span>
+                        </span>
+                        <span class="text-[9px] bg-fire/10 text-fire px-1 py-0.5 rounded font-mono font-bold">POP</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Bottom (User Info / Return Link) -->
+        <div class="p-4 border-t border-steel bg-void/50">
+            <div class="flex items-center space-x-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-steel flex items-center justify-center font-bold text-white border border-[#FF6B1A]/40 shadow-[0_0_10px_rgba(255,107,26,0.2)]">
+                    RS
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">Ricardo Santos</p>
+                    <p class="text-xs text-muted">Diretor de Obras</p>
+                </div>
+            </div>
+            <a href="https://www.obrascity.com.br/dashboard" class="flex items-center justify-center space-x-2 py-2 px-4 bg-steel hover:bg-steel/80 rounded-lg text-xs text-white font-semibold border border-steel hover:border-fire/40 transition duration-150 shadow-md">
+                <i class="fa-solid fa-arrow-left text-fire"></i>
+                <span>Voltar ao Site</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-void relative z-10">
+        
+        <!-- TOP HEADER -->
+        <header class="h-16 bg-dark/95 border-b border-steel flex items-center justify-between px-8 z-10 shadow-lg backdrop-blur-md flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <!-- Sector Icon & Title -->
+                <div class="p-2.5 rounded-lg bg-steel text-fire flex items-center justify-center border border-steel shadow-[0_0_12px_rgba(255,107,26,0.1)]" id="active-sector-header-icon-container">
+                    <i class="fa-solid fa-hard-hat text-lg" id="active-sector-header-icon"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold font-condensed tracking-wide text-white uppercase leading-tight" id="active-sector-header-title">Engenharia</h1>
+                    <p class="text-xs text-muted">Acompanhamento e Organização de Demandas de Canteiro</p>
+                </div>
+            </div>
+
+            <!-- Filters, Search and Actions -->
+            <div class="flex items-center space-x-4">
+                
+                <!-- NEW PREMIUM SEGMENTED VIEW TOGGLE -->
+                <div class="bg-dark border border-steel p-0.5 rounded-full flex items-center relative shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.8)] h-9">
+                    <button id="view-kanban-btn" onclick="switchView('kanban')" class="relative z-10 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all duration-300 flex items-center space-x-1.5 h-7 bg-gradient-to-r from-fire to-fire-hover text-white shadow-[0_2px_8px_rgba(255,107,26,0.3)]">
+                        <i class="fa-solid fa-table-columns text-[10px]"></i>
+                        <span>Kanban</span>
+                    </button>
+                    <button id="view-gantt-btn" onclick="switchView('gantt')" class="relative z-10 px-3.5 py-1 rounded-full text-[11px] font-bold transition-all duration-300 flex items-center space-x-1.5 h-7 text-muted hover:text-white">
+                        <i class="fa-solid fa-chart-gantt text-[10px]"></i>
+                        <span>Gantt / Prazo</span>
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="filterCards()" placeholder="Buscar card..." class="w-36 md:w-44 pl-9 pr-4 py-1.5 border border-steel rounded-full text-xs bg-dark2 focus:ring-1 focus:ring-fire focus:border-fire focus:outline-none transition-all duration-150 h-9">
+                    <i class="fa-solid fa-search text-muted absolute left-3 top-2.5 text-xs"></i>
+                </div>
+
+                <!-- Priority Filter -->
+                <select id="priority-filter" onchange="filterCards()" class="px-2 py-1.5 border border-steel rounded-lg text-xs bg-dark2 text-light focus:ring-1 focus:ring-fire focus:outline-none transition h-9">
+                    <option value="all">Todas</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Média">Média</option>
+                    <option value="Baixa">Baixa</option>
+                </select>
+
+                <!-- New Card Button -->
+                <button onclick="openNewCardModal()" class="bg-fire hover:bg-fire-hover text-white font-bold text-xs py-1.5 px-4 rounded-lg flex items-center space-x-1.5 shadow-[0_4px_12px_rgba(255,107,26,0.3)] transition duration-150 h-9">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Novo Card</span>
+                </button>
+
+                <!-- Settings/Actions of the Sector -->
+                <div class="relative">
+                    <button onclick="toggleSectorDropdown()" class="p-2 border border-steel hover:bg-steel rounded-lg text-muted hover:text-white transition h-9 w-9 flex items-center justify-center">
+                        <i class="fa-solid fa-ellipsis-v"></i>
+                    </button>
+                    <!-- Dropdown options -->
+                    <div id="sector-options-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-dark border border-steel rounded-lg shadow-2xl py-1 z-50">
+                        <button onclick="openEditSectorModal()" class="w-full text-left px-4 py-2 text-sm text-light hover:bg-steel flex items-center space-x-2">
+                            <i class="fa-solid fa-edit text-fire"></i>
+                            <span>Editar Setor</span>
+                        </button>
+                        <button onclick="deleteActiveSector()" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-950/20 flex items-center space-x-2">
+                            <i class="fa-solid fa-trash text-red-500"></i>
+                            <span>Excluir Setor</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI SUMMARY BAR -->
+        <section class="bg-dark border-b border-steel px-8 py-3 grid grid-cols-4 gap-4 flex-shrink-0">
+            <div class="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
+                <div class="p-2.5 rounded bg-steel text-fire shadow-[0_0_10px_rgba(255,107,26,0.15)]"><i class="fa-solid fa-list-check"></i></div>
+                <div>
+                    <span class="block text-[9px] uppercase font-bold text-muted tracking-wider">Atividades Totais</span>
+                    <span class="text-base font-bold font-condensed tracking-wide text-white" id="stat-total-cards">0</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel relative group/cost">
+                <div class="p-2.5 rounded bg-steel text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.15)]"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                <div>
+                    <span class="block text-[9px] uppercase font-bold text-muted tracking-wider flex items-center">
+                        <span>Verba Estimada</span>
+                        <i class="fa-solid fa-circle-info ml-1 text-slate-500 cursor-pointer" title="Orçamento Alocado"></i>
+                    </span>
+                    <span class="text-base font-bold font-condensed tracking-wide text-white" id="stat-total-cost">R$ 0,00</span>
+                </div>
+                <!-- FINANCIAL DEVIATION ALERT IN TOP BAR -->
+                <div class="absolute -bottom-1.5 right-2 bg-rose-950/90 text-rose-400 border border-rose-800/40 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider hidden" id="cost-warning-badge">
+                    ⚠️ Estouro Orçamentário
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
+                <div class="p-2.5 rounded bg-steel text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.15)]"><i class="fa-solid fa-chart-line"></i></div>
+                <div>
+                    <span class="block text-[9px] uppercase font-bold text-muted tracking-wider">Taxa de Entrega</span>
+                    <span class="text-base font-bold font-condensed tracking-wide text-white" id="stat-completion-rate">0%</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 bg-dark2/50 p-2.5 rounded-lg border border-steel">
+                <div class="p-2.5 rounded bg-steel text-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.15)]"><i class="fa-solid fa-circle-exclamation"></i></div>
+                <div>
+                    <span class="block text-[9px] uppercase font-bold text-muted tracking-wider">Alta Prioridade</span>
+                    <span class="text-base font-bold font-condensed tracking-wide text-rose-500 animate-pulse" id="stat-high-priority">0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- KANBAN BOARD CONTAINER -->
+        <div class="flex-1 overflow-x-auto p-8 flex space-x-6 items-start" id="kanban-board">
+            <!-- Dynamic columns render here -->
+        </div>
+
+        <!-- GANTT TIMELINE CONTAINER -->
+        <div class="flex-1 overflow-y-auto p-8 hidden animate-fade-in" id="gantt-board-view">
+            <div class="bg-dark border border-steel rounded-xl shadow-2xl overflow-hidden backdrop-blur-md flex flex-col h-full max-h-[calc(100vh-230px)]">
+                <!-- Gantt Header -->
+                <div class="p-4 bg-dark2/60 border-b border-steel flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-calendar-days text-fire"></i>
+                        <span class="text-sm font-bold font-condensed tracking-wider uppercase text-white">Cronograma Físico de Atividades (Gantt)</span>
+                    </div>
+                    <div class="text-xs text-muted font-mono">
+                        Escala: <span class="bg-steel px-2 py-0.5 rounded text-light font-bold">25/06/2026 - 15/07/2026</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-auto">
+                    <div class="min-w-[900px]">
+                        <!-- Gantt header days -->
+                        <div class="grid grid-cols-[240px_1fr] bg-dark2/30 border-b border-steel text-center text-[10px] font-bold text-muted uppercase tracking-wider">
+                            <div class="text-left p-3 border-r border-steel">Atividade / Setor / Responsável</div>
+                            <div class="grid font-mono" style="grid-template-columns: repeat(21, minmax(0, 1fr));">
+                                <div class="p-3 border-r border-steel/30 bg-fire/5 text-fire">25/06</div>
+                                <div class="p-3 border-r border-steel/30">26/06</div>
+                                <div class="p-3 border-r border-steel/30">27</div>
+                                <div class="p-3 border-r border-steel/30">28</div>
+                                <div class="p-3 border-r border-steel/30">29</div>
+                                <div class="p-3 border-r border-steel/30">30</div>
+                                <div class="p-3 border-r border-steel/30 bg-slate-800/30">01/07</div>
+                                <div class="p-3 border-r border-steel/30">02</div>
+                                <div class="p-3 border-r border-steel/30">03</div>
+                                <div class="p-3 border-r border-steel/30">04</div>
+                                <div class="p-3 border-r border-steel/30">05</div>
+                                <div class="p-3 border-r border-steel/30">06</div>
+                                <div class="p-3 border-r border-steel/30">07</div>
+                                <div class="p-3 border-r border-steel/30">08</div>
+                                <div class="p-3 border-r border-steel/30">09</div>
+                                <div class="p-3 border-r border-steel/30">10</div>
+                                <div class="p-3 border-r border-steel/30">11</div>
+                                <div class="p-3 border-r border-steel/30">12</div>
+                                <div class="p-3 border-r border-steel/30">13</div>
+                                <div class="p-3 border-r border-steel/30">14</div>
+                                <div class="p-3">15/07</div>
+                            </div>
+                        </div>
+                        <div id="gantt-rows-container" class="divide-y divide-steel/40">
+                            <!-- Rows go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- NEW CARD MODAL WITH SOP/PROCESS GENERATOR INTEGRATION -->
+    <div id="new-card-modal" class="hidden fixed inset-0 bg-void/80 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
+        <div class="bg-dark rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-steel max-w-lg w-full overflow-hidden transform scale-95 transition-all font-sans flex flex-col max-h-[90vh]">
+            <div class="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel flex-shrink-0">
+                <h3 class="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2 text-white">
+                    <i class="fa-solid fa-folder-plus text-fire"></i>
+                    <span>CRIAR / EDITAR ATIVIDADE DE PROCESSO</span>
+                </h3>
+                <button type="button" onclick="closeNewCardModal()" class="text-muted hover:text-white transition">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveNewCard(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="edit-card-id" value="">
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Título do Card / Projeto *</label>
+                    <input type="text" id="card-title" required placeholder="Ex: Obra Residencial Jardins - Unidade 302" class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Responsável Inicial</label>
+                        <input type="text" id="card-responsible" placeholder="Ex: Juliana Torres" class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Fase Inicial do Processo Padrão</label>
+                        <select id="card-start-step-selector" class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                            <!-- Populated dynamically with Master POP steps -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Data de Início (Gantt) *</label>
+                        <input type="date" id="card-start-date" required class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Data de Conclusão Prevista *</label>
+                        <input type="date" id="card-date" required class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Prioridade</label>
+                        <select id="card-priority" class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média" selected>Média</option>
+                            <option value="Alta">Alta</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Verba Alocada (R$)</label>
+                        <input type="number" step="0.01" id="card-cost" placeholder="Ex: 450000" class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Descrição do Escopo do Projeto</label>
+                    <textarea id="card-desc" rows="3" placeholder="Insira informações de escopo ou memorial..." class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:outline-none transition"></textarea>
+                </div>
+
+                <div class="pt-4 border-t border-steel flex justify-end space-x-2 flex-shrink-0">
+                    <button type="button" onclick="closeNewCardModal()" class="px-4 py-2 border border-steel hover:bg-steel rounded-lg text-sm font-semibold text-light hover:text-white transition">Cancelar</button>
+                    <button type="submit" id="save-card-btn" class="px-5 py-2 bg-fire hover:bg-fire-hover text-white rounded-lg text-sm font-bold shadow-md transition">Iniciar Projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- UNIFIED POP PIPELINE CONFIGURATOR MODAL -->
+    <div id="workflow-config-modal" class="hidden fixed inset-0 bg-void/90 flex items-center justify-center z-50 p-4 backdrop-blur-md">
+        <div class="bg-dark rounded-xl shadow-[0_10px_50px_rgba(0,0,0,0.95)] border border-steel max-w-2xl w-full overflow-hidden flex flex-col font-sans max-h-[90vh]">
+            
+            <div class="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel flex-shrink-0">
+                <h3 class="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2.5">
+                    <i class="fa-solid fa-route text-fire animate-pulse"></i>
+                    <span>PROGRAMADOR DE PROCESSOS E PROCEDIMENTOS (POP UNIFICADO)</span>
+                </h3>
+                <button type="button" onclick="closeWorkflowConfigModal()" class="text-muted hover:text-white transition">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Single window list for creating/reordering all processes and procedures in sequence -->
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <div class="bg-dark2/50 border border-steel/60 p-3.5 rounded-lg text-xs text-muted leading-relaxed flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-fire mt-0.5"></i>
+                    <div>
+                        Monte a sequência de **Processos e Procedimentos** que regem o andamento dos projetos da sua empresa. 
+                        Indique o setor responsável, o nome da etapa e descreva a lista de procedimentos obrigatórios (um por linha). Os cartões seguirão este fluxo automaticamente e o CRM se atualizará em tempo real!
+                    </div>
+                </div>
+
+                <div class="space-y-4" id="workflow-pipeline-builder-container">
+                    <!-- Dynamic sequence rows rendered here -->
+                </div>
+
+                <!-- Add New Step Button -->
+                <button onclick="addNewPipelineStep()" class="w-full py-3 bg-dark border border-dashed border-steel hover:border-fire hover:bg-steel/10 rounded-lg text-xs font-bold text-muted hover:text-fire transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-plus-circle text-sm"></i>
+                    <span>Adicionar Nova Etapa Consecutiva de Processo</span>
+                </button>
+            </div>
+
+            <div class="pt-4 border-t border-steel p-6 flex justify-end space-x-2 bg-dark2/25 flex-shrink-0">
+                <button onclick="closeWorkflowConfigModal()" class="px-6 py-2.5 bg-fire hover:bg-fire-hover text-white rounded-lg text-xs font-bold transition shadow-md">Fechar e Salvar Processos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW DETAILS MODAL -->
+    <div id="view-card-modal" class="hidden fixed inset-0 bg-void/85 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
+        <div class="bg-dark rounded-xl shadow-[0_10px_50px_rgba(0,0,0,0.95)] border border-steel max-w-4xl w-full overflow-hidden flex flex-col md:flex-row my-8 font-sans max-h-[90vh]">
+            
+            <!-- LEFT COLUMN: Main Info & Details -->
+            <div class="flex-1 p-6 border-b md:border-b-0 md:border-r border-steel space-y-5 overflow-y-auto">
+                
+                <!-- NEW SEQUENTIAL WORKFLOW JOURNEY TIMELINE -->
+                <div id="workflow-journey-tracker" class="bg-dark2 border border-steel/80 p-3 rounded-lg flex flex-col space-y-2">
+                    <span class="block text-[8px] font-extrabold text-fire uppercase tracking-widest flex items-center space-x-1">
+                        <i class="fa-solid fa-route"></i>
+                        <span>Workflow Corporativo Programado</span>
+                    </span>
+                    <div class="flex items-center justify-between text-[11px] font-condensed tracking-wide uppercase text-white font-semibold" id="workflow-steps-progress-nodes">
+                        <!-- Render nodes -->
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between border-b border-steel pb-3">
+                    <div class="flex items-center space-x-2">
+                        <span id="view-card-tag" class="px-2.5 py-1 rounded text-xs font-bold tracking-wide uppercase">Prioridade</span>
+                        <span id="fvs-badge-modal" class="hidden px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider flex items-center space-x-1 animate-pulse">
+                            <i class="fa-solid fa-stamp"></i>
+                            <span>FVS Assinada (ISO 9001)</span>
+                        </span>
+                    </div>
+                    <span class="text-xs text-muted font-mono">ID: <span id="view-card-id">---</span></span>
+                </div>
+                
+                <div>
+                    <h2 class="text-2xl font-bold font-condensed tracking-wide text-white leading-tight" id="view-card-title">Título da Atividade</h2>
+                    <p class="text-xs text-muted mt-1" id="view-card-section-label">Setor: <span class="font-bold text-fire">Engenharia</span></p>
+                </div>
+
+                <!-- Custom Construction Fields -->
+                <div class="grid grid-cols-2 gap-4 bg-dark2/50 p-4 rounded-lg border border-steel text-sm">
+                    <div>
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Responsável Técnico</span>
+                        <span class="font-medium text-light flex items-center space-x-2 mt-1">
+                            <span class="w-6 h-6 rounded-full bg-steel text-fire text-[10px] font-bold flex items-center justify-center border border-fire/20" id="view-card-avatar">--</span>
+                            <span id="view-card-responsible">Ricardo Santos</span>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Cronograma (Início - Fim)</span>
+                        <span class="font-semibold text-light flex items-center space-x-1.5 mt-1 text-xs">
+                            <i class="fa-regular fa-calendar-check text-fire"></i>
+                            <span id="view-card-date">15/07/2026</span>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Verba Alocada</span>
+                        <span class="font-bold text-emerald-400 text-base block mt-1" id="view-card-cost">R$ 0,00</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Etapa do Processo</span>
+                        <span class="font-semibold text-light block mt-1 uppercase text-xs" id="view-card-column">A Fazer</span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Descrição do Escopo / Notas do Projeto</span>
+                    <div class="bg-dark2/20 p-4 rounded-lg border border-steel text-light/90 text-sm leading-relaxed whitespace-pre-line" id="view-card-desc">
+                        Nenhuma descrição fornecida.
+                    </div>
+                </div>
+
+                <!-- FILE ATTACHMENTS -->
+                <div class="space-y-2">
+                    <span class="block text-[10px] font-bold text-muted uppercase tracking-wider flex items-center justify-between">
+                        <span>Anexos / Comprovações do Processo</span>
+                        <button onclick="simulateAddAttachment()" class="text-fire hover:underline text-[9px] font-bold uppercase"><i class="fa-solid fa-paperclip mr-1"></i>Anexar Foto</button>
+                    </span>
+                    <div class="grid grid-cols-3 gap-2.5" id="attachments-container">
+                        <!-- Dynamic attachment cards -->
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="pt-4 border-t border-steel flex justify-between items-center">
+                    <button id="view-edit-btn" onclick="editCardFromDetails()" class="px-4 py-2 bg-steel hover:bg-steel/80 border border-steel hover:border-fire/30 text-light rounded-lg text-xs font-semibold flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-edit text-fire"></i>
+                        <span>Editar Dados</span>
+                    </button>
+                    <button id="view-delete-btn" onclick="deleteCardFromDetails()" class="px-4 py-2 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-400 rounded-lg text-xs font-semibold flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Deletar Card</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Interactive Subtasks, FVS Signature & Comments -->
+            <div class="w-full md:w-[380px] bg-dark2/45 p-6 flex flex-col justify-between border-t md:border-t-0 border-steel overflow-y-auto">
+                <div class="flex-1 space-y-6 pr-1">
+                    
+                    <!-- INTERACTIVE CHECKLIST (SUBTASKS) -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-muted uppercase tracking-wider">Procedimentos Obrigatórios (Checklist)</span>
+                            <span class="text-xs font-mono font-bold text-fire" id="subtasks-progress-text">0/0 (0%)</span>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-steel h-1.5 rounded-full overflow-hidden">
+                            <div id="subtasks-progress-bar" class="bg-gradient-to-r from-fire to-fire-hover h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+
+                        <!-- Subtasks List -->
+                        <div class="space-y-1.5 max-h-56 overflow-y-auto" id="subtasks-list-container">
+                            <!-- Dynamic subtask items -->
+                        </div>
+
+                        <!-- Add Subtask Input -->
+                        <div class="flex items-center space-x-1.5" id="subtask-add-control-wrapper">
+                            <input type="text" id="new-subtask-input" placeholder="Adicionar procedimento extra..." class="flex-1 px-2.5 py-1.5 border border-steel bg-dark text-xs rounded-lg focus:outline-none text-white font-sans">
+                            <button onclick="addSubtask()" class="px-3 py-1.5 bg-steel hover:bg-steel/80 border border-steel hover:border-fire/40 text-fire rounded-lg text-xs font-bold transition">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NEW DYNAMIC FVS DIGITAL SIGNATURE STAMP / CONTROL PANEL -->
+                    <div id="fvs-signature-outer-panel" class="pt-4 border-t border-steel hidden">
+                        <!-- Dynamic card signature rendering goes here -->
+                    </div>
+
+                    <!-- NEW PIPELINE WORKFLOW PROMOTION TRIGGER CONTROL -->
+                    <div id="workflow-promotion-outer-panel" class="pt-4 border-t border-steel hidden">
+                        <!-- Render: "Avançar para a próxima área corporativa" -->
+                    </div>
+
+                    <!-- COLLABORATION FEED (COMMENTS) -->
+                    <div class="space-y-3 pt-4 border-t border-steel">
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Comentários e Diário de Obras</span>
+                        
+                        <!-- Scrollable Feed -->
+                        <div class="space-y-3 max-h-48 overflow-y-auto" id="comments-feed-container">
+                            <!-- Dynamic comments rendered here -->
+                        </div>
+
+                        <!-- Write Comment -->
+                        <div class="flex items-start space-x-2">
+                            <div class="w-6 h-6 rounded-full bg-steel text-fire font-bold text-[10px] flex items-center justify-center border border-fire/10 flex-shrink-0 mt-1">RS</div>
+                            <div class="flex-1 space-y-1.5">
+                                <textarea id="new-comment-textarea" rows="2" placeholder="Escreva uma anotação no diário..." class="w-full p-2 border border-steel bg-dark text-xs rounded-lg focus:outline-none text-white leading-relaxed resize-none"></textarea>
+                                <div class="flex justify-end">
+                                    <button onclick="addComment()" class="px-3 py-1 bg-fire hover:bg-fire-hover text-white text-[11px] font-bold rounded transition font-sans">Comentar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AUDIT TRAIL LOG -->
+                    <div class="space-y-2 pt-4 border-t border-steel">
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider flex items-center space-x-1">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span>Histórico de Operações (Auditoria)</span>
+                        </span>
+                        <div class="space-y-2 max-h-32 overflow-y-auto text-[10px] font-mono text-muted leading-tight" id="audit-logs-container">
+                            <!-- Dynamic logs -->
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Close Modal Button -->
+                <div class="pt-4 border-t border-steel mt-4 flex-shrink-0 font-sans">
+                    <button onclick="closeViewCardModal()" class="w-full py-2 bg-steel hover:bg-steel/80 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition border border-steel">Fechar Painel</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- NEW SECTOR MODAL -->
+    <div id="new-sector-modal" class="hidden fixed inset-0 bg-void/85 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-dark rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-steel max-w-md w-full overflow-hidden">
+            <div class="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel">
+                <h3 class="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2">
+                    <i class="fa-solid fa-folder-tree text-fire"></i>
+                    <span id="sector-modal-title">NOVO SETOR / ÁREA</span>
+                </h3>
+                <button onclick="closeNewSectorModal()" class="text-muted hover:text-white transition">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveSector(event)" class="p-6 space-y-4">
+                <input type="hidden" id="edit-sector-id" value="">
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Nome do Setor / Área *</label>
+                    <input type="text" id="sector-name" required placeholder="Ex: Compras, Operacional, etc." class="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:ring-1 focus:ring-fire focus:outline-none transition">
+                </div>
+
+                <div class="pt-4 border-t border-steel flex justify-end space-x-2">
+                    <button type="button" onclick="closeNewSectorModal()" class="px-4 py-2 border border-steel hover:bg-steel rounded-lg text-sm font-semibold text-light hover:text-white transition">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-fire hover:bg-fire-hover text-white rounded-lg text-sm font-bold shadow-md transition">Salvar Setor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LINKING TO EXTERNAL LOGIC COMPACTED FILE -->
+    <script src="crm-logic.js"></script>
+</body>
+</html>
