@@ -127,6 +127,7 @@ let allCards = [
 
 // Active selected card for Gantt view filtering (NEW MULTI-PROJECT FEATURE)
 let currentlySelectedGanttCardId = "card-1";
+const CRM_REMOTE_ENDPOINT = "/api/crm/focused";
 
 // Safe LocalStorage wrapper to avoid security crashes on direct local file execution
 const safeStorage = {
@@ -154,7 +155,56 @@ let currentlyDraggedSourceColumn = null;
 let currentActiveView = "kanban";
 let activeModalTab = "workflow";
 
-function initApp() {
+async function syncWithRemoteCrm() {
+    try {
+        const response = await fetch(CRM_REMOTE_ENDPOINT, {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+        if (!payload?.ok) {
+            throw new Error(payload?.message || "payload inválido");
+        }
+
+        if (Array.isArray(payload.workflow) && payload.workflow.length > 0) {
+            PROGRAMMED_WORKFLOW_PIPELINE = payload.workflow;
+        }
+
+        if (Array.isArray(payload.sectors) && payload.sectors.length > 0) {
+            sectors = payload.sectors;
+        }
+
+        if (Array.isArray(payload.cards)) {
+            allCards = payload.cards;
+        }
+
+        if (!sectors.some(s => s.id === activeSectorId) && sectors.length > 0) {
+            activeSectorId = sectors[0].id;
+        }
+
+        if (allCards.length > 0) {
+            if (!allCards.some(c => c.id === currentlySelectedGanttCardId)) {
+                currentlySelectedGanttCardId = allCards[0].id;
+            }
+        } else {
+            currentlySelectedGanttCardId = "";
+        }
+
+        saveToLocalStorage();
+        renderSectorsList();
+        renderActiveSectorBoard();
+    } catch (error) {
+        console.error("Falha ao sincronizar CRM remoto:", error);
+    }
+}
+
+async function initApp() {
     const savedCards = safeStorage.getItem("obrascity_all_cards");
     const savedWorkflow = safeStorage.getItem("obrascity_programmed_workflow");
     const savedSectors = safeStorage.getItem("obrascity_sectors_list");
@@ -178,6 +228,7 @@ function initApp() {
 
     renderSectorsList();
     renderActiveSectorBoard();
+    await syncWithRemoteCrm();
 }
 
 function saveToLocalStorage() {
