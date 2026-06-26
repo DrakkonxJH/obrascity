@@ -1,5 +1,13 @@
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+
+export const dynamic = "force-dynamic";
 
 export default async function CrmWorkspacePage() {
-  redirect("/crm");
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  redirect("/novo-crm/crm-dashboard.html");
 }

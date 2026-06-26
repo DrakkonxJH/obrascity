@@ -138,7 +138,7 @@
             <div class="p-4">
                 <div class="flex items-center justify-between text-xs font-semibold text-muted uppercase tracking-wider mb-3 px-2">
                     <span>Setores / Áreas</span>
-                    <button id="new-sector-trigger" onclick="openNewSectorModal()" class="text-fire hover:text-fire-hover transition" title="Adicionar Novo Setor">
+                    <button onclick="openNewSectorModal()" class="text-fire hover:text-fire-hover transition" title="Adicionar Novo Setor">
                         <i class="fa-solid fa-plus-circle text-base"></i>
                     </button>
                 </div>
@@ -150,7 +150,7 @@
 
                 <!-- WORKFLOW CONFIG BUTTON IN SIDEBAR -->
                 <div class="pt-2 border-t border-steel/60">
-                    <button id="workflow-config-trigger" onclick="openWorkflowConfigModal()" class="w-full py-2.5 px-3 rounded-lg bg-steel/30 hover:bg-steel/60 border border-steel hover:border-fire/30 text-left text-xs font-bold transition flex items-center justify-between group">
+                    <button onclick="openWorkflowConfigModal()" class="w-full py-2.5 px-3 rounded-lg bg-steel/30 hover:bg-steel/60 border border-steel hover:border-fire/30 text-left text-xs font-bold transition flex items-center justify-between group">
                         <span class="flex items-center space-x-2 text-white">
                             <i class="fa-solid fa-route text-fire animate-pulse"></i>
                             <span>Modelador de Processos (POP)</span>
@@ -164,15 +164,15 @@
         <!-- Sidebar Bottom (User Info / Return Link) -->
         <div class="p-4 border-t border-steel bg-void/50">
             <div class="flex items-center space-x-3 mb-3">
-                <div id="crm-user-avatar" class="w-10 h-10 rounded-full bg-steel flex items-center justify-center font-bold text-white border border-[#FF6B1A]/40 shadow-[0_0_10px_rgba(255,107,26,0.2)]">
+                <div class="w-10 h-10 rounded-full bg-steel flex items-center justify-center font-bold text-white border border-[#FF6B1A]/40 shadow-[0_0_10px_rgba(255,107,26,0.2)]">
                     RS
                 </div>
                 <div>
-                    <p id="crm-user-name" class="text-sm font-semibold text-white">Ricardo Santos</p>
-                    <p id="crm-user-role" class="text-xs text-muted">Diretor de Obras</p>
+                    <p class="text-sm font-semibold text-white">Ricardo Santos</p>
+                    <p class="text-xs text-muted">Diretor de Obras</p>
                 </div>
             </div>
-            <a href="/dashboard" class="flex items-center justify-center space-x-2 py-2 px-4 bg-steel hover:bg-steel/80 rounded-lg text-xs text-white font-semibold border border-steel hover:border-fire/40 transition duration-150 shadow-md">
+            <a href="https://obrascity.com.br/landing.html" class="flex items-center justify-center space-x-2 py-2 px-4 bg-steel hover:bg-steel/80 rounded-lg text-xs text-white font-semibold border border-steel hover:border-fire/40 transition duration-150 shadow-md">
                 <i class="fa-solid fa-arrow-left text-fire"></i>
                 <span>Voltar ao Site</span>
             </a>
@@ -602,7 +602,7 @@
 
                         <!-- Write Comment -->
                         <div class="flex items-start space-x-2">
-                            <div id="crm-comment-avatar" class="w-6 h-6 rounded-full bg-steel text-fire font-bold text-[10px] flex items-center justify-center border border-fire/10 flex-shrink-0 mt-1">RS</div>
+                            <div class="w-6 h-6 rounded-full bg-steel text-fire font-bold text-[10px] flex items-center justify-center border border-fire/10 flex-shrink-0 mt-1">RS</div>
                             <div class="flex-1 space-y-1.5">
                                 <textarea id="new-comment-textarea" rows="2" placeholder="Escreva uma anotação no diário..." class="w-full p-2 border border-steel bg-dark text-xs rounded-lg focus:outline-none text-white leading-relaxed resize-none"></textarea>
                                 <div class="flex justify-end">
@@ -664,5 +664,7 @@
 
     <!-- LINKING TO EXTERNAL LOGIC COMPACTED FILE -->
     <script src="crm-logic.js"></script>
-</body>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a11f0c6298f214c3',t:'MTc4MjUwNjY1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

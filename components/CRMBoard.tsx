@@ -5,9 +5,7 @@
 // Integrates seamless sequential POP, Custom Kanban columns, and MS Project-style dependency lines in pure SVG!
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { SOP_TEMPLATES } from '@/lib/crm/board-shared';
-import type { AuditLog, Card, Sector, Subtask, WorkflowStep } from '@/lib/crm/board-shared';
-import { saveCardAction, saveWorkflowPipelineAction, saveSectorAction } from '@/app/actions/crmActions';
+import { Card, WorkflowStep, Sector, Subtask, Comment, AuditLog, Attachment } from '../app/actions/crmActions';
 
 interface CRMBoardProps {
   initialCards?: Card[];
@@ -22,11 +20,13 @@ export default function CRMBoard({
   initialCards = [],
   initialWorkflow = [],
   initialSectors = [],
+  onSaveCardsServer,
+  onSaveWorkflowServer
 }: {
   initialCards?: Card[];
-  initialWorkflow?: WorkflowStep[];
-  initialSectors?: Sector[];
-}) {
+  initialWorkflow?: any[];
+  onSaveCards?: any;
+} & any) {
 
     // ----------------------------------------------------
     // LOCAL STATES & PERSISTENCE
@@ -176,8 +176,7 @@ export default function CRMBoard({
     const [selectedDetailCard, setSelectedDetailCard] = useState<Card | null>(null);
     const [editingSector, setEditingSector] = useState<Partial<Sector> | null>(null);
     const [popTab, setPopTab] = useState<'workflow' | 'procedures'>('workflow');
-    const [sopTemplate, setSopTemplate] = useState<string>("none");
-
+    
     // Subtasks / comments local bindings inside details
     const [newSubtaskTitle, setNewSubtaskInput] = useState("");
     const [newCommentText, setNewCommentText] = useState("");
@@ -186,46 +185,25 @@ export default function CRMBoard({
     const rowsContainerRef = useRef<HTMLDivElement>(null);
     const svgOverlayRef = useRef<SVGSVGElement>(null);
 
-    // Removed LocalStorage cache load - now using initialCards/Workflow from server
+    // Load LocalStorage cache if present
     useEffect(() => {
-        // Sync initial data if needed, or handle dynamic updates
+        if (typeof window !== 'undefined') {
+            const cachedCards = localStorage.getItem("obrascity_all_cards");
+            const cachedWorkflow = localStorage.getItem("obrascity_programmed_workflow");
+            if (cachedCards) setAllCards(JSON.parse(cachedCards));
+            if (cachedWorkflow) setWorkflow(JSON.parse(cachedWorkflow));
+        }
     }, []);
 
-    // Sync with Server Actions
-    const saveSingleCard = async (card: Card) => {
-        try {
-            await saveCardAction(card);
-        } catch (err) {
-            console.error("Failed to save card:", err);
-        }
-    };
-
-    const saveWorkflow = async (newWorkflow: WorkflowStep[], cards: Card[]) => {
-        try {
-            await saveWorkflowPipelineAction(newWorkflow, cards);
-        } catch (err) {
-            console.error("Failed to save workflow:", err);
-        }
-    };
-
-    const saveSector = async (sector: Sector) => {
-        try {
-            await saveSectorAction(sector);
-        } catch (err) {
-            console.error("Failed to save sector:", err);
-        }
-    };
-
-    const persistCards = (newCards: Card[]) => {
+    // Sync localStorage
+    const persistData = (newCards: Card[], newWorkflow?: WorkflowStep[]) => {
         setAllCards(newCards);
-        return newCards;
+        if (newWorkflow) setWorkflow(newWorkflow);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("obrascity_all_cards", JSON.stringify(newCards));
+            if (newWorkflow) localStorage.setItem("obrascity_programmed_workflow", JSON.stringify(newWorkflow));
+        }
     };
-
-    const persistWorkflow = (newWorkflow: WorkflowStep[]) => {
-        setWorkflow(newWorkflow);
-        return newWorkflow;
-    };
-
 
     // ----------------------------------------------------
     // MS PROJECT-STYLE SVG DEPEDENCY LINE ENGINE
@@ -299,40 +277,6 @@ interface WorkflowDateRange {
     duration: number;
 }
 
-    const getSequentialDatesForWorkflow = (card: Card) => {
-        let dates: WorkflowDateRange[] = [];
-        let currentStart = new Date(card.startDate || new Date().toISOString());
-
-        workflow.forEach((step) => {
-            let durationDays = 4; // standard duration
-            if (step.step === 1) durationDays = 3;
-            if (step.step === 3) durationDays = 5;
-            if (step.step === 5) durationDays = 5;
-
-            let start = new Date(currentStart);
-            let end = new Date(start);
-            end.setDate(start.getDate() + durationDays - 1);
-
-            dates.push({
-                step: step.step,
-                startDateStr: start.toISOString().split('T')[0],
-                endDateStr: end.toISOString().split('T')[0],
-                startDate: start,
-                endDate: end,
-                duration: durationDays
-            });
-
-            currentStart = new Date(end);
-            currentStart.setDate(end.getDate() + 1);
-        });
-
-        return dates;
-    };
-
-    const gStart = allCards.length > 0
-        ? new Date(Math.min(...allCards.map(c => new Date(c.startDate || "2026-06-25").getTime())))
-        : new Date("2026-06-25T00:00:00");
-
     // ----------------------------------------------------
     // METRICS CALCULATORS
     // ----------------------------------------------------
@@ -352,6 +296,59 @@ interface WorkflowDateRange {
     const completionRate = activeSectorCards.length > 0 ? Math.round((completedCount / activeSectorCards.length) * 100) : 0;
     const urgentCount = activeSectorCards.filter(c => c.priority === "Alta").length;
 
+    const switchActiveSector = (sectorId: string) => {
+        setActiveSectorId(sectorId);
+    };
+
+    const openNewCardModal = (stepIndex?: number) => {
+        setEditingCard(stepIndex !== undefined ? { currentStepIndex: stepIndex } : {});
+        setIsCardModalOpen(true);
+    };
+
+    const openViewCardModal = (cardId: string) => {
+        const card = allCards.find((item) => item.id === cardId) || null;
+        setSelectedDetailCard(card);
+        setIsDetailModalOpen(Boolean(card));
+    };
+
+    const selectGanttActiveProject = (cardId: string) => {
+        setSelectedGanttCardId(cardId);
+    };
+
+    const getSequentialDatesForWorkflow = (card: Card): WorkflowDateRange[] => {
+        const dates: WorkflowDateRange[] = [];
+        let currentStart = new Date(card.startDate || new Date().toISOString());
+
+        workflow.forEach((step) => {
+            let durationDays = 4;
+            if (step.step === 1) durationDays = 3;
+            if (step.step === 3) durationDays = 5;
+            if (step.step === 5) durationDays = 5;
+
+            const start = new Date(currentStart);
+            const end = new Date(start);
+            end.setDate(start.getDate() + durationDays - 1);
+
+            dates.push({
+                step: step.step,
+                startDateStr: start.toISOString().split('T')[0],
+                endDateStr: end.toISOString().split('T')[0],
+                startDate: start,
+                endDate: end,
+                duration: durationDays
+            });
+
+            currentStart = new Date(end);
+            currentStart.setDate(end.getDate() + 1);
+        });
+
+        return dates;
+    };
+
+    const gStart = allCards.length > 0
+        ? new Date(Math.min(...allCards.map((card) => new Date(card.startDate || "2026-06-25").getTime())))
+        : new Date("2026-06-25T00:00:00");
+
     // ----------------------------------------------------
     // HANDLERS & ACTIONS
     // ----------------------------------------------------
@@ -359,7 +356,7 @@ interface WorkflowDateRange {
         setDraggedCardId(cardId);
     };
 
-    const handleDrop = async (e: React.DragEvent, targetStepIndex: number) => {
+    const handleDrop = (e: React.DragEvent, targetStepIndex: number) => {
         e.preventDefault();
         if (!draggedCardId) return;
 
@@ -394,13 +391,11 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const movedCard = cards.find(c => c.id === draggedCardId);
-        if (movedCard) await saveSingleCard(movedCard);
+        persistData(updatedCards);
         setDraggedCardId(null);
     };
 
-    const handleSaveNewCard = async (e: React.FormEvent) => {
+    const handleSaveNewCard = (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingCard || !editingCard.title) return;
 
@@ -408,24 +403,17 @@ interface WorkflowDateRange {
         const step = workflow[targetStepIndex];
 
         let updatedCards: Card[];
-        let savedCard: Card | null = null;
 
         if (editingCard.id) {
             // Update
             updatedCards = allCards.map(c => {
                 if (c.id === editingCard.id) {
                     const changedStep = c.currentStepIndex !== targetStepIndex;
-                    const updated = {
+                    return {
                         ...c,
                         ...(editingCard as Card),
-                        subtasks: changedStep && step ? step.subtasks.map((t, i) => ({ id: `sub-${Date.now()}-${i}`, title: t, done: false })) : c.subtasks,
-                        logs: [
-                            { text: `Informações do card atualizadas`, date: getCurrentTimestamp() },
-                            ...c.logs
-                        ]
+                        subtasks: changedStep && step ? step.subtasks.map((t, i) => ({ id: `sub-${Date.now()}-${i}`, title: t, done: false })) : c.subtasks
                     };
-                    savedCard = updated;
-                    return updated;
                 }
                 return c;
             });
@@ -449,25 +437,16 @@ interface WorkflowDateRange {
                 attachments: []
             };
             updatedCards = [...allCards, newCard];
-            savedCard = newCard;
             setActiveSectorId(step.sectorId);
         }
 
-        persistCards(updatedCards);
-        if (savedCard) await saveSingleCard(savedCard);
+        persistData(updatedCards);
         setIsCardModalOpen(false);
         setEditingCard(null);
     };
 
-    const promoteCard = async () => {
+    const promoteCard = () => {
         if (!selectedDetailCard) return;
-
-        // Quality Gate: All subtasks must be done AND fvsSigned must be true
-        const allDone = selectedDetailCard.subtasks.length > 0 && selectedDetailCard.subtasks.every(s => s.done);
-        if (!allDone || !selectedDetailCard.fvsSigned) {
-            alert(`⚠️ Bloqueio de Qualidade (FVS): Você precisa concluir 100% dos procedimentos obrigatórios da fase "${workflow[selectedDetailCard.currentStepIndex]?.stageName}" e ter a assinatura digital da FVS para promover este projeto!`);
-            return;
-        }
 
         const nextStepIndex = selectedDetailCard.currentStepIndex + 1;
         if (nextStepIndex >= workflow.length) return;
@@ -490,17 +469,14 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const promotedCard = cards.find(c => c.id === selectedDetailCard.id);
-        if (promotedCard) await saveSingleCard(promotedCard);
-
+        persistData(updatedCards);
         setIsDetailModalOpen(false);
         setSelectedDetailCard(null);
         setActiveSectorId(nextStep.sectorId);
         alert(`Sucesso! O projeto foi transferido para o setor "${nextStep.sectorId.toUpperCase()}" na etapa "${nextStep.stageName}".`);
     };
 
-    const signFVS = async () => {
+    const signFVS = () => {
         if (!selectedDetailCard) return;
 
         const updatedCards = allCards.map(c => {
@@ -520,15 +496,13 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const signedCard = cards.find(c => c.id === selectedDetailCard.id);
-        if (signedCard) await saveSingleCard(signedCard);
-
+        persistData(updatedCards);
         // Refresh detail modal
-        if (signedCard) setSelectedDetailCard(signedCard);
+        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
+        if (target) setSelectedDetailCard(target);
     };
 
-    const unsignFVS = async () => {
+    const unsignFVS = () => {
         if (!selectedDetailCard || !confirm("Deseja realmente desfazer a assinatura digital de qualidade desta FVS?")) return;
 
         const updatedCards = allCards.map(c => {
@@ -548,14 +522,12 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const unsignedCard = cards.find(c => c.id === selectedDetailCard.id);
-        if (unsignedCard) await saveSingleCard(unsignedCard);
-
-        if (unsignedCard) setSelectedDetailCard(unsignedCard);
+        persistData(updatedCards);
+        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
+        if (target) setSelectedDetailCard(target);
     };
 
-    const handleAddSubtask = async () => {
+    const handleAddSubtask = () => {
         if (!selectedDetailCard || !newSubtaskTitle.trim()) return;
 
         const updatedCards = allCards.map(c => {
@@ -570,15 +542,13 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const updatedCard = cards.find(c => c.id === selectedDetailCard.id);
-        if (updatedCard) await saveSingleCard(updatedCard);
-
+        persistData(updatedCards);
         setNewSubtaskInput("");
-        if (updatedCard) setSelectedDetailCard(updatedCard);
+        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
+        if (target) setSelectedDetailCard(target);
     };
 
-    const handleToggleSubtask = async (subId: string) => {
+    const handleToggleSubtask = (subId: string) => {
         if (!selectedDetailCard || selectedDetailCard.fvsSigned) return;
 
         const updatedCards = allCards.map(c => {
@@ -599,14 +569,12 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const updatedCard = cards.find(c => c.id === selectedDetailCard.id);
-        if (updatedCard) await saveSingleCard(updatedCard);
-
-        if (updatedCard) setSelectedDetailCard(updatedCard);
+        persistData(updatedCards);
+        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
+        if (target) setSelectedDetailCard(target);
     };
 
-    const handleAddComment = async () => {
+    const handleAddComment = () => {
         if (!selectedDetailCard || !newCommentText.trim()) return;
 
         const updatedCards = allCards.map(c => {
@@ -621,12 +589,10 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const updatedCard = cards.find(c => c.id === selectedDetailCard.id);
-        if (updatedCard) await saveSingleCard(updatedCard);
-
+        persistData(updatedCards);
         setNewCommentText("");
-        if (updatedCard) setSelectedDetailCard(updatedCard);
+        const target = updatedCards.find(c => c.id === selectedDetailCard.id);
+        if (target) setSelectedDetailCard(target);
     };
 
     // ----------------------------------------------------
@@ -634,7 +600,7 @@ interface WorkflowDateRange {
     // ----------------------------------------------------
     const [newSOPStepTitle, setNewSOPStepTitle] = useState("");
 
-    const movePipelineStep = async (idx: number, direction: number) => {
+    const movePipelineStep = (idx: number, direction: number) => {
         const targetIdx = idx + direction;
         if (targetIdx < 0 || targetIdx >= workflow.length) return;
 
@@ -654,18 +620,10 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const wf = persistWorkflow(list);
-
-        await saveWorkflow(wf, cards);
-        // Save only modified cards
-        const modifiedCards = cards.filter(c => c.currentStepIndex === idx || c.currentStepIndex === targetIdx);
-        for (const card of modifiedCards) {
-            await saveSingleCard(card);
-        }
+        persistData(updatedCards, list);
     };
 
-    const handleAddSOPItem = async (stepIndex: number, text: string) => {
+    const handleAddSOPItem = (stepIndex: number, text: string) => {
         if (!text.trim()) return;
         const list = [...workflow];
         list[stepIndex].subtasks.push(text.trim());
@@ -685,17 +643,10 @@ interface WorkflowDateRange {
             return card;
         });
 
-        const cards = persistCards(updatedCards);
-        const wf = persistWorkflow(list);
-
-        await saveWorkflow(wf, cards);
-        const affectedCards = cards.filter(c => c.currentStepIndex === stepIndex);
-        for (const card of affectedCards) {
-            await saveSingleCard(card);
-        }
+        persistData(updatedCards, list);
     };
 
-    const handleRemoveSOPItem = async (stepIndex: number, subIndex: number) => {
+    const handleRemoveSOPItem = (stepIndex: number, subIndex: number) => {
         const list = [...workflow];
         list[stepIndex].subtasks.splice(subIndex, 1);
 
@@ -713,17 +664,10 @@ interface WorkflowDateRange {
             return card;
         });
 
-        const cards = persistCards(updatedCards);
-        const wf = persistWorkflow(list);
-
-        await saveWorkflow(wf, cards);
-        const affectedCards = cards.filter(c => c.currentStepIndex === stepIndex);
-        for (const card of affectedCards) {
-            await saveSingleCard(card);
-        }
+        persistData(updatedCards, list);
     };
 
-    const handleAddNewPipelineStep = async () => {
+    const handleAddNewPipelineStep = () => {
         if (!newSOPStepTitle.trim()) return;
         const nextStep = workflow.length + 1;
         const newStep: WorkflowStep = {
@@ -735,12 +679,11 @@ interface WorkflowDateRange {
             subtasks: ["Procedimento padrão 1", "Procedimento padrão 2"]
         };
         const list = [...workflow, newStep];
-        const wf = persistWorkflow(list);
-        await saveWorkflow(wf, allCards);
+        persistData(allCards, list);
         setNewSOPStepTitle("");
     };
 
-    const handleRemovePipelineStep = async (idx: number) => {
+    const handleRemovePipelineStep = (idx: number) => {
         if (workflow.length <= 1) {
             alert("O fluxo programado corporativo deve conter pelo menos uma fase sequencial ativa.");
             return;
@@ -759,14 +702,7 @@ interface WorkflowDateRange {
             return c;
         });
 
-        const cards = persistCards(updatedCards);
-        const wf = persistWorkflow(list);
-
-        await saveWorkflow(wf, cards);
-        const affectedCards = cards.filter(c => c.currentStepIndex >= list.length - 1); // Those that were pushed back
-        for (const card of affectedCards) {
-            await saveSingleCard(card);
-        }
+        persistData(updatedCards, list);
     };
 
     // ----------------------------------------------------
@@ -798,61 +734,12 @@ interface WorkflowDateRange {
         return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
     };
 
-    const switchActiveSector = (sectorId: string) => {
-        setActiveSectorId(sectorId);
-    };
-
-    const openNewCardModal = (stepIndex?: number) => {
-        const targetIndex = stepIndex !== undefined ? stepIndex : 0;
-        setEditingCard({
-            title: "",
-            desc: "",
-            responsible: "",
-            priority: "Média",
-            startDate: new Date().toISOString().split('T')[0],
-            date: new Date().toISOString().split('T')[0],
-            cost: 0,
-            currentStepIndex: targetIndex,
-        });
-        setIsCardModalOpen(true);
-    };
-
-    const openViewCardModal = (cardId: string) => {
-        const card = allCards.find(c => c.id === cardId);
-        if (card) {
-            setSelectedDetailCard(card);
-            setIsDetailModalOpen(true);
-        }
-    };
-
-    const applySOPTemplate = (templateKey: string) => {
-        setSopTemplate(templateKey);
-        const template = SOP_TEMPLATES[templateKey as keyof typeof SOP_TEMPLATES];
-        if (template && editingCard) {
-            setEditingCard({
-                ...editingCard,
-                title: template.title,
-                desc: template.desc,
-                subtasks: template.subtasks.map((t, i) => ({ id: `sub-tpl-${Date.now()}-${i}`, title: t, done: false }))
-            });
-        }
-    };
-
-
     // ----------------------------------------------------
     // JSX TEMPLATE RENDERER
     // ----------------------------------------------------
     return (
         <div className="h-screen flex overflow-hidden relative font-sans text-light bg-void">
-            {/* Background Noise Overlay to match prototype aesthetic */}
-            <div
-                className="fixed inset-0 pointer-events-none opacity-3 z-0"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E")`,
-                    backgroundSize: '180px'
-                }}
-            />
-
+            
             {/* SIDEBAR */}
             <aside className="w-64 bg-dark text-light flex flex-col justify-between z-30 flex-shrink-0 shadow-2xl border-r border-steel relative">
                 <div>
@@ -1074,7 +961,7 @@ interface WorkflowDateRange {
                                 <span className="text-xs text-muted font-bold uppercase tracking-wider">Visualizar Obra:</span>
                                 <div className="flex items-center space-x-1.5 p-1 bg-dark rounded-lg border border-steel">
                                     {allCards.map(c => (
-                                        <button key={c.id} onClick={() => setSelectedGanttCardId(c.id)} className={`px-3.5 py-1 rounded text-xs font-bold transition ${c.id === selectedGanttCardId ? 'bg-fire text-white' : 'text-muted hover:text-white'}`}>
+                                        <button key={c.id} onClick={() => selectGanttActiveProject(c.id)} className={`px-3.5 py-1 rounded text-xs font-bold transition ${c.id === selectedGanttCardId ? 'bg-fire text-white' : 'text-muted hover:text-white'}`}>
                                             {c.title.split(' - ')[0]}
                                         </button>
                                     ))}
@@ -1087,15 +974,9 @@ interface WorkflowDateRange {
                                     <div className="grid grid-cols-[240px_1fr] bg-dark2/30 border-b border-steel text-center text-[10px] font-bold text-muted uppercase tracking-wider">
                                         <div className="text-left p-3 border-r border-steel">Fase / Atividade</div>
                                         <div className="grid font-mono" style={{ gridTemplateColumns: 'repeat(21, minmax(0, 1fr))' }}>
-                                            {Array.from({ length: 21 }).map((_, i) => {
-                                                const date = new Date(gStart);
-                                                date.setDate(date.getDate() + i);
-                                                return (
-                                                    <div key={i} className="p-3 border-r border-steel/30">
-                                                        {String(date.getDate()).padStart(2, '0')}/{String(date.getMonth() + 1).padStart(2, '0')}
-                                                    </div>
-                                                );
-                                            })}
+                                            {Array.from({ length: 21 }).map((_, i) => (
+                                                <div key={i} className="p-3 border-r border-steel/30">{i + 25}/06</div>
+                                            ))}
                                         </div>
                                     </div>
 
@@ -1166,479 +1047,7 @@ interface WorkflowDateRange {
             {/* NEW CARD MODAL */}
             {isCardModalOpen && (
                 <div className="fixed inset-0 bg-void/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-dark border border-steel w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-                        <div className="p-6 border-b border-steel flex items-center justify-between bg-dark2/50">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 rounded-lg bg-fire flex items-center justify-center text-white">
-                                    <i className="fa-solid fa-plus text-sm"></i>
-                                </div>
-                                <h3 className="font-bold text-white text-lg font-condensed uppercase tracking-wide">Novo Card de Projeto</h3>
-                            </div>
-                            <button onClick={() => setIsCardModalOpen(false)} className="text-muted hover:text-white transition text-xl">&times;</button>
-                        </div>
-
-                        <form onSubmit={handleSaveNewCard} className="p-6 space-y-5">
-                            <div className="grid grid-cols-1 gap-5">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Modelo de SOP (Template)</label>
-                                    <select
-                                        value={sopTemplate}
-                                        onChange={(e) => applySOPTemplate(e.target.value)}
-                                        className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                    >
-                                        <option value="none">Sem template (Personalizado)</option>
-                                        {Object.keys(SOP_TEMPLATES).map(key => (
-                                            <option key={key} value={key}>{SOP_TEMPLATES[key as keyof typeof SOP_TEMPLATES].title}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Título do Projeto</label>
-                                    <input
-                                        type="text"
-                                        value={editingCard?.title || ""}
-                                        onChange={(e) => setEditingCard({...editingCard, title: e.target.value})}
-                                        placeholder="Ex: Obra Residencial X - Unidade 101"
-                                        className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Descrição / Escopo</label>
-                                    <textarea
-                                        rows={3}
-                                        value={editingCard?.desc || ""}
-                                        onChange={(e) => setEditingCard({...editingCard, desc: e.target.value})}
-                                        placeholder="Detalhes do projeto..."
-                                        className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition resize-none"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Responsável</label>
-                                        <input
-                                            type="text"
-                                            value={editingCard?.responsible || ""}
-                                            onChange={(e) => setEditingCard({...editingCard, responsible: e.target.value})}
-                                            placeholder="Nome do gestor"
-                                            className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Prioridade</label>
-                                        <select
-                                            value={editingCard?.priority || "Média"}
-                                            onChange={(e) => setEditingCard({...editingCard, priority: e.target.value as any})}
-                                            className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                        >
-                                            <option value="Alta">Alta</option>
-                                            <option value="Média">Média</option>
-                                            <option value="Baixa">Baixa</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Data de Início</label>
-                                        <input
-                                            type="date"
-                                            value={editingCard?.startDate || ""}
-                                            onChange={(e) => setEditingCard({...editingCard, startDate: e.target.value})}
-                                            className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Data Prevista</label>
-                                        <input
-                                            type="date"
-                                            value={editingCard?.date || ""}
-                                            onChange={(e) => setEditingCard({...editingCard, date: e.target.value})}
-                                            className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1.5">Verba Estimada (R$)</label>
-                                    <input
-                                        type="number"
-                                        value={editingCard?.cost || 0}
-                                        onChange={(e) => setEditingCard({...editingCard, cost: parseFloat(e.target.value)})}
-                                        className="w-full p-2.5 rounded-lg bg-dark2 border border-steel text-white text-sm focus:border-fire outline-none transition"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-end space-x-3 pt-4">
-                                <button type="button" onClick={() => setIsCardModalOpen(false)} className="px-4 py-2 rounded-lg text-muted hover:text-white transition text-xs font-bold">Cancelar</button>
-                                <button type="submit" className="bg-fire hover:bg-fire-hover text-white px-6 py-2 rounded-lg text-xs font-bold shadow-lg transition-all active:scale-95">Salvar Card</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* POP WORKFLOW CONFIG MODAL */}
-            {isPOPModalOpen && (
-                <div className="fixed inset-0 bg-void/90 flex items-center justify-center z-50 p-4 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-dark rounded-xl shadow-[0_10px_50px_rgba(0,0,0,0.95)] border border-steel max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel flex-shrink-0">
-                            <h3 className="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2.5">
-                                <i className="fa-solid fa-route text-fire animate-pulse"></i>
-                                <span>PROGRAMADOR DE PROCESSOS E PROCEDIMENTOS (POP UNIFICADO)</span>
-                            </h3>
-                            <button onClick={() => setIsPOPModalOpen(false)} className="text-muted hover:text-white transition">
-                                <i className="fa-solid fa-times text-lg"></i>
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4 overflow-y-auto flex-1">
-                            <div className="bg-dark2/50 border border-steel/60 p-3.5 rounded-lg text-xs text-muted leading-relaxed flex items-start space-x-2">
-                                <i className="fa-solid fa-circle-info text-fire mt-0.5"></i>
-                                <div>
-                                    Monte a sequência de <strong>Processos e Procedimentos</strong> que regem o andamento dos projetos da sua empresa.
-                                    Indique o setor responsável, o nome da etapa e descreva a lista de procedimentos obrigatórios (um por linha).
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                {workflow.map((step, idx) => (
-                                    <div key={step.step} className="p-4 rounded-xl bg-dark2 border border-steel flex items-start space-x-4 group">
-                                        <div className="flex flex-col items-center space-y-2">
-                                            <span className="text-[10px] font-bold text-fire bg-fire/10 px-2 py-0.5 rounded">Etapa {step.step}</span>
-                                            <div className="flex flex-col space-y-1">
-                                                <button onClick={() => movePipelineStep(idx, -1)} className="p-1 text-muted hover:text-white transition"><i className="fa-solid fa-chevron-up text-[10px]"></i></button>
-                                                <button onClick={() => movePipelineStep(idx, 1)} className="p-1 text-muted hover:text-white transition"><i className="fa-solid fa-chevron-down text-[10px]"></i></button>
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 space-y-3">
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <input
-                                                    value={step.stageName}
-                                                    onChange={(e) => {
-                                                        const list = [...workflow];
-                                                        list[idx].stageName = e.target.value;
-                                                        setWorkflow(list);
-                                                    }}
-                                                    className="p-2 rounded bg-void border border-steel text-xs text-white focus:border-fire outline-none"
-                                                    placeholder="Nome da Etapa"
-                                                />
-                                                <select
-                                                    value={step.sectorId}
-                                                    onChange={(e) => {
-                                                        const list = [...workflow];
-                                                        list[idx].sectorId = e.target.value;
-                                                        setWorkflow(list);
-                                                    }}
-                                                    className="p-2 rounded bg-void border border-steel text-xs text-white focus:border-fire outline-none"
-                                                >
-                                                    {sectors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Procedimentos Obrigatórios (FVS)</span>
-                                                    <button onClick={() => {
-                                                        const text = prompt("Novo procedimento:");
-                                                        if(text) handleAddSOPItem(idx, text);
-                                                    }} className="text-fire text-[10px] font-bold hover:underline"><i className="fa-solid fa-plus mr-1"></i>Adicionar</button>
-                                                </div>
-                                                <div className="grid grid-cols-1 gap-1">
-                                                    {step.subtasks.map((sub, sIdx) => (
-                                                        <div key={sIdx} className="flex items-center justify-between p-2 rounded bg-void border border-steel/30 text-[11px] text-light group/sub">
-                                                            <span>{sub}</span>
-                                                            <button onClick={() => handleRemoveSOPItem(idx, sIdx)} className="text-muted hover:text-rose-500 opacity-0 group-hover/sub:opacity-100 transition"><i className="fa-solid fa-trash text-[10px]"></i></button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => handleRemovePipelineStep(idx)} className="p-2 text-muted hover:text-rose-500 transition"><i className="fa-solid fa-trash"></i></button>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex items-center space-x-2 pt-4">
-                                <input
-                                    value={newSOPStepTitle}
-                                    onChange={(e) => setNewSOPStepTitle(e.target.value)}
-                                    placeholder="Nome da nova etapa..."
-                                    className="flex-1 p-2 rounded bg-void border border-steel text-xs text-white focus:border-fire outline-none"
-                                />
-                                <button onClick={handleAddNewPipelineStep} className="px-4 py-2 bg-fire hover:bg-fire-hover text-white text-xs font-bold rounded-lg transition shadow-md">Adicionar Etapa</button>
-                            </div>
-                        </div>
-                        <div className="p-6 border-t border-steel bg-dark2/25 flex justify-end">
-                            <button onClick={() => setIsPOPModalOpen(false)} className="px-6 py-2.5 bg-fire hover:bg-fire-hover text-white rounded-lg text-xs font-bold transition shadow-md">Fechar e Salvar Processos</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* SECTOR MODAL */}
-            {isSectorModalOpen && (
-                <div className="fixed inset-0 bg-void/85 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-dark rounded-xl shadow-2xl border border-steel max-w-md w-full overflow-hidden">
-                        <div className="bg-steel px-6 py-4 flex items-center justify-between text-white border-b border-steel">
-                            <h3 className="font-bold text-lg font-condensed tracking-wider flex items-center space-x-2">
-                                <i className="fa-solid fa-folder-tree text-fire"></i>
-                                <span>{editingSector?.name ? 'EDITAR SETOR' : 'NOVO SETOR / ÁREA'}</span>
-                            </h3>
-                            <button onClick={() => setIsSectorModalOpen(false)} className="text-muted hover:text-white transition text-xl">&times;</button>
-                        </div>
-                        <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            const updatedSectors = sectors.map(s => s.id === editingSector?.id ? { ...s, ...editingSector } : s);
-                            let newSector: Sector | null = null;
-                            if (!editingSector?.id) {
-                                newSector = { ...editingSector as Sector, id: `sec-${Date.now()}` };
-                                updatedSectors.push(newSector);
-                            } else {
-                                newSector = updatedSectors.find(s => s.id === editingSector?.id) || null;
-                            }
-                            setSectors(updatedSectors);
-                            if (newSector) await saveSector(newSector);
-                            setIsSectorModalOpen(false);
-                            setEditingSector(null);
-                        }} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">Nome do Setor / Área *</label>
-                                <input
-                                    type="text"
-                                    value={editingSector?.name || ""}
-                                    onChange={(e) => setEditingSector({...editingSector, name: e.target.value})}
-                                    required
-                                    placeholder="Ex: Compras, Operacional, etc."
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-dark2 text-light focus:ring-1 focus:ring-fire focus:outline-none transition"
-                                />
-                            </div>
-                            <div className="pt-4 border-t border-steel flex justify-end space-x-2">
-                                <button type="button" onClick={() => setIsSectorModalOpen(false)} className="px-4 py-2 border border-steel hover:bg-steel rounded-lg text-sm font-semibold text-light hover:text-white transition">Cancelar</button>
-                                <button type="submit" className="px-5 py-2 bg-fire hover:bg-fire-hover text-white rounded-lg text-sm font-bold shadow-md transition">Salvar Setor</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* DETAIL VIEW MODAL */}
-            {isDetailModalOpen && selectedDetailCard && (
-
-                <div className="fixed inset-0 bg-void/90 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-                    <div className="bg-dark border border-steel w-full max-w-5xl h-full max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300">
-                        {/* Modal Header */}
-                        <div className="p-6 border-b border-steel bg-dark2/40 flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="w-12 h-12 rounded-xl bg-fire flex items-center justify-center text-white text-xl shadow-lg">
-                                    <i className="fa-solid fa-folder-open"></i>
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-white font-condensed uppercase tracking-tight leading-none">{selectedDetailCard.title}</h3>
-                                    <p className="text-xs text-muted mt-1 font-medium uppercase tracking-wider">ID: {selectedDetailCard.id} • Gestão de Qualidade ISO 9001</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                <button onClick={() => { setIsDetailModalOpen(false); setSelectedDetailCard(null); }} className="text-muted hover:text-white transition text-2xl">&times;</button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-8 grid grid-cols-12 gap-8 bg-void/30">
-                            {/* Left Column: Main Project Data */}
-                            <div className="col-span-12 lg:col-span-7 space-y-8">
-                                <section className="bg-dark2/60 p-6 rounded-2xl border border-steel shadow-inner">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-xs font-bold text-muted uppercase tracking-widest flex items-center space-x-2">
-                                            <i className="fa-solid fa-circle-info text-fire"></i>
-                                            <span>Informações Gerais</span>
-                                        </h4>
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${selectedDetailCard.priority === 'Alta' ? 'bg-rose-500/20 text-rose-400' : 'bg-steel/20 text-muted'}`}>
-                                            {selectedDetailCard.priority}
-                                        </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-1">
-                                            <span className="block text-[10px] font-bold text-muted uppercase">Responsável</span>
-                                            <p className="text-sm font-semibold text-white">{selectedDetailCard.responsible}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="block text-[10px] font-bold text-muted uppercase">Custo Estimado</span>
-                                            <p className="text-sm font-bold text-emerald-400">R$ {selectedDetailCard.cost.toLocaleString('pt-BR')}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="block text-[10px] font-bold text-muted uppercase">Data Início</span>
-                                            <p className="text-sm text-light">{selectedDetailCard.startDate}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="block text-[10px] font-bold text-muted uppercase">Prazo Previsto</span>
-                                            <p className="text-sm text-light">{selectedDetailCard.date}</p>
-                                        </div>
-                                    </div>
-                                    <div className="mt-6 pt-4 border-t border-steel/40">
-                                        <span className="block text-[10px] font-bold text-muted uppercase mb-2">Descrição do Escopo</span>
-                                        <p className="text-sm text-light leading-relaxed italic opacity-80">{selectedDetailCard.desc}</p>
-                                    </div>
-                                </section>
-
-                                <section className="bg-dark2/60 p-6 rounded-2xl border border-steel shadow-inner">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-xs font-bold text-muted uppercase tracking-widest flex items-center space-x-2">
-                                            <i className="fa-solid fa-list-check text-fire"></i>
-                                            <span>Checklist de Processo (SOP)</span>
-                                        </h4>
-                                        <button onClick={handleAddSubtask} className="text-[10px] font-bold text-fire hover:text-fire-hover transition flex items-center space-x-1">
-                                            <i className="fa-solid fa-plus text-[8px]"></i>
-                                            <span>Adicionar Item</span>
-                                        </button>
-                                    </div>
-                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                                        {selectedDetailCard.subtasks.length > 0 ? (
-                                            selectedDetailCard.subtasks.map(sub => (
-                                                <div key={sub.id} className="group flex items-center justify-between p-3 rounded-lg bg-void/40 border border-steel hover:border-fire/30 transition">
-                                                    <div className="flex items-center space-x-3">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={sub.done}
-                                                            onChange={() => handleToggleSubtask(sub.id)}
-                                                            className="w-4 h-4 rounded border-steel bg-dark2 text-fire focus:ring-fire outline-none cursor-pointer"
-                                                        />
-                                                        <span className={`text-sm transition-all ${sub.done ? 'text-muted line-through opacity-50' : 'text-white font-medium'}`}>{sub.title}</span>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p className="text-center py-4 text-xs text-muted italic">Nenhuma tarefa definida para esta fase.</p>
-                                        )}
-                                    </div>
-                                    <div className="mt-4 flex items-center justify-between p-3 rounded-lg bg-steel/20 border border-steel/40">
-                                        <span className="text-xs text-muted font-bold uppercase">Progresso da Fase</span>
-                                        <span className="text-xs font-bold text-white font-mono">
-                                            {Math.round((selectedDetailCard.subtasks.filter(s => s.done).length / (selectedDetailCard.subtasks.length || 1)) * 100)}%
-                                        </span>
-                                    </div>
-                                </section>
-
-                                <section className="bg-dark2/60 p-6 rounded-2xl border border-steel shadow-inner">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-xs font-bold text-muted uppercase tracking-widest flex items-center space-x-2">
-                                            <i className="fa-solid fa-message text-fire"></i>
-                                            <span>Diário de Bordo / Comentários</span>
-                                        </h4>
-                                    </div>
-                                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
-                                        {selectedDetailCard.comments.length > 0 ? (
-                                            selectedDetailCard.comments.map((com, i) => (
-                                                <div key={i} className="p-3 rounded-lg bg-void/40 border-l-2 border-fire/40">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-xs font-bold text-white">{com.author}</span>
-                                                        <span className="text-[9px] text-muted font-mono">{com.date}</span>
-                                                    </div>
-                                                    <p className="text-xs text-light leading-relaxed">{com.text}</p>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p className="text-center py-4 text-xs text-muted italic">Nenhuma anotação registrada.</p>
-                                        )}
-                                    </div>
-                                    <div className="mt-4 flex space-x-2">
-                                        <input
-                                            type="text"
-                                            value={newCommentText}
-                                            onChange={(e) => setNewCommentText(e.target.value)}
-                                            placeholder="Adicionar anotação..."
-                                            className="flex-1 p-2 rounded-lg bg-dark border border-steel text-white text-xs focus:border-fire outline-none"
-                                        />
-                                        <button onClick={handleAddComment} className="bg-fire hover:bg-fire-hover text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-md">Enviar</button>
-                                    </div>
-                                </section>
-                            </div>
-
-                            {/* Right Column: Quality Gates & Audit */}
-                            <div className="col-span-12 lg:col-span-5 space-y-8">
-                                <section className="bg-gradient-to-br from-dark2 to-dark p-6 rounded-3xl border-2 border-fire/30 shadow-xl relative overflow-hidden">
-                                    <div className="absolute -top-4 -right-4 w-24 h-24 bg-fire/10 rounded-full blur-3xl"></div>
-                                    <div className="relative z-10">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h4 className="text-xs font-bold text-muted uppercase tracking-widest flex items-center space-x-2">
-                                                <i className="fa-solid fa-shield-halved text-fire"></i>
-                                                <span>Homologação FVS (ISO 9001)</span>
-                                            </h4>
-                                            <div className={`w-2 h-2 rounded-full ${selectedDetailCard.fvsSigned ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`}></div>
-                                        </div>
-
-                                        {selectedDetailCard.fvsSigned ? (
-                                            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3 animate-in fade-in duration-500">
-                                                <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto text-emerald-400 text-xl shadow-inner">
-                                                    <i className="fa-solid fa-circle-check"></i>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-tight">Selo de Qualidade Ativado</p>
-                                                    <p className="text-[10px] text-muted mt-1">Assinado por: <span className="text-light font-bold">{selectedDetailCard.fvsSignedBy}</span></p>
-                                                    <p className="text-[9px] text-muted font-mono mt-1">Hash: {selectedDetailCard.fvsHash}</p>
-                                                </div>
-                                                <button onClick={unsignFVS} className="w-full py-2 rounded-lg border border-emerald-500/30 text-emerald-400 text-[10px] font-bold hover:bg-emerald-500/10 transition">Revogar Assinatura</button>
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-center space-y-3">
-                                                <div className="w-12 h-12 bg-rose-500/20 rounded-full flex items-center justify-center mx-auto text-rose-400 text-xl shadow-inner">
-                                                    <i className="fa-solid fa-circle-xmark"></i>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-rose-400 uppercase tracking-tight">Aguardando Homologação</p>
-                                                    <p className="text-[10px] text-muted mt-1">Conclua 100% do checklist para habilitar a assinatura digital.</p>
-                                                </div>
-                                                <button
-                                                    disabled={selectedDetailCard.subtasks.length === 0 || selectedDetailCard.subtasks.some(s => !s.done)}
-                                                    onClick={signFVS}
-                                                    className={`w-full py-2 rounded-lg text-[10px] font-bold transition shadow-md ${selectedDetailCard.subtasks.length > 0 && selectedDetailCard.subtasks.every(s => s.done) ? 'bg-fire text-white hover:bg-fire-hover' : 'bg-steel text-muted cursor-not-allowed opacity-50'}`}
-                                                >
-                                                    Assinar Digitalmente (FVS)
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </section>
-
-                                <section className="bg-dark2/60 p-6 rounded-2xl border border-steel shadow-inner">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-xs font-bold text-muted uppercase tracking-widest flex items-center space-x-2">
-                                            <i className="fa-solid fa-clock-rotate-left text-fire"></i>
-                                            <span>Trilha de Auditoria</span>
-                                        </h4>
-                                    </div>
-                                    <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                                        {selectedDetailCard.logs.length > 0 ? (
-                                            selectedDetailCard.logs.map((log, i) => (
-                                                <div key={i} className="flex space-x-3 group">
-                                                    <div className="relative flex flex-col items-center">
-                                                        <div className="w-2 h-2 rounded-full bg-fire mt-1.5"></div>
-                                                        {i !== selectedDetailCard.logs.length - 1 && <div className="w-px h-full bg-steel my-1"></div>}
-                                                    </div>
-                                                    <div className="pb-4">
-                                                        <p className="text-xs text-light leading-relaxed">{log.text}</p>
-                                                        <span className="text-[9px] text-muted font-mono">{log.date}</span>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p className="text-center py-4 text-xs text-muted italic">Nenhum registro de log.</p>
-                                        )}
-                                    </div>
-                                </section>
-
-                                <div className="flex items-center justify-end">
-                                    <button
-                                        onClick={promoteCard}
-                                        disabled={!selectedDetailCard.fvsSigned}
-                                        className={`px-6 py-3 rounded-xl text-xs font-bold transition-all shadow-lg flex items-center space-x-2 ${selectedDetailCard.fvsSigned ? 'bg-gradient-to-r from-fire to-fire-hover text-white hover:scale-105' : 'bg-steel text-muted cursor-not-allowed opacity-50'}`}
-                                    >
-                                        <i className="fa-solid fa-arrow-right-long"></i>
-                                        <span>Promover para Próxima Fase</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Render Form fields tied to handleSaveNewCard */}
                 </div>
             )}
         </div>

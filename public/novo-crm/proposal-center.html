@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Propostas ObrasCitY — Gestão Comercial Inteligente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Barlow, Barlow Condensed, JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=Barlow:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Barlow', 'sans-serif'],
+                        condensed: ['Barlow Condensed', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        void: '#060810',
+                        dark: '#0C1018',
+                        dark2: '#121620',
+                        steel: '#1A2030',
+                        fire: {
+                            DEFAULT: '#FF6B1A',
+                            hover: '#FF9445',
+                            light: 'rgba(255, 107, 26, 0.1)',
+                            glow: 'rgba(255, 107, 26, 0.25)',
+                            border: 'rgba(255, 107, 26, 0.3)',
+                        },
+                        muted: '#8896B3',
+                        light: '#F0F4FF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --void: #060810;
+            --dark: #0C1018;
+            --dark2: #121620;
+            --steel: #1A2030;
+            --fire: #FF6B1A;
+            --text-light: #F0F4FF;
+            --text-muted: #8896B3;
+        }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background-color: var(--void);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* Noise pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: .03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 180px;
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--void);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--steel);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--fire);
+        }
+
+        /* Paper style mockup for Proposal Letter */
+        .proposal-paper {
+            background-color: #ffffff;
+            color: #1e293b;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            font-family: 'Barlow', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden relative">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-dark text-light flex flex-col justify-between z-30 flex-shrink-0 shadow-2xl border-r border-steel relative">
+        <div>
+            <!-- Header Brand / Logo matching the landing page -->
+            <div class="p-6 border-b border-steel flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-fire to-[#CC5200] flex items-center justify-center text-white font-black text-base shadow-[0_4px_16px_rgba(255,107,26,0.4)]">
+                        OC
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-lg text-white font-condensed tracking-wide">ObrasCit<span class="text-fire">Y</span></span>
+                        <span class="block text-[9px] text-muted font-medium uppercase tracking-wider">Gestão Inteligente</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation options -->
+            <div class="p-4 space-y-4">
+                <div class="text-xs font-semibold text-muted uppercase tracking-wider px-2">
+                    <span>Módulos Comerciais</span>
+                </div>
+                
+                <nav class="space-y-1.5">
+                    <a href="crm-dashboard.html" class="w-full text-left py-2.5 px-3 rounded-md transition duration-150 flex items-center space-x-2.5 text-muted hover:bg-steel/40 hover:text-white">
+                        <i class="fa-solid fa-table-columns text-sm"></i>
+                        <span class="text-sm font-semibold">CRM & Kanban</span>
+                    </a>
+                    <a href="#" class="w-full text-left py-2.5 px-3 rounded-md transition duration-150 flex items-center space-x-2.5 bg-fire/10 text-fire border-l-4 border-fire font-bold">
+                        <i class="fa-solid fa-file-contract text-sm"></i>
+                        <span class="text-sm font-semibold">Gerador de Propostas</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Sidebar Bottom (User Info / Return Link) -->
+        <div class="p-4 border-t border-steel bg-void/50">
+            <div class="flex items-center space-x-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-steel flex items-center justify-center font-bold text-white border border-[#FF6B1A]/40 shadow-[0_0_10px_rgba(255,107,26,0.2)]">
+                    RS
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">Ricardo Santos</p>
+                    <p class="text-xs text-muted">Diretor de Obras</p>
+                </div>
+            </div>
+            <a href="https://obrascity.com.br/landing.html" class="flex items-center justify-center space-x-2 py-2 px-4 bg-steel hover:bg-steel/80 rounded-lg text-xs text-white font-semibold border border-steel hover:border-fire/40 transition duration-150 shadow-md">
+                <i class="fa-solid fa-arrow-left text-fire"></i>
+                <span>Voltar ao Site</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-void relative z-10">
+        
+        <!-- TOP HEADER -->
+        <header class="h-16 bg-dark/95 border-b border-steel flex items-center justify-between px-8 z-10 shadow-lg backdrop-blur-md flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <div class="p-2.5 rounded-lg bg-steel text-fire flex items-center justify-center border border-steel shadow-[0_0_12px_rgba(255,107,26,0.1)]">
+                    <i class="fa-solid fa-file-invoice text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold font-condensed tracking-wide text-white uppercase leading-tight">Centro de Propostas de Venda</h1>
+                    <p class="text-xs text-muted">Mapeamento de Orçamento com Custo Unitário SINAPI / Mercado</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="simulateExportProposal()" class="bg-fire hover:bg-fire-hover text-white font-bold text-xs py-1.5 px-4 rounded-lg flex items-center space-x-2 shadow-md transition h-9">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Exportar Proposta PDF</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- SPLIT INTERACTIVE PANEL -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden p-8 gap-8">
+            
+            <!-- LEFT COLUMN: Proposal Items & Price Database (SINAPI Simulator) -->
+            <div class="flex-1 bg-dark border border-steel rounded-xl shadow-2xl p-6 flex flex-col justify-between overflow-y-auto max-h-[calc(100vh-160px)]">
+                <div class="space-y-5">
+                    
+                    <!-- Reference Database Header -->
+                    <div class="flex justify-between items-center border-b border-steel pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-database text-fire"></i>
+                            <span class="font-bold text-sm text-white uppercase tracking-wider font-condensed">Banco de Preços de Referência (SINAPI/SBC)</span>
+                        </div>
+                        <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded font-bold">MENSAL ATUALIZADO</span>
+                    </div>
+
+                    <!-- Client and Title Selection -->
+                    <div class="grid grid-cols-2 gap-4 bg-dark2/40 p-4 rounded-lg border border-steel">
+                        <div>
+                            <label class="block text-[9px] font-bold text-muted uppercase tracking-wider mb-1">Nome do Cliente / Incorporador</label>
+                            <input type="text" id="client-name" oninput="updateProposalPreview()" value="Julio de Sousa" class="w-full px-3 py-1.5 border border-steel bg-dark text-xs rounded text-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-muted uppercase tracking-wider mb-1">Título da Proposta Comercial</label>
+                            <input type="text" id="proposal-title" oninput="updateProposalPreview()" value="Proposta de Infraestrutura e Acabamento - Lote 12" class="w-full px-3 py-1.5 border border-steel bg-dark text-xs rounded text-white focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Search and Select Input -->
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-muted uppercase tracking-wider">Buscar Serviços e Materiais no Banco de Preços</label>
+                        <div class="flex gap-2">
+                            <select id="price-db-select" class="flex-1 px-3 py-2 border border-steel rounded-lg text-xs bg-dark2 text-light focus:outline-none">
+                                <option value="concre_sapata">SINAPI 95321: Concretagem de Sapata fck=30MPa, com bombeamento (R$ 680,00/m³)</option>
+                                <option value="alvenaria_ved">SINAPI 89032: Alvenaria de vedação de bloco cerâmico furado 9x19x19cm (R$ 72,50/m²)</option>
+                                <option value="revest_porce">SBC 12534: Assentamento de porcelanato polido 60x60cm, argamassa colante (R$ 115,00/m²)</option>
+                                <option value="pintura_acr">TCPO 54120: Pintura acrílica de acabamento premium, duas demãos (R$ 32,00/m²)</option>
+                                <option value="escavacao_val">SINAPI 93382: Escavação manual de valas para fundações, profundidade até 1,5m (R$ 85,00/m³)</option>
+                            </select>
+                            <button onclick="addServiceToProposal()" class="px-4 py-2 bg-steel hover:bg-steel/80 border border-steel hover:border-fire/40 text-fire rounded-lg text-xs font-bold transition flex items-center space-x-1.5 whitespace-nowrap">
+                                <i class="fa-solid fa-cart-plus"></i>
+                                <span>Adicionar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Estimator Selected Items table -->
+                    <div class="space-y-2">
+                        <span class="block text-[10px] font-bold text-muted uppercase tracking-wider">Composição do Orçamento da Proposta</span>
+                        
+                        <div class="border border-steel rounded-lg overflow-hidden bg-dark2/30">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-dark2 text-[10px] font-bold text-muted uppercase border-b border-steel">
+                                    <tr>
+                                        <th class="p-3">Serviço de Referência</th>
+                                        <th class="p-3 text-center">Unid.</th>
+                                        <th class="p-3 text-right">Preço Unit.</th>
+                                        <th class="p-3 text-center w-20">Qtd.</th>
+                                        <th class="p-3 text-right">Subtotal</th>
+                                        <th class="p-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="proposal-items-tbody" class="divide-y divide-steel/40">
+                                    <!-- Dynamic rows go here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BDI multiplier controls -->
+                <div class="pt-6 border-t border-steel space-y-4">
+                    <div class="bg-dark2/45 p-4 rounded-xl border border-steel space-y-3">
+                        <div class="flex justify-between items-center flex-wrap">
+                            <div>
+                                <span class="font-bold text-white text-xs block uppercase">Fator de BDI Comercial (Lucro + Taxas)</span>
+                                <span class="text-[10px] text-muted">Aplica porcentagem de despesas indiretas e margem de lucro sobre o custo real</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-base font-extrabold text-fire font-mono" id="bdi-value-label">25%</span>
+                            </div>
+                        </div>
+                        
+                        <input type="range" id="bdi-range" min="10" max="45" value="25" oninput="updateBDIValue(this.value)" class="w-full accent-fire cursor-pointer h-1.5 bg-steel rounded-lg">
+                    </div>
+
+                    <!-- Pricing Summaries -->
+                    <div class="grid grid-cols-3 gap-4 text-center font-mono">
+                        <div class="bg-dark2/20 border border-steel p-2.5 rounded-lg">
+                            <span class="block text-[9px] uppercase font-bold text-muted font-sans">Custo Direto Real</span>
+                            <span class="text-xs font-bold text-light" id="summary-direct-cost">R$ 0,00</span>
+                        </div>
+                        <div class="bg-dark2/20 border border-steel p-2.5 rounded-lg">
+                            <span class="block text-[9px] uppercase font-bold text-muted font-sans">Soma BDI</span>
+                            <span class="text-xs font-bold text-fire" id="summary-bdi-sum">R$ 0,00</span>
+                        </div>
+                        <div class="bg-dark2/20 border border-[#FF6B1A]/20 p-2.5 rounded-lg shadow-[0_0_10px_rgba(255,107,26,0.05)]">
+                            <span class="block text-[9px] uppercase font-bold text-muted font-sans text-fire">Valor da Proposta</span>
+                            <span class="text-sm font-extrabold text-white" id="summary-total-cost">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Notion-Style Live Document Preview -->
+            <div class="flex-1 flex flex-col max-h-[calc(100vh-160px)] relative">
+                
+                <!-- Live Paper Frame -->
+                <div class="flex-1 proposal-paper p-8 overflow-y-auto rounded-xl shadow-2xl relative border border-slate-300">
+                    
+                    <!-- Paper Watermark/Header matching ObrasCitY Client Branded PDF design -->
+                    <div class="flex justify-between items-start border-b-2 border-slate-200 pb-5">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B1A] to-[#CC5200] flex items-center justify-center text-white font-black text-sm shadow-md">OC</div>
+                            <div>
+                                <span class="font-bold text-base text-slate-800 tracking-wide font-sans block leading-none">ObrasCit<span class="text-[#FF6B1A]">Y</span></span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Gestão Comercial Integrada</span>
+                            </div>
+                        </div>
+                        <div class="text-right text-[10px] text-slate-400 font-mono">
+                            <span>PROPOSTA: #PRO-{now_ms}</span><br>
+                            <span>DATA DE EMISSÃO: 26/06/2026</span>
+                        </div>
+                    </div>
+
+                    <!-- Proposal Document Body -->
+                    <div class="mt-6 space-y-6 text-slate-700 text-xs leading-relaxed">
+                        <div>
+                            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">À Empresa / Cliente</span>
+                            <p class="font-bold text-slate-800 text-sm" id="doc-client-label">Julio de Sousa</p>
+                            <p class="text-slate-500">Canteiro de Obras: Residencial Jardins - Barra da Tijuca, RJ</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <p class="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-200 pb-1">Prezados Senhores,</p>
+                            <p class="text-justify leading-relaxed">
+                                Apresentamos abaixo nossa melhor proposta técnica e comercial para a execução dos serviços de engenharia especificados. Os valores unitários têm como base o banco de referências **SINAPI/SBC**, acrescidos de nossa taxa de BDI para cobrir despesas indiretas, fiscais e margem operacional técnica.
+                            </p>
+                        </div>
+
+                        <!-- Dynamic table of services in the preview Document -->
+                        <div class="border border-slate-200 rounded-lg overflow-hidden">
+                            <table class="w-full text-left text-[11px]">
+                                <thead class="bg-slate-100 text-slate-600 font-bold uppercase text-[9px]">
+                                    <tr>
+                                        <th class="p-2.5">Descrição do Serviço</th>
+                                        <th class="p-2.5 text-center">Unid.</th>
+                                        <th class="p-2.5 text-right">Qtd.</th>
+                                        <th class="p-2.5 text-right">Preço Unit. (BDI Inc.)</th>
+                                        <th class="p-2.5 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="doc-items-tbody" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Dynamic rows matching estimation on the left -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Total Summaries inside the document -->
+                        <div class="flex justify-end pt-3">
+                            <div class="w-64 space-y-1.5 border-t-2 border-slate-200 pt-3 text-right">
+                                <div class="flex justify-between text-slate-500 font-medium">
+                                    <span>Soma dos Serviços:</span>
+                                    <span id="doc-subtotal-label">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-500 font-medium">
+                                    <span>BDI Aplicado (<span id="doc-bdi-percent-label">25%</span>):</span>
+                                    <span id="doc-bdi-label">R$ 0,00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-900 font-black text-sm pt-1 border-t border-slate-100">
+                                    <span>VALOR TOTAL PROPOSTO:</span>
+                                    <span class="text-[#FF6B1A]" id="doc-total-label">R$ 0,00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contract Terms (Editable/Fictional) -->
+                        <div class="space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-100 text-[10px] text-slate-500">
+                            <p class="font-bold text-slate-700">CONDIÇÕES DE PAGAMENTO E PRAZOS:</p>
+                            <p>
+                                • **Prazo de Validade da Proposta:** 30 dias a partir da data de emissão.<br>
+                                • **Condições de Pagamento:** 30% de sinal de entrada, 40% divididos conforme medições físicas em canteiro (Gantt integrado), e 30% na entrega definitiva e homologação da FVS.<br>
+                                • **Prazo de Execução:** Conforme cronograma físico-financeiro programado na plataforma ObrasCitY.
+                            </p>
+                        </div>
+
+                        <!-- Signature lines -->
+                        <div class="pt-8 grid grid-cols-2 gap-8 text-center text-[10px] text-slate-400">
+                            <div class="border-t border-slate-200 pt-2.5">
+                                <span class="font-bold text-slate-600 block">Ricardo Santos</span>
+                                <span>ObrasCitY Engenharia Ltda</span>
+                            </div>
+                            <div class="border-t border-slate-200 pt-2.5">
+                                <span class="font-bold text-slate-600 block" id="doc-client-signature-name">Julio de Sousa</span>
+                                <span>Contratante / Aceitante</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+
+    <!-- COMMERCIAL PROPOSALS INTERACTIVE CONTROLLER SCRIPT -->
+    <script>
+        // Pre-loaded items dataset with real average Brazilian market values (SINAPI reference base)
+        const DATABASE_ITEMS = {
+            concre_sapata: { name: "SINAPI 95321: Concretagem de Sapata fck=30MPa, com bombeamento", unit: "m³", price: 680.00 },
+            alvenaria_ved: { name: "SINAPI 89032: Alvenaria de bloco cerâmico furado 9x19x19cm", unit: "m²", price: 72.50 },
+            revest_porce: { name: "SBC 12534: Assentamento de porcelanato polido 60x60cm", unit: "m²", price: 115.00 },
+            pintura_acr: { name: "TCPO 54120: Pintura acrílica de acabamento premium, duas demãos", unit: "m²", price: 32.00 },
+            escavacao_val: { name: "SINAPI 93382: Escavação manual de valas para fundações", unit: "m³", price: 85.00 }
+        };
+
+        // Active items loaded on the current proposal
+        let proposalItems = [
+            { key: "concre_sapata", name: "SINAPI 95321: Concretagem de Sapata fck=30MPa, com bombeamento", unit: "m³", price: 680.00, qty: 15 },
+            { key: "revest_porce", name: "SBC 12534: Assentamento de porcelanato polido 60x60cm", unit: "m²", price: 115.00, qty: 80 },
+            { key: "pintura_acr", name: "TCPO 54120: Pintura acrílica de acabamento premium, duas demãos", unit: "m²", price: 32.00, qty: 120 }
+        ];
+
+        let bdiPercentage = 25; // Default BDI
+
+        function initProposalCenter() {
+            renderProposalItems();
+            updateProposalPreview();
+        }
+
+        function renderProposalItems() {
+            const tbody = document.getElementById("proposal-items-tbody");
+            tbody.innerHTML = "";
+
+            proposalItems.forEach((item, idx) => {
+                const subtotal = item.price * item.qty;
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-dark2/20 border-b border-steel/20";
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-white max-w-xs truncate">${item.name}</td>
+                    <td class="p-3 text-center text-muted font-mono">${item.unit}</td>
+                    <td class="p-3 text-right text-light font-mono">R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td class="p-3 text-center">
+                        <input type="number" value="${item.qty}" min="1" onchange="updateItemQty(${idx}, this.value)" class="w-16 px-1.5 py-1 text-center border border-steel bg-dark text-xs rounded text-white focus:outline-none focus:border-fire font-mono font-bold">
+                    </td>
+                    <td class="p-3 text-right text-emerald-400 font-mono font-bold">R$ ${subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="removeServiceFromProposal(${idx})" class="text-muted hover:text-red-400 transition">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            calculateTotals();
+        }
+
+        function addServiceToProposal() {
+            const selectedKey = document.getElementById("price-db-select").value;
+            const dbItem = DATABASE_ITEMS[selectedKey];
+
+            if (dbItem) {
+                // Check if already exists, else push new
+                const existing = proposalItems.find(item => item.key === selectedKey);
+                if (existing) {
+                    existing.qty += 10; // Increment default
+                } else {
+                    proposalItems.push({
+                        key: selectedKey,
+                        name: dbItem.name,
+                        unit: dbItem.unit,
+                        price: dbItem.price,
+                        qty: 10 // Default initial qty
+                    });
+                }
+
+                renderProposalItems();
+                updateProposalPreview();
+            }
+        }
+
+        function removeServiceFromProposal(idx) {
+            proposalItems.splice(idx, 1);
+            renderProposalItems();
+            updateProposalPreview();
+        }
+
+        function updateItemQty(idx, val) {
+            const qty = parseInt(val) || 1;
+            proposalItems[idx].qty = qty;
+            
+            renderProposalItems();
+            updateProposalPreview();
+        }
+
+        function updateBDIValue(val) {
+            bdiPercentage = parseInt(val) || 10;
+            document.getElementById("bdi-value-label").textContent = `${bdiPercentage}%`;
+            
+            calculateTotals();
+            updateProposalPreview();
+        }
+
+        function calculateTotals() {
+            const directCost = proposalItems.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+            const bdiSum = directCost * (bdiPercentage / 100);
+            const totalValue = directCost + bdiSum;
+
+            document.getElementById("summary-direct-cost").textContent = `R$ ${directCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById("summary-bdi-sum").textContent = `R$ ${bdiSum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById("summary-total-cost").textContent = `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        }
+
+        // ==========================================
+        // LIVE PREVIEW DOCUMENT UPDATES
+        // ==========================================
+        function updateProposalPreview() {
+            // Update Client bindings
+            const clientNameInput = document.getElementById("client-name").value.trim() || "Julio de Sousa";
+            document.getElementById("doc-client-label").textContent = clientNameInput;
+            document.getElementById("doc-client-signature-name").textContent = clientNameInput;
+
+            // Update items table on preview document
+            const docTbody = document.getElementById("doc-items-tbody");
+            docTbody.innerHTML = "";
+
+            proposalItems.forEach(item => {
+                const subtotal = item.price * item.qty;
+                
+                // Calculate unit price with BDI multiplier included (R$ unit * (1 + BDI/100))
+                const unitWithBDI = item.price * (1 + bdiPercentage / 100);
+                const subtotalWithBDI = unitWithBDI * item.qty;
+
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="p-2.5 font-semibold text-slate-800">${item.name}</td>
+                    <td class="p-2.5 text-center text-slate-500">${item.unit}</td>
+                    <td class="p-2.5 text-right font-mono text-slate-500">${item.qty}</td>
+                    <td class="p-2.5 text-right font-mono text-slate-500">R$ ${unitWithBDI.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td class="p-2.5 text-right font-mono font-bold text-slate-800">R$ ${subtotalWithBDI.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                `;
+                docTbody.appendChild(tr);
+            });
+
+            // Update bottom paper totals
+            const directCost = proposalItems.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+            const bdiSum = directCost * (bdiPercentage / 100);
+            const totalValue = directCost + bdiSum;
+
+            document.getElementById("doc-subtotal-label").textContent = `R$ ${directCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById("doc-bdi-percent-label").textContent = `${bdiPercentage}%`;
+            document.getElementById("doc-bdi-label").textContent = `R$ ${bdiSum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById("doc-total-label").textContent = `R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        }
+
+        function simulateExportProposal() {
+            const client = document.getElementById("client-name").value.trim() || "Cliente";
+            alert(`Sucesso! A proposta comercial para "${client}" foi formatada, timbrada, assinada e exportada como PDF de alta qualidade para sua pasta de Downloads!`);
+        }
+
+        window.addEventListener("DOMContentLoaded", initProposalCenter);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a11a35d229bef614',t:'MTc4MjQ1NTkxOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
