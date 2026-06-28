@@ -60,6 +60,7 @@ export const dynamic = "force-dynamic";
 
 const PLANOS = ["trial", "starter", "pro", "enterprise"];
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+const ACTIONABLE_ALERT_STATUSES = new Set(["open", "in_progress"]);
 const PLANO_MRR: Record<string, number> = {
   trial: 0,
   starter: 79,
@@ -203,6 +204,25 @@ const BTN_SM: React.CSSProperties = {
 const BTN_SM_RED: React.CSSProperties = { ...BTN_SM, color: "var(--of-red)", borderColor: "var(--of-red)44" };
 const BTN_SM_GREEN: React.CSSProperties = { ...BTN_SM, color: "var(--of-green)", borderColor: "var(--of-green)44" };
 
+const ALERT_REASON_LABELS: Record<string, string> = {
+  login_rate_limit: "Rate limit de login",
+  login_auth_error: "Falha de autenticação no login",
+  master_mfa_enrollment_required: "Conta master sem MFA cadastrado",
+  mfa_required_not_enrolled: "Perfil obrigatório sem MFA cadastrado",
+  admin_without_2fa: "Administrador sem 2FA",
+  resend_confirmation_failed: "Falha ao reenviar confirmação",
+  signup_rate_limit_ip: "Rate limit de cadastro por IP",
+  signup_rate_limit_email: "Rate limit de cadastro por e-mail",
+  signup_flow_error: "Erro no fluxo de cadastro",
+  signup_auth_error: "Falha de autenticação no cadastro",
+  invalid_materials_csv_upload: "Upload inválido de CSV de materiais",
+  invalid_purchase_orders_csv_upload: "Upload inválido de CSV de pedidos",
+};
+
+function formatAlertReason(reason: string) {
+  return ALERT_REASON_LABELS[reason] ?? reason.replaceAll("_", " ");
+}
+
 export default async function ContasPage({
   searchParams,
 }: {
@@ -230,7 +250,29 @@ export default async function ContasPage({
 
   const totalAtivos = empresas.filter((e) => ACTIVE_STATUSES.has(e.assinatura_status)).length;
   const totalSuspensos = empresas.filter((e) => e.assinatura_status === "suspended").length;
-  const alertasHigh = alertas.filter((a) => a.severity === "high").length;
+  const alertasActionable = alertas.filter((a) => ACTIONABLE_ALERT_STATUSES.has(a.status));
+  const alertasActionableHigh = alertasActionable.filter((a) => a.severity === "high").length;
+  const alertasResolved = alertas.filter((a) => a.status === "resolved").length;
+  const alertasIgnored = alertas.filter((a) => a.status === "ignored").length;
+  const alertReasonCounts = Array.from(
+    alertas.reduce((acc, alert) => {
+      const key = alert.reason;
+      const current = acc.get(key) ?? {
+        reason: key,
+        total: 0,
+        actionable: 0,
+        high: 0,
+      };
+      current.total += 1;
+      if (ACTIONABLE_ALERT_STATUSES.has(alert.status)) current.actionable += 1;
+      if (alert.severity === "high") current.high += 1;
+      acc.set(key, current);
+      return acc;
+    }, new Map<string, { reason: string; total: number; actionable: number; high: number }>()),
+  )
+    .map(([, value]) => value)
+    .sort((a, b) => b.actionable - a.actionable || b.high - a.high || b.total - a.total)
+    .slice(0, 8);
   const empresasTrial = empresas.filter((e) => e.assinatura_status === "trialing").length;
   const empresasPagantes = empresas.filter((e) => e.assinatura_status === "active").length;
   const mrrEstimado = empresas.reduce((acc, e) => acc + (PLANO_MRR[e.plano] ?? 0), 0);
@@ -310,11 +352,11 @@ export default async function ContasPage({
           aria-label="Ver alertas de segurança"
         >
           <p className="of-kpi-icon"><Bell size={18} aria-hidden /></p>
-          <p className="of-kpi-label">Alertas de segurança</p>
-          <p className="of-kpi-value" style={{ color: alertasHigh > 0 ? "var(--of-red)" : "var(--of-yellow)" }}>
-            {alertas.length}
+          <p className="of-kpi-label">Alertas acionáveis</p>
+          <p className="of-kpi-value" style={{ color: alertasActionableHigh > 0 ? "var(--of-red)" : "var(--of-yellow)" }}>
+            {alertasActionable.length}
           </p>
-          <p className="of-metric-change">{alertasHigh} críticos (high)</p>
+          <p className="of-metric-change">{alertasActionableHigh} high em aberto · {alertas.length} recentes</p>
         </Link>
         <article className="of-metric-card purple">
           <p className="of-kpi-icon"><ClipboardList size={18} aria-hidden /></p>
@@ -1285,11 +1327,71 @@ export default async function ContasPage({
       {/* ── TAB: SEGURANÇA ── */}
       {tab === "seguranca" && (
         <div style={{ display: "grid", gap: 20 }}>
+          <div className="of-kpi-grid">
+            <article className="of-metric-card yellow">
+              <p className="of-kpi-label">Abertos ou em análise</p>
+              <p className="of-kpi-value" style={{ color: alertasActionableHigh > 0 ? "var(--of-red)" : "var(--of-yellow)" }}>
+                {alertasActionable.length}
+              </p>
+              <p className="of-metric-change">{alertasActionableHigh} com severidade high</p>
+            </article>
+            <article className="of-metric-card green">
+              <p className="of-kpi-label">Resolvidos</p>
+              <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>{alertasResolved}</p>
+              <p className="of-metric-change">dentro da amostra recente</p>
+            </article>
+            <article className="of-metric-card">
+              <p className="of-kpi-label">Ignorados</p>
+              <p className="of-kpi-value">{alertasIgnored}</p>
+              <p className="of-metric-change">ruído operacional ou sem ação</p>
+            </article>
+            <article className="of-metric-card purple">
+              <p className="of-kpi-label">Eventos recentes</p>
+              <p className="of-kpi-value" style={{ color: "var(--of-purple)" }}>{alertas.length}</p>
+              <p className="of-metric-change">amostra carregada pela tela</p>
+            </article>
+          </div>
+
+          <article className="of-card">
+            <div className="of-card-title" style={{ marginBottom: 16 }}>
+              Motivos que mais exigem atenção
+            </div>
+            <div className="of-table-wrap of-table-wrap--flat">
+              <table className="of-table of-table--dense">
+                <thead>
+                  <tr>
+                    <th style={TH_STYLE}>Motivo</th>
+                    <th style={TH_STYLE}>Acionáveis</th>
+                    <th style={TH_STYLE}>High</th>
+                    <th style={TH_STYLE}>Recentes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alertReasonCounts.map((item) => (
+                    <tr key={item.reason}>
+                      <td style={{ ...TD_STYLE, maxWidth: 320 }}>{formatAlertReason(item.reason)}</td>
+                      <td style={TD_STYLE}>{item.actionable}</td>
+                      <td style={TD_STYLE}>{item.high}</td>
+                      <td style={TD_STYLE}>{item.total}</td>
+                    </tr>
+                  ))}
+                  {alertReasonCounts.length === 0 ? (
+                    <tr><td colSpan={4} style={{ ...TD_STYLE, color: "var(--of-text-3)" }}>Nenhum motivo contabilizado.</td></tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
           {/* Alertas */}
           <article className="of-card">
             <div className="of-card-title" style={{ marginBottom: 16 }}>
               Alertas de segurança recentes ({alertas.length})
             </div>
+            <p className="of-list-description" style={{ marginBottom: 12 }}>
+              Esta tabela mostra os alertas mais recentes. O backlog que realmente exige ação é o conjunto com status
+              <strong> aberto </strong>ou<strong> em análise</strong>.
+            </p>
             <div className="of-table-wrap of-table-wrap--flat">
               <table className="of-table of-table--dense">
                 <thead>
@@ -1314,7 +1416,7 @@ export default async function ContasPage({
                       </td>
                       <td style={TD_STYLE}><SeverityBadge severity={a.severity} /></td>
                       <td style={TD_STYLE}><AlertStatusBadge status={a.status} /></td>
-                      <td style={{ ...TD_STYLE, maxWidth: 260, fontSize: "0.8rem" }}>{a.reason}</td>
+                      <td style={{ ...TD_STYLE, maxWidth: 260, fontSize: "0.8rem" }}>{formatAlertReason(a.reason)}</td>
                       <td style={{ ...TD_STYLE, fontSize: "0.78rem", color: "var(--of-text-2)" }}>{a.email ?? "—"}</td>
                       <td style={{ ...TD_STYLE, fontFamily: "monospace", fontSize: "0.75rem", color: "var(--of-text-3)" }}>
                         {hashShort(a.ip_hash)}
