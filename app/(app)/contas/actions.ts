@@ -128,7 +128,7 @@ export async function alterarPlanoAction(empresaId: string, formData: FormData) 
 
   const { error: empresaError } = await admin
     .from("empresas")
-    .update({ plano, updated_at: now.toISOString() })
+    .update({ plano })
     .eq("id", empresaId);
   if (empresaError) throw new Error(`Erro ao sincronizar plano da empresa: ${empresaError.message}`);
 
