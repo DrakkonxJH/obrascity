@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolvePublicAppOrigin } from "@/lib/validations/env";
 import { provisionTrialTenant } from "@/lib/auth/provision-tenant";
 import { createTenantAuthSession, getTenantSecurityPolicyByEmpresa } from "@/lib/db/seguranca-corporativa";
+import { buildMfaChallengePath, buildMfaSetupPath, getMfaRequirementForProfile, getPostLoginPath } from "@/lib/auth/mfa";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -134,7 +135,6 @@ export async function signInAction(
 
     profileRole = String(profile?.role ?? "");
     const empresaId = String(profile?.empresa_id ?? "");
-    const userFactorsCount = data.user?.factors?.length ?? 0;
     const isMasterOwner = isControlTotalOwner({
       id: data.user?.id,
       email: data.user?.email ?? null,
@@ -150,47 +150,59 @@ export async function signInAction(
         };
       }
 
-      if (userFactorsCount === 0) {
-        await createSecurityAlert({
-          category: "login",
-          severity: "high",
-          reason: "master_mfa_required",
-          email,
-          ip,
-          metadata: {
-            role: profileRole,
-          },
-        });
+    }
+
+    const safeNext = getPostLoginPath(isMasterOwner, nextPath);
+    const mfaRequirement = await getMfaRequirementForProfile({
+      id: profile?.id,
+      email: data.user?.email ?? null,
+      role: profileRole,
+      empresa_id: empresaId,
+    });
+
+    if (mfaRequirement.required) {
+      const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assuranceError) {
         await supabase.auth.signOut();
         return {
           ok: false,
-          message: "A conta master exige MFA obrigatório antes do acesso.",
+          message: `Falha ao validar segundo fator: ${assuranceError.message}`,
         };
+      }
+
+      if (assurance.currentLevel !== "aal2") {
+        if (mfaRequirement.reason === "master" && assurance.nextLevel !== "aal2") {
+          await createSecurityAlert({
+            category: "login",
+            severity: "high",
+            reason: "master_mfa_enrollment_required",
+            email,
+            ip,
+            metadata: {
+              role: profileRole,
+            },
+          });
+        }
+
+        if (mfaRequirement.reason === "tenant-role" && assurance.nextLevel !== "aal2") {
+          await createSecurityAlert({
+            category: "login",
+            severity: "high",
+            reason: "mfa_required_not_enrolled",
+            email,
+            ip,
+            metadata: {
+              role: profileRole,
+              empresaId,
+            },
+          });
+        }
+
+        redirect(assurance.nextLevel === "aal2" ? buildMfaChallengePath(safeNext) : buildMfaSetupPath(safeNext));
       }
     }
 
     if (empresaId && !isMasterOwner) {
-      const tenantPolicy = await getTenantSecurityPolicyByEmpresa(empresaId);
-      const requiresMfaByRole = tenantPolicy.mfa_required_roles.includes(profileRole);
-      if (requiresMfaByRole && userFactorsCount === 0) {
-        await createSecurityAlert({
-          category: "login",
-          severity: "high",
-          reason: "mfa_required_not_enrolled",
-          email,
-          ip,
-          metadata: {
-            role: profileRole,
-            empresaId,
-          },
-        });
-        await supabase.auth.signOut();
-        return {
-          ok: false,
-          message: "Seu perfil exige MFA obrigatório. Cadastre um fator de autenticação com o administrador.",
-        };
-      }
-
       if (profile?.id) {
         const deviceLabel = headerStore.get("sec-ch-ua-platform") ?? "Dispositivo web";
         const userAgent = headerStore.get("user-agent") ?? "N/A";
@@ -230,11 +242,7 @@ export async function signInAction(
     email: data.user?.email ?? null,
     role: profileRole,
   });
-  const safeNext = isMasterOwner
-    ? "/contas"
-    : nextPath.startsWith("/") && !nextPath.startsWith("//")
-      ? nextPath
-      : "/dashboard";
+  const safeNext = getPostLoginPath(isMasterOwner, nextPath);
   redirect(safeNext);
 }
 

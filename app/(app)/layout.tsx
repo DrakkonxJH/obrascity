@@ -4,6 +4,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
+import { buildMfaChallengePath, buildMfaSetupPath, getMfaRequirementForProfile } from "@/lib/auth/mfa";
 import type { LayoutSummary } from "@/lib/db/layout-summary";
 import { getLayoutSummary } from "@/lib/db/layout-summary";
 import { listNotificacoes } from "@/lib/db/notificacoes";
@@ -13,6 +14,7 @@ import { supportsObraTrash } from "@/lib/db/obras";
 import { mapDbNotifications } from "@/lib/notifications/map";
 import { validateAndTouchTenantSession } from "@/lib/db/seguranca-corporativa";
 import { getRequestIpFromHeaders, isMasterIpAllowed } from "@/lib/auth/master-access";
+import { createServerClient } from "@/lib/supabase/server";
 import { encerrarAcessoAssistidoAction } from "./contas/actions";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +85,19 @@ export default async function AppLayout({
   }
 
   const canAccessControlTotal = isControlTotalOwner(profile);
+  const mfaRequirement = await getMfaRequirementForProfile(profile);
+  if (mfaRequirement.required) {
+    const supabase = await createServerClient();
+    const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError) {
+      redirect("/login");
+    }
+    if (assurance?.currentLevel !== "aal2") {
+      const fallbackNext = canAccessControlTotal ? "/contas" : "/dashboard";
+      redirect(assurance?.nextLevel === "aal2" ? buildMfaChallengePath(fallbackNext) : buildMfaSetupPath(fallbackNext));
+    }
+  }
+
   if (profile && !profile.empresa_id && !canAccessControlTotal) {
     redirect("/conta-pendente");
   }

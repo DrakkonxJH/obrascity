@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
 import { getRequestIpFromHeaders, isMasterIpAllowed } from "@/lib/auth/master-access";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { getEnv } from "@/lib/validations/env";
 import { getManagedQueues } from "@/lib/queue/connection";
 
@@ -289,6 +290,12 @@ export async function POST(request: NextRequest) {
   }
   if (!isMasterIpAllowed(getRequestIpFromHeaders(request.headers))) {
     return NextResponse.json({ error: "Acesso restrito por allowlist de IP" }, { status: 403 });
+  }
+
+  const supabase = await createServerClient();
+  const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError || assurance?.currentLevel !== "aal2") {
+    return NextResponse.json({ error: "MFA obrigatório para operações master." }, { status: 403 });
   }
 
   const payload = (await request.json().catch(() => null)) as RequestBody | null;
