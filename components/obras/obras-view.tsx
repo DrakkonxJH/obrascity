@@ -78,23 +78,23 @@ export function ObrasView({ obrasAtivas, obrasLixeira }: ObrasViewProps) {
         }
       />
       <div className="of-kpi-grid" style={{ marginTop: -2 }}>
-        <article className="of-metric-card blue">
-          <p className="of-kpi-label">Obras ativas</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{obrasAtivas.length}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Obras ativas</div>
+          <div className="of-kpi-value" style={{ color: "var(--of-blue)" }}>{obrasAtivas.length}</div>
         </article>
-        <article className="of-metric-card yellow">
-          <p className="of-kpi-label">Em andamento</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{totalAndamento}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Em andamento</div>
+          <div className="of-kpi-value" style={{ color: "var(--of-yellow)" }}>{totalAndamento}</div>
         </article>
-        <article className="of-metric-card green">
-          <p className="of-kpi-label">Concluídas</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-green)" }}>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Concluídas</div>
+          <div className="of-kpi-value" style={{ color: "var(--of-green)" }}>
             {obrasAtivas.filter((o) => o.status === "concluida").length}
-          </p>
+          </div>
         </article>
-        <article className="of-metric-card">
-          <p className="of-kpi-label">Lixeira</p>
-          <p className="of-kpi-value" style={{ color: "var(--of-red)" }}>{obrasLixeira.length}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Lixeira</div>
+          <div className="of-kpi-value" style={{ color: "var(--of-red)" }}>{obrasLixeira.length}</div>
         </article>
       </div>
       <div className="of-obras-toolbar">

@@ -102,42 +102,42 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
         className="of-dashboard-grid"
         style={{ gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", marginBottom: 16 }}
       >
-        <article className="of-card">
-          <div className="of-card-title">Progresso da obra</div>
-          <p className="of-kpi-value">{obra.progresso}%</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Progresso da obra</div>
+          <div className="of-kpi-value">{obra.progresso}%</div>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Orçado total</div>
-          <p className="of-kpi-value">{money.format(orcadoTotal)}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Orçado total</div>
+          <div className="of-kpi-value">{money.format(orcadoTotal)}</div>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Realizado total</div>
-          <p className="of-kpi-value">{money.format(realizadoTotal)}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Realizado total</div>
+          <div className="of-kpi-value">{money.format(realizadoTotal)}</div>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Saldo disponível</div>
-          <p className="of-kpi-value">{money.format(saldo)}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Saldo disponível</div>
+          <div className="of-kpi-value">{money.format(saldo)}</div>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Cronograma concluído</div>
-          <p className="of-kpi-value">{progressoCronograma}%</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Cronograma concluído</div>
+          <div className="of-kpi-value">{progressoCronograma}%</div>
           <p className="of-empty-text">
             {tarefasConcluidas}/{cronogramaObra.length} tarefas concluídas
           </p>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Atividades realizadas</div>
-          <p className="of-kpi-value">{atividadesRealizadas.length}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Atividades realizadas</div>
+          <div className="of-kpi-value">{atividadesRealizadas.length}</div>
           <p className="of-empty-text">Concluídas no cronograma</p>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Atividades a executar</div>
-          <p className="of-kpi-value">{atividadesExecutar.length}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Atividades a executar</div>
+          <div className="of-kpi-value">{atividadesExecutar.length}</div>
           <p className="of-empty-text">Pendentes e em andamento</p>
         </article>
-        <article className="of-card">
-          <div className="of-card-title">Histórico operacional</div>
-          <p className="of-kpi-value">{historicoExecucao.length}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Histórico operacional</div>
+          <div className="of-kpi-value">{historicoExecucao.length}</div>
           <p className="of-empty-text">Registros no diário de obra</p>
         </article>
       </div>

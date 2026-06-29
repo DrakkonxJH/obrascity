@@ -95,21 +95,21 @@ export default async function ProjetosPage() {
         ) : null}
 
         <div className="of-stats-grid" style={{ marginBottom: 20 }}>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{documentos.length}</div>
-            <div className="of-stat-label">Total de documentos</div>
+          <article className="of-kpi-card">
+            <div className="of-kpi-label">Total de documentos</div>
+            <div className="of-kpi-value">{documentos.length}</div>
           </article>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{documentosCompatibilizados}</div>
-            <div className="of-stat-label">Compatibilizados</div>
+          <article className="of-kpi-card">
+            <div className="of-kpi-label">Compatibilizados</div>
+            <div className="of-kpi-value">{documentosCompatibilizados}</div>
           </article>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{conflitosAbertos}</div>
-            <div className="of-stat-label">Conflitos abertos</div>
+          <article className="of-kpi-card">
+            <div className="of-kpi-label">Conflitos abertos</div>
+            <div className="of-kpi-value">{conflitosAbertos}</div>
           </article>
-          <article className="of-stat-card">
-            <div className="of-stat-value">{conflitosCriticos}</div>
-            <div className="of-stat-label">Conflitos críticos</div>
+          <article className="of-kpi-card">
+            <div className="of-kpi-label">Conflitos críticos</div>
+            <div className="of-kpi-value">{conflitosCriticos}</div>
           </article>
         </div>
 
