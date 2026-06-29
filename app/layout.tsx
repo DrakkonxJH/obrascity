@@ -28,6 +28,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      </head>
       <body className="min-h-full overflow-x-hidden bg-[var(--of-bg)] text-[var(--of-text)]">
         {children}
       </body>
