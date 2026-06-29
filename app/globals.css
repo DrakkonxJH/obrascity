@@ -40,6 +40,7 @@
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 @theme inline {
@@ -1293,18 +1294,18 @@ html[data-device="mobile"] .of-main-content {
 .of-card {
   border: 1px solid var(--of-border);
   background:
-    radial-gradient(circle at 110% -22%, rgba(255, 107, 26, 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(15, 20, 34, 0.95), rgba(10, 14, 24, 0.96));
+    radial-gradient(circle at 110% -22%, rgba(255, 107, 26, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(15, 20, 34, 0.9), rgba(10, 14, 24, 0.95));
   border-radius: 14px;
   padding: 22px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-premium);
   transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .of-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 107, 26, 0.38);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32);
+  transform: translateY(-3px);
+  border-color: rgba(255, 107, 26, 0.4);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 .of-card-title {
@@ -1336,13 +1337,15 @@ html[data-device="mobile"] .of-main-content {
   border: 1px solid var(--of-border);
   border-radius: 14px;
   padding: 20px;
-  background: linear-gradient(140deg, rgba(13, 17, 32, 0.95), rgba(10, 15, 29, 0.95));
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  background: linear-gradient(140deg, rgba(13, 17, 32, 0.98), rgba(10, 15, 29, 0.98));
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .of-kpi-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .of-kpi-icon {
