@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import {
   signInAction,
   type LoginActionState,
@@ -19,8 +20,28 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(signInAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    // Garante que o Turnstile seja renderizado mesmo após navegação via cliente
+    const renderCaptcha = () => {
+      if (window.turnstile) {
+        window.turnstile.render(".cf-turnstile");
+      }
+    };
+
+    // Pequeno delay para garantir que o DOM esteja pronto e o script carregado
+    const timer = setTimeout(renderCaptcha, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="afterInteractive"
+        onLoad={() => {
+            if (window.turnstile) window.turnstile.render(".cf-turnstile");
+        }}
+      />
       <form action={formAction} autoComplete="off" className="of-login-v2-form">
         <input type="hidden" name="next" value={nextPath} />
         <div className="of-login-v2-field">
@@ -51,7 +72,7 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
               defaultValue=""
               required
               className="of-login-v2-input"
-              placeholder="********"
+            placeholder="********"
             />
             <button
               type="button"
@@ -113,7 +134,6 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
         </Link>
 
       </form>
-
     </>
   );
 }
