@@ -80,7 +80,14 @@ export async function signInAction(
   }
 
   const supabase = await createServerClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const captchaToken = String(formData.get("cf-turnstile-response") ?? "");
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: {
+      captchaToken: captchaToken,
+    }
+  });
 
   if (error) {
     await createSecurityAlert({
