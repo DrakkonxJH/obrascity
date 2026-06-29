@@ -86,6 +86,14 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
           </Link>
         </div>
 
+        <div className="of-login-v2-turnstile" style={{ margin: '20px 0', display: 'flex', justifyContent: 'center' }}>
+          <div
+            className="cf-turnstile"
+            data-sitekey="0x4AAAAAADTbHch1sDHIMVHq"
+            data-theme="dark"
+          ></div>
+        </div>
+
         {state.message ? (
           <p className="of-login-v2-error">
             {state.message}
