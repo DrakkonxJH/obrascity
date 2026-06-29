@@ -215,9 +215,9 @@ export default async function ViabilidadePage() {
             { value: noGos, label: "NO-GO" },
             { value: pendentes, label: "Em análise" },
           ].map((item) => (
-            <article key={item.label} className="of-stat-card">
-              <div className="of-stat-value">{item.value}</div>
-              <div className="of-stat-label">{item.label}</div>
+            <article key={item.label} className="of-kpi-card">
+              <div className="of-kpi-label">{item.label}</div>
+              <div className="of-kpi-value">{item.value}</div>
             </article>
           ))}
         </div>

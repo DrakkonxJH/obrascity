@@ -75,26 +75,26 @@ export default async function FinanceiroPage() {
           <p className="of-empty-text">{loadError}</p>
         </article>
       ) : null}
-      <div className="of-fin-metrics">
-        <article className="of-fin-card">
-          <p className="of-fin-label">Orçamento Total</p>
-          <p className="of-fin-value">{money.format(totalOrcado)}</p>
-          <p className="of-fin-sub">{rows.length} lançamentos ativos</p>
+      <div className="of-stats-grid" style={{ marginBottom: 20 }}>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Orçamento Total</div>
+          <div className="of-kpi-value">{money.format(totalOrcado)}</div>
+          <p className="of-empty-text" style={{ fontSize: '0.75rem', marginTop: 4 }}>{rows.length} lançamentos ativos</p>
         </article>
-        <article className="of-fin-card">
-          <p className="of-fin-label">Gasto Acumulado</p>
-          <p className="of-fin-value warn">{money.format(totalRealizado)}</p>
-          <p className="of-fin-sub">Consumo do orçamento em tempo real</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Gasto Acumulado</div>
+          <div className="of-kpi-value warn">{money.format(totalRealizado)}</div>
+          <p className="of-empty-text" style={{ fontSize: '0.75rem', marginTop: 4 }}>Consumo do orçamento em tempo real</p>
         </article>
-        <article className="of-fin-card">
-          <p className="of-fin-label">Saldo Disponível</p>
-          <p className={`of-fin-value ${saldo >= 0 ? "ok" : "risk"}`}>{money.format(saldo)}</p>
-          <p className="of-fin-sub">{saldo >= 0 ? "Dentro do planejado" : "Acima do previsto"}</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Saldo Disponível</div>
+          <div className={`of-kpi-value ${saldo >= 0 ? "ok" : "risk"}`}>{money.format(saldo)}</div>
+          <p className="of-empty-text" style={{ fontSize: '0.75rem', marginTop: 4 }}>{saldo >= 0 ? "Dentro do planejado" : "Acima do previsto"}</p>
         </article>
-        <article className="of-fin-card">
-          <p className="of-fin-label">Receita Contratada</p>
-          <p className="of-fin-value info">{money.format(receitaContratada)}</p>
-          <p className="of-fin-sub">Baseada nas medições registradas</p>
+        <article className="of-kpi-card">
+          <div className="of-kpi-label">Receita Contratada</div>
+          <div className="of-kpi-value info">{money.format(receitaContratada)}</div>
+          <p className="of-empty-text" style={{ fontSize: '0.75rem', marginTop: 4 }}>Baseada nas medições registradas</p>
         </article>
       </div>
 
@@ -318,38 +318,38 @@ export default async function FinanceiroPage() {
         </div>
       </article>
 
-      <div className="of-fin-evm-grid">
-        <article className="of-card of-fin-evm-card">
-          <p className="of-fin-label">PV · Planned Value</p>
-          <p className="of-fin-mini-value">{money.format(evm.pv)}</p>
-          <p className="of-fin-sub">Valor planejado acumulado da obra.</p>
+      <div className="of-stats-grid" style={{ marginTop: 20 }}>
+        <article className="of-card">
+          <div className="of-card-title">PV · Planned Value</div>
+          <div className="of-kpi-value" style={{ fontSize: '1.5rem', marginTop: 8 }}>{money.format(evm.pv)}</div>
+          <p className="of-empty-text" style={{ marginTop: 4 }}>Valor planejado acumulado da obra.</p>
         </article>
-        <article className="of-card of-fin-evm-card">
-          <p className="of-fin-label">EV · AC</p>
-          <div className="of-fin-evm-split">
-            <div className="of-fin-evm-row">
-              <p className="of-fin-evm-row-label">EV (valor agregado)</p>
-              <p className="of-fin-evm-row-value">{money.format(evm.ev)}</p>
+        <article className="of-card">
+          <div className="of-card-title">EV · AC</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="of-empty-text">EV (valor agregado)</span>
+              <span className="of-mono" style={{ fontWeight: 700 }}>{money.format(evm.ev)}</span>
             </div>
-            <div className="of-fin-evm-row">
-              <p className="of-fin-evm-row-label">AC (custo real)</p>
-              <p className="of-fin-evm-row-value">{money.format(evm.ac)}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="of-empty-text">AC (custo real)</span>
+              <span className="of-mono" style={{ fontWeight: 700 }}>{money.format(evm.ac)}</span>
             </div>
           </div>
         </article>
-        <article className="of-card of-fin-evm-card">
-          <p className="of-fin-label">CPI · SPI · EAC</p>
-          <div className="of-fin-evm-kpis">
-            <div className="of-fin-evm-kpi">
-              <p className="of-fin-evm-kpi-label">CPI</p>
-              <p className="of-fin-evm-kpi-value">{evm.cpi.toFixed(3)}</p>
+        <article className="of-card">
+          <div className="of-card-title">CPI · SPI · EAC</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
+            <div className="of-kpi-card" style={{ margin: 0 }}>
+              <div className="of-kpi-label">CPI</div>
+              <div className="of-kpi-value">{evm.cpi.toFixed(3)}</div>
             </div>
-            <div className="of-fin-evm-kpi">
-              <p className="of-fin-evm-kpi-label">SPI</p>
-              <p className="of-fin-evm-kpi-value">{evm.spi.toFixed(3)}</p>
+            <div className="of-kpi-card" style={{ margin: 0 }}>
+              <div className="of-kpi-label">SPI</div>
+              <div className="of-kpi-value">{evm.spi.toFixed(3)}</div>
             </div>
           </div>
-          <p className="of-fin-sub">EAC estimado: {money.format(evm.eac)}</p>
+          <p className="of-empty-text" style={{ marginTop: 8 }}>EAC estimado: {money.format(evm.eac)}</p>
         </article>
       </div>
       </section>
