@@ -1,7 +1,7 @@
 import { getDashboardResumo, listObras } from "@/lib/db/obras";
 import { listMembros } from "@/lib/db/equipes";
 import { listFinanceiro } from "@/lib/db/financeiro";
-import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { DashboardView } from "@/components/templates/dashboard-view";
 
 export default async function DashboardPage() {
   const [resumo, obras, membros, financeiro] = await Promise.all([

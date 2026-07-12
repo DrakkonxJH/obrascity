@@ -12,9 +12,9 @@ import { listMudancas } from "@/lib/db/mudancas";
 import { listViabilidade } from "@/lib/db/viabilidade";
 import { listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "../actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 type ReportType = "progresso" | "financeiro" | "equipes" | "materiais" | "diario" | "executivo" | "qualidade" | "mudancas" | "viabilidade";
 

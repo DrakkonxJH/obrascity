@@ -1,10 +1,10 @@
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
 import { listProjetosConflitos, listProjetosDocumentos } from "@/lib/db/projetos";
 import { createProjetoConflitoAction, createProjetoDocumentoAction } from "./actions";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 const statusDocumentoLabels: Record<string, string> = {
   em_revisao: "Em revisão",

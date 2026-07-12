@@ -1,44 +1,13 @@
-import { createServerClient } from "@/lib/supabase/server";
-import { getEmpresaIdFromProfile } from "@/lib/db/tenant";
-import { ensureObraAtiva, listActiveObraIds, listObras } from "@/lib/db/obras";
+import { getMedicoesService } from "@/lib/domains/medicoes";
+import { MedicaoItem, EvmIndicadores } from "@/lib/domains/medicoes/entities";
 
-export type MedicaoItem = {
-  id: string;
-  obra_id: string;
-  obra_nome: string;
-  referencia: string;
-  valor: number;
-  retencao: number;
-  aditivo: number;
-  status: string;
-};
+export type MedicaoItemLegacy = MedicaoItem;
 
-export async function listMedicoes(): Promise<MedicaoItem[]> {
-  const empresaId = await getEmpresaIdFromProfile();
-  const supabase = await createServerClient();
+export async function listMedicoes(): Promise<MedicaoItemLegacy[]> {
+  const service = await getMedicoesService();
+  const { listActiveObraIds } = await import("@/lib/db/obras");
   const activeObraIds = await listActiveObraIds();
-  const { data, error } = await supabase
-    .from("medicoes")
-    .select("id, obra_id, referencia, valor, retencao, aditivo, status, obras(nome)")
-    .eq("empresa_id", empresaId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(`Erro ao listar medicoes: ${error.message}`);
-  }
-
-  return (data ?? [])
-    .filter((item) => activeObraIds.has(item.obra_id as string))
-    .map((item) => ({
-    id: item.id as string,
-    obra_id: item.obra_id as string,
-    obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra",
-    referencia: item.referencia as string,
-    valor: Number(item.valor ?? 0),
-    retencao: Number(item.retencao ?? 0),
-    aditivo: Number(item.aditivo ?? 0),
-    status: item.status as string,
-  }));
+  return service.listMedicoes(activeObraIds);
 }
 
 export async function createMedicao(input: {
@@ -49,62 +18,18 @@ export async function createMedicao(input: {
   aditivo: number;
   status?: string;
 }) {
-  const empresaId = await getEmpresaIdFromProfile();
-  const supabase = await createServerClient();
-  await ensureObraAtiva(input.obra_id);
-  const { error, data } = await supabase
-    .from("medicoes")
-    .insert({
-      empresa_id: empresaId,
-      obra_id: input.obra_id,
-      referencia: input.referencia,
-      valor: input.valor,
-      retencao: input.retencao,
-      aditivo: input.aditivo,
-      status: input.status ?? "rascunho",
-    })
-    .select("id")
-    .single();
-
-  if (error || !data?.id) {
-    throw new Error(`Erro ao criar medicao: ${error?.message ?? "medição não retornou id"}`);
-  }
-  return data.id as string;
+  const service = await getMedicoesService();
+  return service.createMedicao({
+    obraId: input.obra_id,
+    referencia: input.referencia,
+    valor: input.valor,
+    retencao: input.retencao,
+    aditivo: input.aditivo,
+    status: input.status,
+  });
 }
 
-export async function getEvmIndicadores() {
-  const empresaId = await getEmpresaIdFromProfile();
-  const supabase = await createServerClient();
-
-  const [financeiro, obrasAtivas] = await Promise.all([
-    supabase
-      .from("obras_financeiro")
-      .select("orcado, realizado")
-      .eq("empresa_id", empresaId),
-    listObras(),
-  ]);
-
-  if (financeiro.error) {
-    throw new Error(`Erro ao calcular EVM financeiro: ${financeiro.error.message}`);
-  }
-  const pv = (financeiro.data ?? []).reduce((acc, row) => acc + Number(row.orcado ?? 0), 0);
-  const ac = (financeiro.data ?? []).reduce((acc, row) => acc + Number(row.realizado ?? 0), 0);
-  const progressoMedio =
-    obrasAtivas.length > 0
-      ? obrasAtivas.reduce((acc, row) => acc + Number(row.progresso ?? 0), 0) / obrasAtivas.length
-      : 0;
-  const ev = pv * (progressoMedio / 100);
-
-  const cpi = ac > 0 ? ev / ac : 0;
-  const spi = pv > 0 ? ev / pv : 0;
-  const eac = cpi > 0 ? pv / cpi : pv;
-
-  return {
-    pv,
-    ev,
-    ac,
-    cpi,
-    spi,
-    eac,
-  };
+export async function getEvmIndicadores(): Promise<EvmIndicadores> {
+  const service = await getMedicoesService();
+  return service.getEvmIndicadores();
 }

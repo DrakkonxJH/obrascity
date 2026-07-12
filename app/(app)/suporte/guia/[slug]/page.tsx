@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getGuiaBySlug } from "../data";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 
 type GuiaDetailPageProps = {
   params: Promise<{ slug: string }>;

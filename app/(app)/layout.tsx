@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/shell/app-shell";
+import { AppShell } from "@/components/templates/app-shell";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isControlTotalOwner } from "@/lib/auth/control-total";

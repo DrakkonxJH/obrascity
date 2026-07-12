@@ -1,4 +1,4 @@
-import { ConfigView } from "@/components/config/config-view";
+import { ConfigView } from "@/components/templates/config-view";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { createServerClient } from "@/lib/supabase/server";
 import { listPrivacyRequests } from "@/lib/db/privacy";

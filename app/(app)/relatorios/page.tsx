@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listObras } from "@/lib/db/obras";
 import { listRelatorioExecucoes, listRelatorios } from "@/lib/db/relatorios";
 import { solicitarRelatórioAction } from "./actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import {
   BarChart3,
   Boxes,
@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 const reportCards: Array<{
   tipo: string;

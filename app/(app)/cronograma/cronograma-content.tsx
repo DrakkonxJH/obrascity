@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { GanttView } from "@/components/cronograma/gantt-view";
-import { PageHeader } from "@/components/ui/page-header";
+import { GanttView } from "@/components/templates/gantt-view";
+import { PageHeader } from "@/components/molecules/page-header";
 import { buildGanttMonths, currentMonthIndex, ganttBarColor } from "@/lib/cronograma/gantt-utils";
 import {
   createCronogramaAction,

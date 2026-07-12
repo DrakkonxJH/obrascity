@@ -1,6 +1,6 @@
 import { listObras, listObrasTrash } from "@/lib/db/obras";
 import { listFinanceiro } from "@/lib/db/financeiro";
-import { ObrasView } from "@/components/obras/obras-view";
+import { ObrasView } from "@/components/templates/obras-view";
 
 export default async function ObrasPage() {
   const [obras, obrasLixeira, financeiro] = await Promise.all([listObras(), listObrasTrash(), listFinanceiro()]);

@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import { listObras } from "@/lib/db/obras";
 import { escalateGarantiaSlaBreaches, listGarantiaChamados, listGarantiaInteracoes } from "@/lib/db/garantia";
 import {
@@ -8,7 +8,7 @@ import {
 } from "./actions";
 import Link from "next/link";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 export default async function GarantiaPage() {
   const { access } = await getCurrentTenantFeatureAccess("qualidade_basic");

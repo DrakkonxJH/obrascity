@@ -16,10 +16,10 @@ import {
   updateNaoConformidadeAction,
   updatePlanoAcaoStatusAction,
 } from "./actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 type QualidadePageProps = {
   searchParams: Promise<{

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 
 test("renderiza eyebrow, título, subtítulo e ações quando informados", () => {
   const html = renderToStaticMarkup(

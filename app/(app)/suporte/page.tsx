@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { listGuias } from "./guia/data";
-import { AiSupportChat } from "@/components/support/ai-support-chat";
-import { PageHeader } from "@/components/ui/page-header";
+import { AiSupportChat } from "@/components/organisms/ai-support-chat";
+import { PageHeader } from "@/components/molecules/page-header";
 
 export default function SuportePage() {
   const totalGuias = listGuias().length;

@@ -6,8 +6,8 @@ import { listDiarios } from "@/lib/db/diario";
 import { listCronograma } from "@/lib/db/cronograma";
 import { listPedidosCompra } from "@/lib/db/materiais";
 import { listRelatorios } from "@/lib/db/relatorios";
-import { ObraLifecycleActions } from "@/components/obras/obra-lifecycle-actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { ObraLifecycleActions } from "@/components/organisms/obra-lifecycle-actions";
+import { PageHeader } from "@/components/molecules/page-header";
 
 type ObraDetailPageProps = {
   params: Promise<{ id: string }>;

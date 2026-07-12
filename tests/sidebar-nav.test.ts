@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildNavSections } from "@/components/layout/sidebar";
+import { buildNavSections } from "@/components/templates/sidebar";
 
 test("navegação padrão inclui grupos essenciais pós-login", () => {
   const sections = buildNavSections(false, false);

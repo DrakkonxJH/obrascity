@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listGuias } from "./data";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 
 export const dynamic = "force-dynamic";
 

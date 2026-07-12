@@ -1,7 +1,7 @@
 import { listObras } from "@/lib/db/obras";
 import { listDiarios } from "@/lib/db/diario";
 import { createDiarioAction } from "./actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
 
 function formatDate(value: string) {

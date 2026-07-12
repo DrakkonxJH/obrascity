@@ -1,5 +1,5 @@
-import { AuthHeader } from "@/components/layout/auth-header";
-import { AuthFooter } from "@/components/layout/auth-footer";
+import { AuthHeader } from "@/components/templates/auth-header";
+import { AuthFooter } from "@/components/templates/auth-footer";
 
 export default function AuthLayout({
   children,

@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import { listObras } from "@/lib/db/obras";
 import { listMobileSyncConflicts, listMobileSyncJobs } from "@/lib/db/mobile-campo";
 import {
@@ -8,7 +8,7 @@ import {
 } from "./actions";
 import Link from "next/link";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 function directionLabel(direction: string) {
   if (direction === "upload") return "Campo → nuvem";

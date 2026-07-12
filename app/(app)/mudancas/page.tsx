@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import { listApprovalRequests } from "@/lib/db/approvals";
 import { listObras } from "@/lib/db/obras";
 import { listMudancas } from "@/lib/db/mudancas";
@@ -7,7 +7,7 @@ import { listEmpresaProfiles } from "@/lib/db/profiles";
 import { approveMudancaRequestAction, createMudancaAction, rejectMudancaRequestAction } from "./actions";
 import Link from "next/link";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 

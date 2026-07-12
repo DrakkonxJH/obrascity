@@ -3,10 +3,10 @@ import { listObras } from "@/lib/db/obras";
 import { listViabilidade } from "@/lib/db/viabilidade";
 import { saveViabilidadeAction } from "./actions";
 import { RiskMatrix } from "./risk-matrix";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 type StatusField = "status_tecnico" | "status_legal" | "status_economico";
 

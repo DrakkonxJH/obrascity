@@ -1,10 +1,10 @@
 import { createEquipeAction, createEquipeAlocacaoAction } from "./actions";
 import { listEquipes, listMembros } from "@/lib/db/equipes";
-import { EquipesView } from "@/components/equipes/equipes-view";
+import { EquipesView } from "@/components/templates/equipes-view";
 import { listObras } from "@/lib/db/obras";
 import { listEquipeAlocacoes, listEquipeCapacidade } from "@/lib/db/mobilizacao";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 export default async function EquipesPage() {
   const { access } = await getCurrentTenantFeatureAccess("equipes_basic");

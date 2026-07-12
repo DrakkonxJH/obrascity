@@ -6,7 +6,7 @@ import type { BillingCycle } from "@/lib/billing/stripe-price-map";
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { startCheckoutAction } from "./actions";
 import { featuresAgrupadas, type CategoriaFeature, type TierPlano } from "@/lib/billing/features-agrupadas";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 

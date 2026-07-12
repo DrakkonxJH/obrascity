@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/require-profile";
 import { isControlTotalOwner } from "@/lib/auth/control-total";
-import { OpsAiAssistant } from "@/components/master/ops-ai-assistant";
-import { OpsTerminal } from "@/components/master/ops-terminal";
+import { OpsAiAssistant } from "@/components/organisms/ops-ai-assistant";
+import { OpsTerminal } from "@/components/organisms/ops-terminal";
 import { ASSIGNABLE_PROFILE_ROLE_OPTIONS, PROFILE_ROLE_LABEL } from "@/lib/auth/roles";
 import {
   listAllEmpresas,
@@ -38,7 +38,7 @@ import {
   iniciarAcessoAssistidoAction,
   encerrarAcessoAssistidoAction,
 } from "./actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import {
   Bell,
   Building2,

@@ -1,14 +1,14 @@
-import { FinanceCharts } from "@/components/financeiro/finance-charts";
+import { FinanceCharts } from "@/components/organisms/finance-charts";
 import { listFinanceiro } from "@/lib/db/financeiro";
 import { listObras } from "@/lib/db/obras";
 import { createFinanceiroAction, createFinanceiroTituloAction, settleFinanceiroTituloAction } from "./actions";
 import { createMedicaoAction } from "./medicoes-actions";
 import { getEvmIndicadores, listMedicoes } from "@/lib/db/medicoes";
 import { listFinanceiroTitulos, listFluxoCaixaMensal } from "@/lib/db/financeiro-corporativo";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 

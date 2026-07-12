@@ -8,7 +8,7 @@ import { CheckCircle2, CircleDollarSign, CreditCard, ShieldCheck, Sparkles, User
 import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { startCheckoutAction } from "./actions";
 import { GatewayCheckoutForm } from "./gateway-selector";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 
 const BILLING_ROLES = new Set(["administrador", "gestor"]);
 

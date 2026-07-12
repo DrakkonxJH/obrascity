@@ -5,7 +5,7 @@ import { getAssinaturaAtual } from "@/lib/db/assinaturas";
 import { listPortalShares } from "@/lib/db/portal-shares";
 import { getAppOrigin } from "@/lib/validations/env";
 import { createPortalShareAction, revokePortalShareAction } from "./actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 
 function getTimestamp(value: string | null | undefined) {
   if (!value) return 0;

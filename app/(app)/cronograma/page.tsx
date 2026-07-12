@@ -1,6 +1,6 @@
 import { CronogramaContent } from "./cronograma-content";
 import { getCurrentTenantFeatureAccess } from "@/lib/billing/server-feature-gate";
-import { PremiumFeatureBlock } from "@/components/premium-feature-block";
+import { PremiumFeatureBlock } from "@/components/organisms/premium-feature-block";
 
 type CronogramaPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

@@ -1,7 +1,7 @@
 import { listApprovalRequests } from "@/lib/db/approvals";
 import { getTenantRetentionPolicy, listExecutiveAlerts, listRecentAuditLogs, listTenantObservabilityEvents } from "@/lib/db/governanca";
 import { approveRequestAction, rejectRequestAction, requestExternalSyncAction, saveRetentionPolicyAction } from "./actions";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });

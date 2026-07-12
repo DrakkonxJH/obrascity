@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 import Link from "next/link";
 import type { Metadata } from "next";
-import { LegalPageShell } from "@/components/legal/legal-page-shell";
+import { LegalPageShell } from "@/components/templates/legal-page-shell";
 
 export const metadata: Metadata = {
   title: "Termos de uso — ObrasCitY",
