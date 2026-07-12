@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 import { createObraAction } from "@/app/(app)/obras/actions";
-import { useAppUi } from "./app-ui-provider";
+import { useAppUi } from "@/components/templates/app-ui-provider";
 
 export function NovaObraModal() {
   const { novaObraOpen, closeNovaObra } = useAppUi();

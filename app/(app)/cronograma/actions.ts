@@ -143,8 +143,8 @@ export async function createDependenciaAction(formData: FormData) {
   const deps = await listDependenciasCronograma();
   const graph = new Map<string, Set<string>>();
   for (const dep of deps) {
-    if (!graph.has(dep.tarefa_predecessora_id)) graph.set(dep.tarefa_predecessora_id, new Set());
-    graph.get(dep.tarefa_predecessora_id)?.add(dep.tarefa_sucessora_id);
+    if (!graph.has(dep.tarefaPredecessoraId)) graph.set(dep.tarefaPredecessoraId, new Set());
+    graph.get(dep.tarefaPredecessoraId)?.add(dep.tarefaSucessoraId);
   }
   if (!graph.has(tarefa_predecessora_id)) graph.set(tarefa_predecessora_id, new Set());
   graph.get(tarefa_predecessora_id)?.add(tarefa_sucessora_id);

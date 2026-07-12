@@ -7,7 +7,7 @@ import { ObraCard } from "@/components/organisms/obra-card";
 import { Search } from "lucide-react";
 import { PageHeader } from "@/components/molecules/page-header";
 import Link from "next/link";
-import { ObraLifecycleActions } from "./obra-lifecycle-actions";
+import { ObraLifecycleActions } from "@/components/organisms/obra-lifecycle-actions";
 
 type ObraWithBudget = Obra & { budgetPct: number };
 

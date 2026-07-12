@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 import { createMembroAction } from "@/app/(app)/equipes/member-actions";
 import type { EquipeItem } from "@/lib/db/equipes";
-import { useAppUi } from "./app-ui-provider";
+import { useAppUi } from "@/components/templates/app-ui-provider";
 
 type AddMemberModalProps = {
   equipes: EquipeItem[];

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAppUi } from "./app-ui-provider";
+import { useAppUi } from "@/components/templates/app-ui-provider";
 import { ObraLifecycleActions } from "@/components/organisms/obra-lifecycle-actions";
 
 export function DetailPanel() {

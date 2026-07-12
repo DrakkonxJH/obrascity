@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useAppUi } from "./app-ui-provider";
+import { useAppUi } from "@/components/templates/app-ui-provider";
 
 export type NotifDisplay = {
   id: string;

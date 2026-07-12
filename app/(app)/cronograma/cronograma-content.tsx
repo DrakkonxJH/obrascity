@@ -93,12 +93,12 @@ export async function CronogramaContent({
   };
 
   const filteredItems = items
-    .filter((item) => filterByObra(item.obra_id))
+    .filter((item) => filterByObra(item.obraId))
     .filter((item) => filterByStatus(item.status))
     .filter((item) => isInDateRange(item.inicio, item.fim));
 
   const filteredCaminhoCritico = caminhoCritico
-    .filter((item) => filterByObra(item.obra_id))
+    .filter((item) => filterByObra(item.obraId))
     .filter((item) => isInDateRange(item.inicio, item.fim));
 
   const filteredReplanejamentos = replanejamentos.filter((item) => filterByObra(item.obra_id));
@@ -131,14 +131,14 @@ export async function CronogramaContent({
     return Math.round((total / atrasadas.length) * 10) / 10;
   })();
 
-  const baselineByTaskId = new Map(baselines.map((item) => [item.tarefa_id, item]));
+  const baselineByTaskId = new Map(baselines.map((item) => [item.tarefaId, item]));
   const baselineComparativo = filteredItems.map((item) => {
     const baseline = baselineByTaskId.get(item.id);
     if (!baseline) {
       return { ...item, baselineVersao: null as number | null, desvioDias: null as number | null };
     }
     const atualFim = new Date(item.fim).getTime();
-    const baseFim = new Date(baseline.baseline_fim).getTime();
+    const baseFim = new Date(baseline.baselineFim).getTime();
     const desvioDias = Math.round((atualFim - baseFim) / 86_400_000);
     return { ...item, baselineVersao: baseline.versao, desvioDias };
   });
@@ -168,7 +168,7 @@ export async function CronogramaContent({
     return {
       id: item.id,
       nome: item.nome,
-      obra_nome: item.obra_nome,
+      obra_nome: item.obraNome,
       status: item.status,
       inicio: item.inicio,
       fim: item.fim,
@@ -287,7 +287,7 @@ export async function CronogramaContent({
                 <tbody>
                   {baselineComparativo.slice(0, 20).map((item) => (
                     <tr key={item.id}>
-                      <td>{item.obra_nome}</td>
+                      <td>{item.obraNome}</td>
                       <td>{item.nome}</td>
                       <td className="of-mono">{item.baselineVersao ? "Registrada" : "—"}</td>
                       <td className="of-mono">{item.inicio} → {item.fim}</td>
@@ -334,7 +334,7 @@ export async function CronogramaContent({
               {paginatedItems.map((item) => (
                 <div className="of-crono-edit-item" key={item.id}>
                   <div className="of-crono-edit-head">
-                    <p className="of-crono-edit-obra">{item.obra_nome}</p>
+                    <p className="of-crono-edit-obra">{item.obraNome}</p>
                     <span className={`of-crono-status-badge ${cronogramaStatusTone(item.status)}`}>{cronogramaStatusLabel(item.status)}</span>
                   </div>
                   <form action={updateCronogramaAction} className="of-crono-edit-form">
@@ -346,7 +346,7 @@ export async function CronogramaContent({
                       <div className="of-crono-field"><label className="of-crono-field-label">Fim</label><input name="fim" type="date" defaultValue={item.fim} className="of-input" /></div>
                       <div className="of-crono-field"><label className="of-crono-field-label">Status</label><select name="status" defaultValue={item.status} className="of-input"><option value="planejado">Planejado</option><option value="andamento">Andamento</option><option value="concluido">Concluído</option><option value="atrasado">Atrasado</option><option value="cancelado">Cancelado</option></select></div>
                     </div>
-                    <div className="of-crono-edit-actions"><button type="submit" className="of-btn-primary">Salvar alterações</button><span className="of-mono">Atualizado: {item.updated_at ? new Date(item.updated_at).toLocaleString("pt-BR") : "—"}</span></div>
+                    <div className="of-crono-edit-actions"><button type="submit" className="of-btn-primary">Salvar alterações</button><span className="of-mono">Atualizado: {item.updatedAt ? new Date(item.updatedAt).toLocaleString("pt-BR") : "—"}</span></div>
                   </form>
                   <form action={deleteCronogramaAction} className="of-crono-delete-form">
                     <input type="hidden" name="return_to" value={returnTo} />
@@ -376,8 +376,8 @@ export async function CronogramaContent({
             <form action={createDependenciaAction} className="of-card of-form-grid md:grid-cols-2">
               <input type="hidden" name="return_to" value={returnTo} />
               <div className="of-card-title md:col-span-2">Dependências</div>
-              <select name="tarefa_predecessora_id" required defaultValue="" className="of-input"><option value="" disabled>Tarefa predecessora</option>{filteredItems.map((item) => (<option key={item.id} value={item.id}>{item.obra_nome} · {item.nome}</option>))}</select>
-              <select name="tarefa_sucessora_id" required defaultValue="" className="of-input"><option value="" disabled>Tarefa sucessora</option>{filteredItems.map((item) => (<option key={item.id} value={item.id}>{item.obra_nome} · {item.nome}</option>))}</select>
+              <select name="tarefa_predecessora_id" required defaultValue="" className="of-input"><option value="" disabled>Tarefa predecessora</option>{filteredItems.map((item) => (<option key={item.id} value={item.id}>{item.obraNome} · {item.nome}</option>))}</select>
+              <select name="tarefa_sucessora_id" required defaultValue="" className="of-input"><option value="" disabled>Tarefa sucessora</option>{filteredItems.map((item) => (<option key={item.id} value={item.id}>{item.obraNome} · {item.nome}</option>))}</select>
               <select name="tipo" defaultValue="finish_to_start" className="of-input md:col-span-2"><option value="finish_to_start">Finish-to-start</option><option value="start_to_start">Start-to-start</option></select>
               <button type="submit" className="of-btn-primary md:col-span-2">Criar dependência</button>
             </form>
@@ -397,7 +397,7 @@ export async function CronogramaContent({
               <div className="of-table-wrap" style={{ border: 0 }}>
                 <table className="of-table"><thead><tr><th>Obra</th><th>Tarefa</th><th>Duração</th><th>Dependências</th></tr></thead><tbody>
                   {filteredCaminhoCritico.map((item) => (
-                    <tr key={item.tarefa_id}><td>{item.obra_nome}</td><td>{item.nome}</td><td className="of-mono">{item.duracao_dias} dias</td><td className="of-mono">{item.dependencias}</td></tr>
+                    <tr key={item.tarefaId}><td>{item.obraNome}</td><td>{item.nome}</td><td className="of-mono">{item.duracao_dias} dias</td><td className="of-mono">{item.dependencias}</td></tr>
                   ))}
                   {filteredCaminhoCritico.length === 0 ? <tr><td colSpan={4} className="of-empty-text">Sem dados para caminho crítico.</td></tr> : null}
                 </tbody></table>
@@ -416,7 +416,7 @@ export async function CronogramaContent({
               <div className="of-replan-header"><h4 className="of-replan-title">Histórico ({filteredReplanejamentos.length})</h4></div>
               {filteredReplanejamentos.length > 0 ? (
                 <div className="of-replan-list">{filteredReplanejamentos.map((item) => (
-                  <div className="of-replan-item" key={item.id}><div className="of-replan-head"><p className="of-replan-obra">{item.obra_nome}</p><span className="of-replan-date">{new Date(item.created_at).toLocaleDateString("pt-BR")}</span></div><p className="of-replan-motivo">{item.motivo}</p><div className="of-replan-impacts"><div className="of-replan-impact"><span className="of-replan-label">Impacto em prazo</span><span className="of-replan-value">{item.impacto_prazo_dias} dias</span></div><div className="of-replan-impact"><span className="of-replan-label">Impacto financeiro</span><span className="of-replan-value">R$ {item.impacto_custo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div><div className="of-replan-impact"><span className="of-replan-label">Status</span><span className={`of-replan-status ${item.status}`}>{item.status}</span></div></div></div>
+                  <div className="of-replan-item" key={item.id}><div className="of-replan-head"><p className="of-replan-obra">{item.obraNome}</p><span className="of-replan-date">{new Date(item.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="of-replan-motivo">{item.motivo}</p><div className="of-replan-impacts"><div className="of-replan-impact"><span className="of-replan-label">Impacto em prazo</span><span className="of-replan-value">{item.impacto_prazo_dias} dias</span></div><div className="of-replan-impact"><span className="of-replan-label">Impacto financeiro</span><span className="of-replan-value">R$ {item.impacto_custo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div><div className="of-replan-impact"><span className="of-replan-label">Status</span><span className={`of-replan-status ${item.status}`}>{item.status}</span></div></div></div>
                 ))}</div>
               ) : <p className="of-empty-text" style={{ margin: 0, padding: "12px 0" }}>Nenhum replanejamento registrado.</p>}
             </article>
