@@ -3,6 +3,7 @@ import { EquipeItem, MembroItem } from "@/lib/domains/equipes/entities";
 
 export type EquipeItemLegacy = EquipeItem;
 export type MembroItemLegacy = MembroItem;
+export type { EquipeItem, MembroItem };
 
 export async function listEquipes(): Promise<EquipeItemLegacy[]> {
   const service = await getEquipesService();

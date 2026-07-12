@@ -21,6 +21,7 @@ export type DiarioItem = {
   assinaturaUrl: string | null;
   createdBy: string | null;
   createdByNome: string | null;
+  created_by_nome: string | null;
   evidencias: DiarioEvidenciaItem[];
 };
 

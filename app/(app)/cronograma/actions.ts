@@ -88,7 +88,7 @@ export async function updateCronogramaAction(formData: FormData) {
     .from("obras")
     .select("nome, cliente")
     .eq("empresa_id", empresaId)
-    .eq("id", updated.obra_id)
+    .eq("id", updated.obraId)
     .single<{ nome: string; cliente: string | null }>();
 
   if (obraRes.error) {

@@ -54,6 +54,7 @@ export class DiarioService {
         assinaturaUrl: (item.assinatura_url as string | null) ?? null,
         createdBy: (item.created_by as string | null) ?? null,
         createdByNome: null as string | null,
+        created_by_nome: null as string | null,
         evidencias: [] as any[],
       }));
 
@@ -86,6 +87,7 @@ export class DiarioService {
     return rows.map((item) => ({
       ...item,
       createdByNome: item.createdBy ? (profileMap.get(item.createdBy) ?? null) : null,
+      created_by_nome: item.createdBy ? (profileMap.get(item.createdBy) ?? null) : null,
       evidencias: evidenciasByDiario.get(item.id) ?? [],
     }));
   }

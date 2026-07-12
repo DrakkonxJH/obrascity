@@ -17,7 +17,7 @@ export default async function PortalPublicPage({ params }: PortalPublicPageProps
   }
 
   const admin = createAdminClient();
-  const scopeObraIds = share.obra_ids;
+  const scopeObraIds = share.obraIds;
   const obrasQuery = admin
     .from("obras")
     .select("id, nome, cliente, status, progresso")

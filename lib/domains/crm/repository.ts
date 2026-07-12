@@ -368,7 +368,7 @@ export class SupabaseCrmRepository implements ICrmRepository {
         .maybeSingle<{ id: string }>();
       if (error) throw error;
       if (data?.id) return data.id;
-      const created = await this.supabase.from("crm_companies").insert({ empresa_id: empresaId, nome }).select("id").single<{ id: string }>();
+      const created = await this.supabase.from("crm_companies").insert({ empresa_id: empresaId, nome: clean }).select("id").single<{ id: string }>();
       if (created.error || !created.data?.id) throw created.error || new Error("Falha ao criar empresa CRM");
       return created.data.id;
     }, { empresaId, name });

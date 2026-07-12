@@ -92,8 +92,8 @@ export async function createPurchaseOrderAction(
   const requiresApproval = requiresApprovalForAmount(roleValue, valor);
   const requiredRole = resolveRequiredRoleByAmount(valor);
   const createdOrderId = await createPurchaseOrder({
-    material_id: materialId,
-    obra_id: obraId,
+    materialId,
+    obraId,
     fornecedor,
     quantidade,
     valor,

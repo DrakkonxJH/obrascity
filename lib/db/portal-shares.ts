@@ -10,6 +10,7 @@ export type PortalShareItem = {
   active: boolean;
   expires_at: string | null;
   obra_ids: string[];
+  obraIds: string[];
   created_at: string;
 };
 
@@ -21,6 +22,7 @@ export type PortalShareResolved = {
   expires_at: string | null;
   active: boolean;
   obra_ids: string[];
+  obraIds: string[];
 };
 
 function isMissingTable(errorMessage: string, tableName: string) {
@@ -48,15 +50,20 @@ export async function listPortalShares(): Promise<PortalShareItem[]> {
     throw new Error(`Erro ao listar compartilhamentos do portal: ${error.message}`);
   }
 
-  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
-    id: String(row.id ?? ""),
-    token: String(row.token ?? ""),
-    descricao: (row.descricao as string | null) ?? null,
-    active: Boolean(row.active),
-    expires_at: (row.expires_at as string | null) ?? null,
-    obra_ids: Array.isArray(row.obra_ids) ? row.obra_ids.map((id) => String(id)) : [],
-    created_at: String(row.created_at ?? ""),
-  }));
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => {
+    const obraIds = Array.isArray(row.obra_ids) ? row.obra_ids.map((id) => String(id)) : [];
+
+    return {
+      id: String(row.id ?? ""),
+      token: String(row.token ?? ""),
+      descricao: (row.descricao as string | null) ?? null,
+      active: Boolean(row.active),
+      expires_at: (row.expires_at as string | null) ?? null,
+      obra_ids: obraIds,
+      obraIds,
+      created_at: String(row.created_at ?? ""),
+    };
+  });
 }
 
 export async function createPortalShare(input: { descricao?: string; expires_at?: string | null; obra_ids?: string[] }) {
@@ -142,6 +149,8 @@ export async function resolvePortalShareByToken(token: string): Promise<PortalSh
     return null;
   }
 
+  const obraIds = Array.isArray(data.obra_ids) ? data.obra_ids.map((id) => String(id)) : [];
+
   return {
     id: data.id as string,
     empresa_id: data.empresa_id as string,
@@ -149,6 +158,7 @@ export async function resolvePortalShareByToken(token: string): Promise<PortalSh
     descricao: (data.descricao as string | null) ?? null,
     expires_at: expiresAt,
     active: Boolean(data.active),
-    obra_ids: Array.isArray(data.obra_ids) ? data.obra_ids.map((id) => String(id)) : [],
+    obra_ids: obraIds,
+    obraIds,
   };
 }

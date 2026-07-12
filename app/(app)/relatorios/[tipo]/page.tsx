@@ -145,10 +145,10 @@ export default async function ReportTypePage({ params }: PageParams) {
     const totalOrcado = financeiro.reduce((acc, item) => acc + item.orcado, 0);
     const totalRealizado = financeiro.reduce((acc, item) => acc + item.realizado, 0);
     const porObra = financeiro.reduce<Record<string, { orcado: number; realizado: number }>>((acc, item) => {
-      const current = acc[item.obra_nome] ?? { orcado: 0, realizado: 0 };
+      const current = acc[item.obraNome] ?? { orcado: 0, realizado: 0 };
       current.orcado += item.orcado;
       current.realizado += item.realizado;
-      acc[item.obra_nome] = current;
+      acc[item.obraNome] = current;
       return acc;
     }, {});
     mainSection = (
@@ -311,7 +311,7 @@ export default async function ReportTypePage({ params }: PageParams) {
                 {pedidos.map((pedido) => (
                   <tr key={pedido.id}>
                     <td>{pedido.material_nome}</td>
-                    <td>{pedido.obra_nome}</td>
+                    <td>{pedido.obraNome}</td>
                     <td>{pedido.fornecedor || "—"}</td>
                     <td>{pedido.status}</td>
                   </tr>
@@ -336,7 +336,7 @@ export default async function ReportTypePage({ params }: PageParams) {
           </article>
           <article className="of-metric-card yellow">
             <p className="of-kpi-label">Último registro</p>
-            <p className="of-kpi-value">{diarios[0]?.data_ref ?? "—"}</p>
+            <p className="of-kpi-value">{diarios[0]?.dataRef ?? "—"}</p>
           </article>
         </div>
       </div>
@@ -357,8 +357,8 @@ export default async function ReportTypePage({ params }: PageParams) {
             <tbody>
               {diarios.map((diario) => (
                 <tr key={diario.id}>
-                  <td>{diario.data_ref}</td>
-                  <td>{diario.obra_nome}</td>
+                  <td>{diario.dataRef}</td>
+                  <td>{diario.obraNome}</td>
                   <td>{diario.clima ?? "—"}</td>
                   <td>{diario.efetivo}</td>
                 </tr>
@@ -418,7 +418,7 @@ export default async function ReportTypePage({ params }: PageParams) {
               <tbody>
                 {qualidade.naoConformidades.slice(0, 10).map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
+                    <td>{item.obraNome}</td>
                     <td>{item.categoria}</td>
                     <td>{item.severidade}</td>
                     <td>{item.status}</td>
@@ -475,8 +475,8 @@ export default async function ReportTypePage({ params }: PageParams) {
     const pendentes = mudancas.filter((item) => ["pendente", "em_aprovacao"].includes(item.status)).length;
     const aprovadas = mudancas.filter((item) => item.status === "aprovada").length;
     const rejeitadas = mudancas.filter((item) => item.status === "rejeitada").length;
-    const impactoPrazo = mudancas.reduce((acc, item) => acc + item.impacto_prazo_dias, 0);
-    const impactoCusto = mudancas.reduce((acc, item) => acc + item.impacto_custo, 0);
+    const impactoPrazo = mudancas.reduce((acc, item) => acc + item.impactoPrazoDias, 0);
+    const impactoCusto = mudancas.reduce((acc, item) => acc + item.impactoCusto, 0);
     const distribuicao = Array.from(new Set(mudancas.map((item) => item.tipo))).map((tipoItem) => ({
       tipo: tipoItem,
       total: mudancas.filter((item) => item.tipo === tipoItem).length,
@@ -537,10 +537,10 @@ export default async function ReportTypePage({ params }: PageParams) {
                   const totalTipo = distribuicao.find((entry) => entry.tipo === item.tipo)?.total ?? 0;
                   return (
                     <tr key={item.id}>
-                      <td>{item.obra_nome}</td>
+                      <td>{item.obraNome}</td>
                       <td>{item.tipo}</td>
                       <td>{item.status} · {totalTipo} do tipo</td>
-                      <td>{item.impacto_prazo_dias} dias / {formatMoney(item.impacto_custo)}</td>
+                      <td>{item.impactoPrazoDias} dias / {formatMoney(item.impactoCusto)}</td>
                     </tr>
                   );
                 })}
@@ -564,7 +564,7 @@ export default async function ReportTypePage({ params }: PageParams) {
     const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
     const estudosComObra = estudos.map((item) => ({
       ...item,
-      obra_nome: obraNomeById.get(item.obra_id) ?? "Obra",
+      obra_nome: obraNomeById.get(item.obraId) ?? "Obra",
     }));
     const gos = estudosComObra.filter((item) => item.go_no_go === "go").length;
     const noGos = estudosComObra.filter((item) => item.go_no_go === "no_go").length;
@@ -611,7 +611,7 @@ export default async function ReportTypePage({ params }: PageParams) {
             <tbody>
               {estudosComObra.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.obra_nome}</td>
+                  <td>{item.obraNome}</td>
                   <td>{item.status_tecnico}</td>
                   <td>{item.status_legal}</td>
                   <td>{item.status_economico}</td>

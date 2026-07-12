@@ -7,10 +7,10 @@ export default async function ObrasPage() {
 
   const budgetByObra = new Map<string, { orcado: number; realizado: number }>();
   for (const row of financeiro) {
-    const current = budgetByObra.get(row.obra_id) ?? { orcado: 0, realizado: 0 };
+    const current = budgetByObra.get(row.obraId) ?? { orcado: 0, realizado: 0 };
     current.orcado += row.orcado;
     current.realizado += row.realizado;
-    budgetByObra.set(row.obra_id, current);
+    budgetByObra.set(row.obraId, current);
   }
 
   const obrasWithBudget = obras.map((obra) => {

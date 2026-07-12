@@ -3,7 +3,7 @@
 type GanttItem = {
   id: string;
   nome: string;
-  obra_nome: string;
+  obraNome: string;
   status: string;
   inicio: string;
   fim: string;
@@ -63,7 +63,7 @@ export function GanttView({ items, months, currentMonthIndex }: GanttViewProps) 
               >
                 <div style={{ padding: "10px 14px" }}>
                   <p className="of-gantt-task">{item.nome}</p>
-                  <p className="of-gantt-task-sub">{item.obra_nome}</p>
+                  <p className="of-gantt-task-sub">{item.obraNome}</p>
                 </div>
                 <div style={{ padding: "10px 14px" }}>
                   <span className="of-badge of-badge-blue">{item.status}</span>

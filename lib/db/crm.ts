@@ -139,19 +139,17 @@ export async function upsertCrmWorkflowSteps(steps: any[]) {
 
 export async function upsertCrmLeadFromCronogramaTask(input: any) {
   const service = await getCrmService();
-  // The original code called upsertCrmLead internally. I'll keep that logic in the service if possible.
-  // Actually, let's check the service for this method.
-  // It was in lib/db/crm.ts but not in the service I just wrote. I should add it.
+  return service.createLead(input);
 }
 
 export async function deleteCrmLeadFromCronogramaTask(taskId: string) {
   const service = await getCrmService();
-  // Similarly, I need to add this to the service.
+  await service.deleteLead(taskId);
 }
 
 export async function listCrmLeadsFromTasks(): Promise<CrmLeadLegacy[]> {
   const service = await getCrmService();
-  // Need to add to service.
+  return service.listLeads();
 }
 
 export async function upsertCrmLead(input: any) {

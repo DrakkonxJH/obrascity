@@ -97,10 +97,10 @@ export default async function EquipesPage() {
                 </thead>
                 <tbody>
                   {capacidade.map((item) => (
-                    <tr key={item.equipe_id}>
-                      <td>{item.equipe_nome}</td>
-                      <td className="of-mono">{item.capacidade_total}</td>
-                      <td className="of-mono">{item.alocados_total}</td>
+                    <tr key={item.equipeId}>
+                      <td>{item.equipeNome}</td>
+                      <td className="of-mono">{item.capacidadeTotal}</td>
+                      <td className="of-mono">{item.alocadosTotal}</td>
                       <td>
                         <span className={`of-badge ${item.conflito ? "of-badge-red" : "of-badge-green"}`}>
                           {item.conflito ? "Conflito" : "OK"}
@@ -138,12 +138,12 @@ export default async function EquipesPage() {
               <tbody>
                 {alocacoes.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
-                    <td>{item.equipe_nome}</td>
+                    <td>{item.obraNome}</td>
+                    <td>{item.equipeNome}</td>
                     <td>{item.frente}</td>
                     <td>{item.turno}</td>
                     <td>
-                      {new Date(item.data_inicio).toLocaleDateString("pt-BR")} - {new Date(item.data_fim).toLocaleDateString("pt-BR")}
+                      {new Date(item.dataInicio).toLocaleDateString("pt-BR")} - {new Date(item.dataFim).toLocaleDateString("pt-BR")}
                     </td>
                     <td>{item.status}</td>
                   </tr>

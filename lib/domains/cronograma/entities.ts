@@ -46,6 +46,8 @@ export type CronogramaBaselineItem = {
   versao: number;
 };
 
+export type CronogramaBaselineLatestItem = CronogramaBaselineItem;
+
 export type CreateTarefaInput = {
   obraId: string;
   nome: string;

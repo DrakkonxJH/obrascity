@@ -11,6 +11,9 @@ export type RiscoItem = {
 export type ViabilidadeItem = {
   id: string;
   obra_id: string;
+  obraId: string;
+  obra_nome?: string;
+  obraNome?: string;
   status_tecnico: string;
   status_legal: string;
   status_economico: string;
@@ -201,36 +204,41 @@ export async function listViabilidade(): Promise<ViabilidadeItem[]> {
     return [];
   }
 
-  return (data ?? []).map((item) => ({
-    id: String(item.id ?? ""),
-    obra_id: String(item.obra_id ?? ""),
-    status_tecnico: String(item.status_tecnico ?? "pendente"),
-    status_legal: String(item.status_legal ?? "pendente"),
-    status_economico: String(item.status_economico ?? "pendente"),
-    go_no_go: String(item.go_no_go ?? "pendente"),
-    parecer: String(item.parecer ?? ""),
-    riscos: parseRiscos(item.riscos),
-    aprovado_por: item.aprovado_por ? String(item.aprovado_por) : null,
-    aprovado_em: item.aprovado_em ? String(item.aprovado_em) : null,
-    valor_investimento: parseNullableNumber(item.valor_investimento),
-    receita_esperada: parseNullableNumber(item.receita_esperada),
-    roi_percent: parseNullableNumber(item.roi_percent),
-    payback_meses: parseNullableNumber(item.payback_meses),
-    vpl: parseNullableNumber(item.vpl),
-    tir_percent: parseNullableNumber(item.tir_percent),
-    area_terreno_m2: parseNullableNumber(item.area_terreno_m2),
-    area_construida_m2: parseNullableNumber(item.area_construida_m2),
-    custo_m2: parseNullableNumber(item.custo_m2),
-    preco_venda_m2: parseNullableNumber(item.preco_venda_m2),
-    impacto_ambiental: String(item.impacto_ambiental ?? "nao_avaliado") || "nao_avaliado",
-    notas_tecnicas: String(item.notas_tecnicas ?? ""),
-    notas_legais: String(item.notas_legais ?? ""),
-    notas_economicas: String(item.notas_economicas ?? ""),
-    prazo_obra_meses: parseNullableNumber(item.prazo_obra_meses),
-    indice_aproveitamento: parseNullableNumber(item.indice_aproveitamento),
-    taxa_ocupacao: parseNullableNumber(item.taxa_ocupacao),
-    updated_at: String(item.updated_at ?? ""),
-  }));
+  return (data ?? []).map((item) => {
+    const obraId = String(item.obra_id ?? "");
+
+    return {
+      id: String(item.id ?? ""),
+      obra_id: obraId,
+      obraId,
+      status_tecnico: String(item.status_tecnico ?? "pendente"),
+      status_legal: String(item.status_legal ?? "pendente"),
+      status_economico: String(item.status_economico ?? "pendente"),
+      go_no_go: String(item.go_no_go ?? "pendente"),
+      parecer: String(item.parecer ?? ""),
+      riscos: parseRiscos(item.riscos),
+      aprovado_por: item.aprovado_por ? String(item.aprovado_por) : null,
+      aprovado_em: item.aprovado_em ? String(item.aprovado_em) : null,
+      valor_investimento: parseNullableNumber(item.valor_investimento),
+      receita_esperada: parseNullableNumber(item.receita_esperada),
+      roi_percent: parseNullableNumber(item.roi_percent),
+      payback_meses: parseNullableNumber(item.payback_meses),
+      vpl: parseNullableNumber(item.vpl),
+      tir_percent: parseNullableNumber(item.tir_percent),
+      area_terreno_m2: parseNullableNumber(item.area_terreno_m2),
+      area_construida_m2: parseNullableNumber(item.area_construida_m2),
+      custo_m2: parseNullableNumber(item.custo_m2),
+      preco_venda_m2: parseNullableNumber(item.preco_venda_m2),
+      impacto_ambiental: String(item.impacto_ambiental ?? "nao_avaliado") || "nao_avaliado",
+      notas_tecnicas: String(item.notas_tecnicas ?? ""),
+      notas_legais: String(item.notas_legais ?? ""),
+      notas_economicas: String(item.notas_economicas ?? ""),
+      prazo_obra_meses: parseNullableNumber(item.prazo_obra_meses),
+      indice_aproveitamento: parseNullableNumber(item.indice_aproveitamento),
+      taxa_ocupacao: parseNullableNumber(item.taxa_ocupacao),
+      updated_at: String(item.updated_at ?? ""),
+    };
+  });
 }
 
 export async function upsertViabilidade(input: UpsertViabilidadeInput) {

@@ -159,8 +159,8 @@ export async function GET(_: Request, context: RouteContext) {
 
   if (tipo === "qualidade") {
     const qualidade = await listQualidade();
-    const ncRows = qualidade.naoConformidades.filter((item) => !obraId || item.obra_id === obraId);
-    const checklist = qualidade.checklist.filter((item) => !obraId || item.obra_id === obraId);
+    const ncRows = qualidade.naoConformidades.filter((item) => !obraId || item.obraId === obraId);
+    const checklist = qualidade.checklist.filter((item) => !obraId || item.obraId === obraId);
     const checklistsConformes = checklist.filter((item) => item.conforme).length;
     return jsonResponseAsFile(
       {
@@ -174,7 +174,7 @@ export async function GET(_: Request, context: RouteContext) {
           indice_qualidade: checklist.length ? Number(((checklistsConformes / checklist.length) * 100).toFixed(1)) : 0,
         },
         itens: ncRows.map((item) => ({
-          obra: item.obra_nome,
+          obra: item.obraNome,
           categoria: item.categoria,
           severidade: item.severidade,
           status: item.status,
@@ -186,11 +186,11 @@ export async function GET(_: Request, context: RouteContext) {
   }
 
   if (tipo === "mudancas") {
-    const mudancas = (await listMudancas()).filter((item) => !obraId || item.obra_id === obraId);
+    const mudancas = (await listMudancas()).filter((item) => !obraId || item.obraId === obraId);
     if (formato === "xlsx") {
       const csv = [
         "obra,tipo,titulo,impacto_prazo_dias,impacto_custo,status",
-        ...mudancas.map((item) => `${item.obra_nome},${item.tipo},${item.titulo},${item.impacto_prazo_dias},${item.impacto_custo},${item.status}`),
+        ...mudancas.map((item) => `${item.obraNome},${item.tipo},${item.titulo},${item.impactoPrazoDias},${item.impactoCusto},${item.status}`),
       ].join("\n");
       return csvResponseAsFile(csv, fileName);
     }
@@ -209,9 +209,9 @@ export async function GET(_: Request, context: RouteContext) {
     const [estudos, obras] = await Promise.all([listViabilidade(), listObras()]);
     const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
     const itens = estudos
-      .filter((item) => !obraId || item.obra_id === obraId)
+      .filter((item) => !obraId || item.obraId === obraId)
       .map((item) => ({
-        obra: obraNomeById.get(item.obra_id) ?? "Obra",
+        obra: obraNomeById.get(item.obraId) ?? "Obra",
         status_tecnico: item.status_tecnico,
         status_legal: item.status_legal,
         status_economico: item.status_economico,

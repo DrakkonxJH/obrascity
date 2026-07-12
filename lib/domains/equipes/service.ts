@@ -31,15 +31,20 @@ export class EquipesService {
     try {
       const empresaId = await this.deps.getEmpresaId();
       const data = await this.repository.listMembros(empresaId);
-      return data.map((item) => ({
-        id: item.id as string,
-        profileId: (item.profile_id as string | null) ?? null,
-        nome: ((item.profiles as { nome?: string } | null)?.nome as string | undefined) ?? null,
-        email: ((item.profiles as { email?: string } | null)?.email as string | undefined) ?? null,
-        equipeId: (item.equipe_id as string | null) ?? null,
-        cargo: (item.cargo as string | null) ?? null,
-        crea: (item.crea as string | null) ?? null,
-      }));
+      return data.map((item) => {
+        const equipeId = (item.equipe_id as string | null) ?? null;
+
+        return {
+          id: item.id as string,
+          profileId: (item.profile_id as string | null) ?? null,
+          nome: ((item.profiles as { nome?: string } | null)?.nome as string | undefined) ?? null,
+          email: ((item.profiles as { email?: string } | null)?.email as string | undefined) ?? null,
+          equipeId,
+          equipe_id: equipeId,
+          cargo: (item.cargo as string | null) ?? null,
+          crea: (item.crea as string | null) ?? null,
+        };
+      });
     } catch (error: any) {
       logInfraError(error, { action: "listMembros" });
       throw error;

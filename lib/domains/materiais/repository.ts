@@ -20,12 +20,12 @@ export interface IMateriaisRepository {
   createMaterial(empresaId: string, input: any): Promise<void>;
   updateMaterial(empresaId: string, id: string, input: any): Promise<void>;
   getMateriais(empresaId: string): Promise<any[]>;
-  upsertMaterial(empresaId: string, id?: string, input: any): Promise<void>;
+  upsertMaterial(empresaId: string, id: string | undefined, input: any): Promise<void>;
   createPurchaseOrder(empresaId: string, input: any): Promise<{ id: string }>;
   getMaterialsForImport(empresaId: string): Promise<any[]>;
   getObrasForImport(empresaId: string): Promise<any[]>;
   getExistingOrdersForImport(empresaId: string): Promise<any[]>;
-  upsertPurchaseOrder(empresaId: string, id?: string, input: any): Promise<void>;
+  upsertPurchaseOrder(empresaId: string, id: string | undefined, input: any): Promise<void>;
   listCotacoesCompra(empresaId: string): Promise<any[]>;
   createCotacaoCompra(empresaId: string, input: any): Promise<void>;
   listCotacoesFornecedores(empresaId: string): Promise<any[]>;
@@ -95,7 +95,7 @@ export class SupabaseMateriaisRepository implements IMateriaisRepository {
     return data ?? [];
   }
 
-  async upsertMaterial(empresaId: string, id?: string, input: any): Promise<void> {
+  async upsertMaterial(empresaId: string, id: string | undefined, input: any): Promise<void> {
     if (id) {
       await this.updateMaterial(empresaId, id, input);
     } else {
@@ -139,7 +139,7 @@ export class SupabaseMateriaisRepository implements IMateriaisRepository {
     return data ?? [];
   }
 
-  async upsertPurchaseOrder(empresaId: string, id?: string, input: any): Promise<void> {
+  async upsertPurchaseOrder(empresaId: string, id: string | undefined, input: any): Promise<void> {
     if (id) {
       const { error } = await this.supabase
         .from("pedidos_compra")

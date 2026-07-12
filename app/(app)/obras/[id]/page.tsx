@@ -63,11 +63,11 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
 
   if (!obra) notFound();
 
-  const financeiroObra = financeiro.filter((item) => item.obra_id === obra.id);
-  const diariosObra = diarios.filter((item) => item.obra_id === obra.id).slice(0, 8);
-  const cronogramaObra = cronograma.filter((item) => item.obra_id === obra.id);
-  const pedidosObra = pedidos.filter((item) => item.obra_id === obra.id).slice(0, 8);
-  const relatoriosObra = relatorios.filter((item) => item.obra_id === obra.id).slice(0, 8);
+  const financeiroObra = financeiro.filter((item) => item.obraId === obra.id);
+  const diariosObra = diarios.filter((item) => item.obraId === obra.id).slice(0, 8);
+  const cronogramaObra = cronograma.filter((item) => item.obraId === obra.id);
+  const pedidosObra = pedidos.filter((item) => item.obraId === obra.id).slice(0, 8);
+  const relatoriosObra = relatorios.filter((item) => item.obraId === obra.id).slice(0, 8);
 
   const orcadoTotal = financeiroObra.reduce((sum, item) => sum + item.orcado, 0);
   const realizadoTotal = financeiroObra.reduce((sum, item) => sum + item.realizado, 0);
@@ -82,7 +82,7 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
     .filter((item) => !isCompletedTask(item.status))
     .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
   const historicoExecucao = diariosObra.sort(
-    (a, b) => new Date(b.data_ref).getTime() - new Date(a.data_ref).getTime(),
+    (a, b) => new Date(b.dataRef).getTime() - new Date(a.dataRef).getTime(),
   );
 
   return (
@@ -257,7 +257,7 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
               <tbody>
                 {historicoExecucao.map((item) => (
                   <tr key={item.id}>
-                    <td>{new Date(item.data_ref).toLocaleDateString("pt-BR")}</td>
+                    <td>{new Date(item.dataRef).toLocaleDateString("pt-BR")}</td>
                     <td>{item.ocorrencias || "Sem descrição informada"}</td>
                     <td>{item.created_by_nome || "Não informado"}</td>
                     <td>{item.efetivo}</td>
@@ -280,7 +280,7 @@ export default async function ObraDetailPage({ params }: ObraDetailPageProps) {
               {diariosObra.map((item) => (
                 <li key={item.id} className="of-list-item">
                   <p className="of-list-title">
-                    {new Date(item.data_ref).toLocaleDateString("pt-BR")} · Efetivo {item.efetivo}
+                    {new Date(item.dataRef).toLocaleDateString("pt-BR")} · Efetivo {item.efetivo}
                   </p>
                   <p className="of-list-description">
                     {item.ocorrencias || "Sem ocorrências registradas"} · Responsável:{" "}

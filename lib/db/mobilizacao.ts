@@ -4,24 +4,24 @@ import { getCurrentProfile } from "@/lib/auth/require-profile";
 
 export type EquipeAlocacaoItem = {
   id: string;
-  obra_id: string;
-  obra_nome: string;
-  equipe_id: string;
-  equipe_nome: string;
+  obraId: string;
+  obraNome: string;
+  equipeId: string;
+  equipeNome: string;
   frente: string;
   turno: string;
-  data_inicio: string;
-  data_fim: string;
-  capacidade_planejada: number;
+  dataInicio: string;
+  dataFim: string;
+  capacidadePlanejada: number;
   alocados: number;
   status: string;
 };
 
 export type EquipeCapacidadeItem = {
-  equipe_id: string;
-  equipe_nome: string;
-  capacidade_total: number;
-  alocados_total: number;
+  equipeId: string;
+  equipeNome: string;
+  capacidadeTotal: number;
+  alocadosTotal: number;
   conflito: boolean;
 };
 
@@ -41,15 +41,15 @@ export async function listEquipeAlocacoes(): Promise<EquipeAlocacaoItem[]> {
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
     id: String(row.id ?? ""),
-    obra_id: String(row.obra_id ?? ""),
-    obra_nome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
-    equipe_id: String(row.equipe_id ?? ""),
-    equipe_nome: ((row.equipes as { nome?: string } | null)?.nome ?? "Equipe") as string,
+    obraId: String(row.obra_id ?? ""),
+    obraNome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
+    equipeId: String(row.equipe_id ?? ""),
+    equipeNome: ((row.equipes as { nome?: string } | null)?.nome ?? "Equipe") as string,
     frente: String(row.frente ?? ""),
     turno: String(row.turno ?? "diurno"),
-    data_inicio: String(row.data_inicio ?? ""),
-    data_fim: String(row.data_fim ?? ""),
-    capacidade_planejada: Number(row.capacidade_planejada ?? 0),
+    dataInicio: String(row.data_inicio ?? ""),
+    dataFim: String(row.data_fim ?? ""),
+    capacidadePlanejada: Number(row.capacidade_planejada ?? 0),
     alocados: Number(row.alocados ?? 0),
     status: String(row.status ?? "planejada"),
   }));
@@ -120,10 +120,10 @@ export async function listEquipeCapacidade(): Promise<EquipeCapacidadeItem[]> {
     const equipeId = String(row.id ?? "");
     const resume = capacidade.get(equipeId) ?? { capacidade: 0, alocados: 0 };
     return {
-      equipe_id: equipeId,
-      equipe_nome: String(row.nome ?? "Equipe"),
-      capacidade_total: resume.capacidade,
-      alocados_total: resume.alocados,
+      equipeId: equipeId,
+      equipeNome: String(row.nome ?? "Equipe"),
+      capacidadeTotal: resume.capacidade,
+      alocadosTotal: resume.alocados,
       conflito: resume.alocados > resume.capacidade,
     };
   });

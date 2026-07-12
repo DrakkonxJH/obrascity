@@ -73,7 +73,7 @@ export class CronogramaService {
     }
   }
 
-  async updateTarefa(input: UpdateTarefaInput): Promise<{ id: string; obra_id: string }> {
+  async updateTarefa(input: UpdateTarefaInput): Promise<{ id: string; obraId: string }> {
     try {
       const empresaId = await this.deps.getEmpresaId();
       const result = await this.repository.updateTarefa(empresaId, input);

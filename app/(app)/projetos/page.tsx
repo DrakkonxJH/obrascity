@@ -185,7 +185,7 @@ export default async function ProjetosPage() {
               <tbody>
                 {documentos.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
+                    <td>{item.obraNome}</td>
                     <td>{item.disciplina}</td>
                     <td>{item.revisao}</td>
                     <td>
@@ -224,7 +224,7 @@ export default async function ProjetosPage() {
               <tbody>
                 {conflitos.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
+                    <td>{item.obraNome}</td>
                     <td>{item.titulo}</td>
                     <td>
                       <span className={`of-badge ${severidadeBadgeClass[item.severidade] ?? "of-badge-default"}`}>

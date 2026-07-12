@@ -101,11 +101,11 @@ export async function CronogramaContent({
     .filter((item) => filterByObra(item.obraId))
     .filter((item) => isInDateRange(item.inicio, item.fim));
 
-  const filteredReplanejamentos = replanejamentos.filter((item) => filterByObra(item.obra_id));
+  const filteredReplanejamentos = replanejamentos.filter((item) => filterByObra(item.obraId));
 
   const tarefasIds = new Set(filteredItems.map((item) => item.id));
   const filteredDependencias = dependencias.filter(
-    (item) => tarefasIds.has(item.tarefa_predecessora_id) || tarefasIds.has(item.tarefa_sucessora_id),
+    (item) => tarefasIds.has(item.tarefaPredecessoraId) || tarefasIds.has(item.tarefaSucessoraId),
   );
 
   const totalTarefas = filteredItems.length;
@@ -168,7 +168,7 @@ export async function CronogramaContent({
     return {
       id: item.id,
       nome: item.nome,
-      obra_nome: item.obraNome,
+      obraNome: item.obraNome,
       status: item.status,
       inicio: item.inicio,
       fim: item.fim,
@@ -397,7 +397,7 @@ export async function CronogramaContent({
               <div className="of-table-wrap" style={{ border: 0 }}>
                 <table className="of-table"><thead><tr><th>Obra</th><th>Tarefa</th><th>Duração</th><th>Dependências</th></tr></thead><tbody>
                   {filteredCaminhoCritico.map((item) => (
-                    <tr key={item.tarefaId}><td>{item.obraNome}</td><td>{item.nome}</td><td className="of-mono">{item.duracao_dias} dias</td><td className="of-mono">{item.dependencias}</td></tr>
+                    <tr key={item.tarefaId}><td>{item.obraNome}</td><td>{item.nome}</td><td className="of-mono">{item.duracaoDias} dias</td><td className="of-mono">{item.dependencias}</td></tr>
                   ))}
                   {filteredCaminhoCritico.length === 0 ? <tr><td colSpan={4} className="of-empty-text">Sem dados para caminho crítico.</td></tr> : null}
                 </tbody></table>
@@ -416,7 +416,7 @@ export async function CronogramaContent({
               <div className="of-replan-header"><h4 className="of-replan-title">Histórico ({filteredReplanejamentos.length})</h4></div>
               {filteredReplanejamentos.length > 0 ? (
                 <div className="of-replan-list">{filteredReplanejamentos.map((item) => (
-                  <div className="of-replan-item" key={item.id}><div className="of-replan-head"><p className="of-replan-obra">{item.obraNome}</p><span className="of-replan-date">{new Date(item.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="of-replan-motivo">{item.motivo}</p><div className="of-replan-impacts"><div className="of-replan-impact"><span className="of-replan-label">Impacto em prazo</span><span className="of-replan-value">{item.impacto_prazo_dias} dias</span></div><div className="of-replan-impact"><span className="of-replan-label">Impacto financeiro</span><span className="of-replan-value">R$ {item.impacto_custo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div><div className="of-replan-impact"><span className="of-replan-label">Status</span><span className={`of-replan-status ${item.status}`}>{item.status}</span></div></div></div>
+                  <div className="of-replan-item" key={item.id}><div className="of-replan-head"><p className="of-replan-obra">{item.obraNome}</p><span className="of-replan-date">{new Date(item.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="of-replan-motivo">{item.motivo}</p><div className="of-replan-impacts"><div className="of-replan-impact"><span className="of-replan-label">Impacto em prazo</span><span className="of-replan-value">{item.impactoPrazoDias} dias</span></div><div className="of-replan-impact"><span className="of-replan-label">Impacto financeiro</span><span className="of-replan-value">R$ {item.impactoCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div><div className="of-replan-impact"><span className="of-replan-label">Status</span><span className={`of-replan-status ${item.status}`}>{item.status}</span></div></div></div>
                 ))}</div>
               ) : <p className="of-empty-text" style={{ margin: 0, padding: "12px 0" }}>Nenhum replanejamento registrado.</p>}
             </article>

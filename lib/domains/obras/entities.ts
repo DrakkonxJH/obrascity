@@ -1,5 +1,7 @@
 import type { Obra } from "@/types/domain";
 
+export type { Obra };
+
 export type ObraTrashItem = Obra & {
   deleted_at: string;
   deleted_by: string | null;

@@ -9,12 +9,16 @@ import { isMissingRelation } from "@/lib/db/migration-guard";
 export type MudancaItem = {
   id: string;
   obra_id: string;
+  obraId: string;
   obra_nome: string;
+  obraNome: string;
   tipo: string;
   titulo: string;
   descricao: string;
   impacto_prazo_dias: number;
+  impactoPrazoDias: number;
   impacto_custo: number;
+  impactoCusto: number;
   status: string;
   created_at: string;
 };
@@ -33,18 +37,29 @@ export async function listMudancas(): Promise<MudancaItem[]> {
     return [];
   }
 
-  return ((data ?? []) as Array<Record<string, unknown>>).map((item) => ({
-    id: String(item.id ?? ""),
-    obra_id: String(item.obra_id ?? ""),
-    obra_nome: ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
-    tipo: String(item.tipo ?? ""),
-    titulo: String(item.titulo ?? ""),
-    descricao: String(item.descricao ?? ""),
-    impacto_prazo_dias: Number(item.impacto_prazo_dias ?? 0),
-    impacto_custo: Number(item.impacto_custo ?? 0),
-    status: String(item.status ?? "pendente"),
-    created_at: String(item.created_at ?? ""),
-  }));
+  return ((data ?? []) as Array<Record<string, unknown>>).map((item) => {
+    const obraId = String(item.obra_id ?? "");
+    const obraNome = ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string;
+    const impactoPrazoDias = Number(item.impacto_prazo_dias ?? 0);
+    const impactoCusto = Number(item.impacto_custo ?? 0);
+
+    return {
+      id: String(item.id ?? ""),
+      obra_id: obraId,
+      obraId,
+      obra_nome: obraNome,
+      obraNome,
+      tipo: String(item.tipo ?? ""),
+      titulo: String(item.titulo ?? ""),
+      descricao: String(item.descricao ?? ""),
+      impacto_prazo_dias: impactoPrazoDias,
+      impactoPrazoDias,
+      impacto_custo: impactoCusto,
+      impactoCusto,
+      status: String(item.status ?? "pendente"),
+      created_at: String(item.created_at ?? ""),
+    };
+  });
 }
 
 export async function createMudanca(input: {
@@ -102,4 +117,3 @@ export async function createMudanca(input: {
     });
   }
 }
-

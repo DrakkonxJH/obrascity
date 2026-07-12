@@ -18,7 +18,7 @@ export default async function CronogramaPage({ searchParams }: CronogramaPagePro
   }
 
   const params = searchParams ? await searchParams : {};
-  const obraId = firstParam(params.obra_id);
+  const obraId = firstParam(params.obraId);
   const status = firstParam(params.status);
   const dateFrom = firstParam(params.date_from);
   const dateTo = firstParam(params.date_to);

@@ -1,5 +1,6 @@
 import { getObrasService } from "@/lib/domains/obras";
-import { Obra, ObraTrashItem } from "@/types/domain";
+import type { Obra } from "@/types/domain";
+import type { ObraTrashItem } from "@/lib/domains/obras/entities";
 
 export type ObraTrashItemLegacy = ObraTrashItem;
 

@@ -24,7 +24,7 @@ export default async function DiarioPage() {
   const agora = new Date();
   const totalRegistros = diarios.length;
   const registrosEsteMes = diarios.filter((item) => {
-    const data = new Date(`${item.data_ref}T00:00:00`);
+    const data = new Date(`${item.dataRef}T00:00:00`);
     return (
       Number.isFinite(data.getTime()) &&
       data.getMonth() === agora.getMonth() &&
@@ -121,8 +121,8 @@ export default async function DiarioPage() {
           <tbody>
             {diarios.map((d) => (
               <tr key={d.id}>
-                <td className="of-mono">{d.data_ref}</td>
-                <td>{d.obra_nome}</td>
+                <td className="of-mono">{d.dataRef}</td>
+                <td>{d.obraNome}</td>
                 <td>{d.clima ?? "—"}</td>
                 <td>{d.efetivo}</td>
                 <td>
@@ -131,7 +131,7 @@ export default async function DiarioPage() {
                       {d.evidencias.slice(0, 2).map((evidencia) => (
                         <a
                           key={evidencia.id}
-                          href={evidencia.arquivo_url}
+                          href={evidencia.arquivoUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="text-[#ff9445] hover:underline text-sm"
@@ -165,7 +165,7 @@ export default async function DiarioPage() {
             {ultimasOcorrencias.map((item) => (
               <li key={item.id} className="of-list-item">
                 <p className="of-list-title">
-                  {item.obra_nome} · {formatDate(item.data_ref)}
+                  {item.obraNome} · {formatDate(item.dataRef)}
                 </p>
                 <p className="of-list-description">{item.ocorrencias}</p>
               </li>

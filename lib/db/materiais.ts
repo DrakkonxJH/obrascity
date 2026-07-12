@@ -24,6 +24,19 @@ export type CotacaoCompraItemLegacy = CotacaoCompraItem;
 export type CotacaoFornecedorItemLegacy = CotacaoFornecedorItem;
 export type CotacaoRodadaItemLegacy = CotacaoRodadaItem;
 export type ContratoFornecedorItemLegacy = ContratoFornecedorItem;
+export type {
+  MaterialItem,
+  PedidoCompraItem,
+  MaterialImportInput,
+  MaterialImportResult,
+  PurchaseOrderImportInput,
+  PurchaseOrderImportResult,
+  PurchaseOrderInput,
+  CotacaoCompraItem,
+  CotacaoFornecedorItem,
+  CotacaoRodadaItem,
+  ContratoFornecedorItem,
+};
 
 export async function listMateriais(): Promise<MaterialItemLegacy[]> {
   const service = await getMateriaisService();
@@ -78,8 +91,8 @@ export async function updateMaterial(
 export async function createPurchaseOrder(input: PurchaseOrderInputLegacy) {
   const service = await getMateriaisService();
   return service.createPurchaseOrder({
-    materialId: input.material_id,
-    obraId: input.obra_id,
+    material_id: input.materialId,
+    obra_id: input.obraId,
     fornecedor: input.fornecedor,
     quantidade: input.quantidade,
     valor: input.valor,

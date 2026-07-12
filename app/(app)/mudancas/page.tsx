@@ -48,7 +48,7 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   }
 
   const params = searchParams ? await searchParams : {};
-  const obraFilter = firstParam(params.obra_id);
+  const obraFilter = firstParam(params.obraId);
   const tipoFilter = firstParam(params.tipo);
   const statusFilter = firstParam(params.status);
   const query = firstParam(params.q).toLowerCase().trim();
@@ -90,11 +90,11 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   const pendentesAprovacao = mudancas.filter((item) => ["pendente", "em_aprovacao"].includes(item.status)).length;
   const aprovadas = mudancas.filter((item) => item.status === "aprovada").length;
   const rejeitadas = mudancas.filter((item) => item.status === "rejeitada").length;
-  const impactoTotalPrazo = mudancas.reduce((acc, item) => acc + item.impacto_prazo_dias, 0);
-  const impactoTotalCusto = mudancas.reduce((acc, item) => acc + item.impacto_custo, 0);
+  const impactoTotalPrazo = mudancas.reduce((acc, item) => acc + item.impactoPrazoDias, 0);
+  const impactoTotalCusto = mudancas.reduce((acc, item) => acc + item.impactoCusto, 0);
   const impactoAprovado = mudancas
     .filter((item) => item.status === "aprovada")
-    .reduce((acc, item) => acc + item.impacto_custo, 0);
+    .reduce((acc, item) => acc + item.impactoCusto, 0);
 
   const distribuicaoPorTipo = ["escopo", "prazo", "custo", "contratual"].map((tipo) => ({
     tipo,
@@ -102,29 +102,29 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
   }));
 
   const filteredMudancas = mudancas
-    .filter((item) => (obraFilter ? item.obra_id === obraFilter : true))
+    .filter((item) => (obraFilter ? item.obraId === obraFilter : true))
     .filter((item) => (tipoFilter ? item.tipo === tipoFilter : true))
     .filter((item) => (statusFilter ? item.status === statusFilter : true))
     .filter((item) => {
       if (!query) return true;
-      const source = `${item.obra_nome} ${item.titulo} ${item.descricao}`.toLowerCase();
+      const source = `${item.obraNome} ${item.titulo} ${item.descricao}`.toLowerCase();
       return source.includes(query);
     })
     .sort((a, b) => {
       const pa = (a.status === "em_aprovacao" ? 2 : 0) + (a.status === "pendente" ? 1 : 0);
       const pb = (b.status === "em_aprovacao" ? 2 : 0) + (b.status === "pendente" ? 1 : 0);
       if (pb !== pa) return pb - pa;
-      return b.impacto_custo - a.impacto_custo;
+      return b.impactoCusto - a.impactoCusto;
     });
 
   const obraRanking = Object.values(
     mudancas.reduce<Record<string, { obraNome: string; total: number; custo: number }>>((acc, item) => {
-      const key = item.obra_id || item.obra_nome;
+      const key = item.obraId || item.obraNome;
       if (!acc[key]) {
-        acc[key] = { obraNome: item.obra_nome, total: 0, custo: 0 };
+        acc[key] = { obraNome: item.obraNome, total: 0, custo: 0 };
       }
       acc[key].total += 1;
-      acc[key].custo += item.impacto_custo;
+      acc[key].custo += item.impactoCusto;
       return acc;
     }, {}),
   )
@@ -369,11 +369,11 @@ export default async function MudancasPage({ searchParams }: MudancasPageProps) 
               <tbody>
                 {filteredMudancas.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
+                    <td>{item.obraNome}</td>
                     <td><span className="of-badge of-badge-default">{tipoLabels[item.tipo] ?? item.tipo}</span></td>
                     <td>{item.titulo}</td>
-                    <td className="of-mono">{item.impacto_prazo_dias} dias</td>
-                    <td>{money.format(item.impacto_custo)}</td>
+                    <td className="of-mono">{item.impactoPrazoDias} dias</td>
+                    <td>{money.format(item.impactoCusto)}</td>
                     <td>
                       <span className={`of-badge ${statusBadgeClass[item.status] ?? "of-badge-default"}`}>
                         {statusLabels[item.status] ?? item.status}

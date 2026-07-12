@@ -14,7 +14,7 @@ export async function getMedicoesService(): Promise<MedicoesService> {
     },
     ensureObraAtiva: async (obraId: string) => {
       const { ensureObraAtiva } = await import("@/lib/db/obras");
-      return ensureObraAtiva(obraId);
+      await ensureObraAtiva(obraId);
     },
   };
   return new MedicoesService(repository, deps);

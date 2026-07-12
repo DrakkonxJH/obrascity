@@ -198,7 +198,7 @@ export default async function MateriaisPage() {
               {pedidos.map((pedido) => (
                 <tr key={pedido.id}>
                   <td>{pedido.material_nome}</td>
-                  <td>{pedido.obra_nome}</td>
+                  <td>{pedido.obraNome}</td>
                   <td>{pedido.fornecedor || "—"}</td>
                   <td className="of-mono">{pedido.quantidade}</td>
                   <td>
@@ -290,7 +290,7 @@ export default async function MateriaisPage() {
                 return (
                   <tr key={cotacao.id}>
                     <td>{cotacao.titulo}</td>
-                    <td>{cotacao.obra_nome}</td>
+                    <td>{cotacao.obraNome}</td>
                     <td>{cotacao.material_nome}</td>
                     <td>{cotacao.status}</td>
                     <td className="of-mono">{propostas.length}</td>
@@ -382,7 +382,7 @@ export default async function MateriaisPage() {
             <tbody>
               {contratos.map((contrato) => (
                 <tr key={contrato.id}>
-                  <td>{contrato.obra_nome}</td>
+                  <td>{contrato.obraNome}</td>
                   <td>{contrato.status}</td>
                   <td>{money.format(contrato.valor_total)}</td>
                   <td className="of-mono">{contrato.prazo_dias} dias</td>

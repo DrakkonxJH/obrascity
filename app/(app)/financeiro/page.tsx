@@ -116,7 +116,7 @@ export default async function FinanceiroPage() {
               const restante = row.orcado - row.realizado;
               return (
                 <tr key={row.id}>
-                  <td>{row.obra_nome}</td>
+                  <td>{row.obraNome}</td>
                   <td>{money.format(row.orcado)}</td>
                   <td>{money.format(row.realizado)}</td>
                   <td>{money.format(restante)}</td>
@@ -273,9 +273,9 @@ export default async function FinanceiroPage() {
             <tbody>
               {titulos.map((titulo) => (
                 <tr key={titulo.id}>
-                  <td>{titulo.obra_nome}</td>
+                  <td>{titulo.obraNome}</td>
                   <td>{titulo.tipo.toUpperCase()}</td>
-                  <td>{titulo.centro_custo}</td>
+                  <td>{titulo.centroCusto}</td>
                   <td>{titulo.descricao}</td>
                   <td>{new Date(titulo.vencimento).toLocaleDateString("pt-BR")}</td>
                   <td>{titulo.status}</td>

@@ -20,7 +20,7 @@ type FinanceChartsProps = {
 export function FinanceCharts({ rows, totalOrcado, totalRealizado }: FinanceChartsProps) {
   const byObra = new Map<string, number>();
   for (const row of rows) {
-    byObra.set(row.obra_nome, (byObra.get(row.obra_nome) ?? 0) + row.realizado);
+    byObra.set(row.obraNome, (byObra.get(row.obraNome) ?? 0) + row.realizado);
   }
 
   const sortedSlices = [...byObra.entries()].sort((a, b) => b[1] - a[1]);

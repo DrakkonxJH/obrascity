@@ -35,14 +35,14 @@ export default async function PortalPage() {
       tipo: "link" as const,
       titulo: share.descricao ?? "Link público criado",
       descricao: share.active ? "Compartilhamento externo disponível para clientes." : "Compartilhamento revogado.",
-      referencia: share.obra_ids.length > 0 ? `${share.obra_ids.length} obra(s) vinculada(s)` : "Todas as obras",
+      referencia: share.obraIds.length > 0 ? `${share.obraIds.length} obra(s) vinculada(s)` : "Todas as obras",
       data: share.created_at,
     })),
     ...relatorios.map((relatorio) => ({
       id: `report-${relatorio.id}`,
       tipo: "relatorio" as const,
       titulo: `Relatório ${relatorio.tipo}`,
-      descricao: `${relatorio.obra_nome ?? "Consolidado"} · ${relatorio.status}`,
+      descricao: `${relatorio.obraNome ?? "Consolidado"} · ${relatorio.status}`,
       referencia: relatorio.formato.toUpperCase(),
       data: relatorio.created_at,
     })),
@@ -170,8 +170,8 @@ export default async function PortalPage() {
                   <tr key={share.id}>
                     <td>{share.descricao ?? "Link sem descrição"}</td>
                     <td>
-                      {share.obra_ids.length > 0
-                        ? `${share.obra_ids.length} obra(s) selecionada(s)`
+                      {share.obraIds.length > 0
+                        ? `${share.obraIds.length} obra(s) selecionada(s)`
                         : "Todas as obras"}
                     </td>
                     <td>{share.expires_at ? new Date(share.expires_at).toLocaleDateString("pt-BR") : "Sem expiração"}</td>
@@ -249,7 +249,7 @@ export default async function PortalPage() {
               <li key={relatorio.id} className="of-list-item">
                 <p className="of-list-title">{relatorio.tipo}</p>
                 <p className="of-list-description">
-                  {relatorio.obra_nome ?? "Consolidado"} · {relatorio.status}
+                  {relatorio.obraNome ?? "Consolidado"} · {relatorio.status}
                 </p>
               </li>
             ))}

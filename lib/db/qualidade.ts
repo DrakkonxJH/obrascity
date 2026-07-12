@@ -22,7 +22,9 @@ export type QualidadeResponsavel = {
 export type NaoConformidadeItem = {
   id: string;
   obra_id: string;
+  obraId: string;
   obra_nome: string;
+  obraNome: string;
   categoria: string;
   descricao: string;
   severidade: string;
@@ -63,7 +65,9 @@ export type EvidenciaItem = {
 export type ChecklistItem = {
   id: string;
   obra_id: string;
+  obraId: string;
   obra_nome: string;
+  obraNome: string;
   norma: string;
   item: string;
   status: string;
@@ -227,23 +231,30 @@ export async function listNaoConformidades(filters: QualidadeFiltro = {}): Promi
 
   return rows
     .filter((item) => activeObraIds.has(item.obra_id as string))
-    .map((item) => ({
-    id: item.id as string,
-    obra_id: item.obra_id as string,
-    obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra",
-    categoria: item.categoria as string,
-    descricao: decryptField(item.descricao as string) ?? "",
-    severidade: (item.severidade as string) ?? "media",
-    status: (item.status as string) ?? "aberta",
-    prazo: (item.prazo as string | null) ?? null,
-    responsavel_id: (item.responsavel_id as string | null) ?? null,
-    responsavel_nome: profileMap[(item.responsavel_id as string | null) ?? ""] ?? null,
-    resolucao: decryptField(item.resolucao as string | null) ?? "",
-    created_at: item.created_at as string,
-    resolvido_em: (item.resolvido_em as string | null) ?? null,
-    fechado_em: (item.fechado_em as string | null) ?? null,
-    reaberturas: Number(item.reaberturas ?? 0),
-  }));
+    .map((item) => {
+      const obraId = item.obra_id as string;
+      const obraNome = (item.obras as { nome?: string } | null)?.nome ?? "Obra";
+
+      return {
+        id: item.id as string,
+        obra_id: obraId,
+        obraId,
+        obra_nome: obraNome,
+        obraNome,
+        categoria: item.categoria as string,
+        descricao: decryptField(item.descricao as string) ?? "",
+        severidade: (item.severidade as string) ?? "media",
+        status: (item.status as string) ?? "aberta",
+        prazo: (item.prazo as string | null) ?? null,
+        responsavel_id: (item.responsavel_id as string | null) ?? null,
+        responsavel_nome: profileMap[(item.responsavel_id as string | null) ?? ""] ?? null,
+        resolucao: decryptField(item.resolucao as string | null) ?? "",
+        created_at: item.created_at as string,
+        resolvido_em: (item.resolvido_em as string | null) ?? null,
+        fechado_em: (item.fechado_em as string | null) ?? null,
+        reaberturas: Number(item.reaberturas ?? 0),
+      };
+    });
 }
 
 export async function createNaoConformidade(input: {
@@ -656,20 +667,27 @@ export async function listChecklistItems(filters: QualidadeFiltro = {}): Promise
 
   const mapped = rows
     .filter((item) => activeObraIds.has(item.obra_id as string))
-    .map((item) => ({
-    id: item.id as string,
-    obra_id: item.obra_id as string,
-    obra_nome: (item.obras as { nome?: string } | null)?.nome ?? "Obra",
-    norma: item.norma as string,
-    item: item.item as string,
-    status: legacyMode ? (item.conforme ? "conforme" : "pendente") : ((item.status as string) ?? "pendente"),
-    conforme: Boolean(item.conforme),
-    observacao: decryptField(item.observacao as string | null) ?? "",
-    responsavel_id: legacyMode ? null : ((item.responsavel_id as string | null) ?? null),
-    responsavel_nome: legacyMode ? null : (profileMap[(item.responsavel_id as string | null) ?? ""] ?? null),
-    inspecionado_em: legacyMode ? null : ((item.inspecionado_em as string | null) ?? null),
-    created_at: item.created_at as string,
-  }));
+    .map((item) => {
+      const obraId = item.obra_id as string;
+      const obraNome = (item.obras as { nome?: string } | null)?.nome ?? "Obra";
+
+      return {
+        id: item.id as string,
+        obra_id: obraId,
+        obraId,
+        obra_nome: obraNome,
+        obraNome,
+        norma: item.norma as string,
+        item: item.item as string,
+        status: legacyMode ? (item.conforme ? "conforme" : "pendente") : ((item.status as string) ?? "pendente"),
+        conforme: Boolean(item.conforme),
+        observacao: decryptField(item.observacao as string | null) ?? "",
+        responsavel_id: legacyMode ? null : ((item.responsavel_id as string | null) ?? null),
+        responsavel_nome: legacyMode ? null : (profileMap[(item.responsavel_id as string | null) ?? ""] ?? null),
+        inspecionado_em: legacyMode ? null : ((item.inspecionado_em as string | null) ?? null),
+        created_at: item.created_at as string,
+      };
+    });
 
   return mapped.filter((item) => {
     if (filters.status && item.status !== filters.status) return false;

@@ -254,7 +254,7 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
                 <tr key={nc.id}>
                   <td>
                     <p className="of-list-title">{nc.categoria}</p>
-                    <p className="of-list-description">{nc.obra_nome}</p>
+                    <p className="of-list-description">{nc.obraNome}</p>
                     <p className="of-list-description">{nc.descricao}</p>
                   </td>
                   <td>{nc.severidade}</td>
@@ -322,7 +322,7 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
               </option>
               {ncRows.map((nc) => (
                 <option key={nc.id} value={nc.id}>
-                  {nc.categoria} · {nc.obra_nome}
+                  {nc.categoria} · {nc.obraNome}
                 </option>
               ))}
             </select>
@@ -377,7 +377,7 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
               </option>
               {ncRows.map((nc) => (
                 <option key={nc.id} value={nc.id}>
-                  {nc.categoria} · {nc.obra_nome}
+                  {nc.categoria} · {nc.obraNome}
                 </option>
               ))}
             </select>
@@ -461,7 +461,7 @@ export default async function QualidadePage({ searchParams }: QualidadePageProps
                     </p>
                     <p className="of-list-description">{item.observacao || "Sem observação"}</p>
                   </td>
-                  <td>{item.obra_nome}</td>
+                  <td>{item.obraNome}</td>
                   <td>
                     <span className={statusChecklistBadge(item.status)}>{item.status}</span>
                   </td>

@@ -4,13 +4,13 @@ import { getCurrentProfile } from "@/lib/auth/require-profile";
 
 export type FinanceiroTituloItem = {
   id: string;
-  obra_id: string;
-  obra_nome: string;
+  obraId: string;
+  obraNome: string;
   tipo: "ap" | "ar";
-  centro_custo: string;
+  centroCusto: string;
   descricao: string;
   valor: number;
-  valor_liquidado: number;
+  valorLiquidado: number;
   status: string;
   vencimento: string;
   conciliado: boolean;
@@ -39,13 +39,13 @@ export async function listFinanceiroTitulos(): Promise<FinanceiroTituloItem[]> {
 
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
     id: String(row.id ?? ""),
-    obra_id: String(row.obra_id ?? ""),
-    obra_nome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
+    obraId: String(row.obra_id ?? ""),
+    obraNome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
     tipo: String(row.tipo ?? "ap") === "ar" ? "ar" : "ap",
-    centro_custo: String(row.centro_custo ?? ""),
+    centroCusto: String(row.centro_custo ?? ""),
     descricao: String(row.descricao ?? ""),
     valor: Number(row.valor ?? 0),
-    valor_liquidado: Number(row.valor_liquidado ?? 0),
+    valorLiquidado: Number(row.valor_liquidado ?? 0),
     status: String(row.status ?? "previsto"),
     vencimento: String(row.vencimento ?? ""),
     conciliado: Boolean(row.conciliado),

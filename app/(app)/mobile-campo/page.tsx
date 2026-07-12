@@ -158,7 +158,7 @@ export default async function MobileCampoPage() {
               </option>
               {jobs.map((job) => (
                 <option key={job.id} value={job.id}>
-                  {job.obra_nome} · {directionLabel(job.direction)} ·{" "}
+                  {job.obraNome} · {directionLabel(job.direction)} ·{" "}
                   {new Date(job.created_at).toLocaleString("pt-BR")}
                 </option>
               ))}
@@ -191,7 +191,7 @@ export default async function MobileCampoPage() {
               <tbody>
                 {jobs.map((job) => (
                   <tr key={job.id}>
-                    <td>{job.obra_nome}</td>
+                    <td>{job.obraNome}</td>
                     <td>{syncStatusLabel(job.status)}</td>
                     <td>{directionLabel(job.direction)}</td>
                     <td className="of-mono">

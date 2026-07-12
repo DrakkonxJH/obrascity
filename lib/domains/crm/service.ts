@@ -85,7 +85,8 @@ export class CrmService {
     return "manual";
   }
 
-  private asIsoDateTime(dateOrIso: string) {
+  private asIsoDateTime(dateOrIso: string | null) {
+    if (!dateOrIso) return null;
     const maybe = new Date(dateOrIso);
     if (!Number.isFinite(maybe.getTime())) {
       return new Date().toISOString();
@@ -365,6 +366,16 @@ export class CrmService {
     } catch (error: any) {
       logDomainError(error, { action: "deleteLead", id });
       throw error;
+    }
+  }
+
+  async listActivities(dealId: string): Promise<CrmDealActivity[]> {
+    try {
+      const empresaId = await this.deps.getEmpresaId();
+      return await this.repository.listActivities(empresaId, dealId);
+    } catch (error: any) {
+      logInfraError(error, { action: "listActivities", dealId });
+      return [];
     }
   }
 

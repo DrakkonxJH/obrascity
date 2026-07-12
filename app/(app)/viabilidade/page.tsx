@@ -156,7 +156,7 @@ export default async function ViabilidadePage() {
   const obraNomeById = new Map(obras.map((obra) => [obra.id, obra.nome]));
   const estudosComObraNome = estudos.map((item) => ({
     ...item,
-    obra_nome: obraNomeById.get(item.obra_id) ?? "Obra sem identificação",
+    obra_nome: obraNomeById.get(item.obraId) ?? "Obra sem identificação",
   }));
 
   const totalEstudos = estudosComObraNome.length;
@@ -513,7 +513,7 @@ export default async function ViabilidadePage() {
                   <tr key={item.id}>
                     <td>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontWeight: 700 }}>{item.obra_nome}</span>
+                        <span style={{ fontWeight: 700 }}>{item.obraNome}</span>
                         <span className="of-empty-text">{item.parecer || "Sem parecer consolidado."}</span>
                       </div>
                     </td>
@@ -540,7 +540,7 @@ export default async function ViabilidadePage() {
         </article>
 
         {estudosComObraNome.map((estudo) => (
-          <RiskMatrix key={estudo.id} estudoId={estudo.id} riscos={estudo.riscos} obraNome={estudo.obra_nome} />
+          <RiskMatrix key={estudo.id} estudoId={estudo.id} riscos={estudo.riscos} obraNome={estudo.obraNome ?? estudo.obra_nome ?? "Obra"} />
         ))}
 
         <div

@@ -5,7 +5,9 @@ import { getCurrentProfile } from "@/lib/auth/require-profile";
 export type MobileSyncJobItem = {
   id: string;
   obra_id: string;
+  obraId: string;
   obra_nome: string;
+  obraNome: string;
   status: string;
   direction: string;
   pendentes_criar: number;
@@ -42,19 +44,26 @@ export async function listMobileSyncJobs(): Promise<MobileSyncJobItem[]> {
     throw new Error(`Erro ao listar sincronizações mobile: ${error.message}`);
   }
 
-  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
-    id: String(row.id ?? ""),
-    obra_id: String(row.obra_id ?? ""),
-    obra_nome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
-    status: String(row.status ?? "pendente"),
-    direction: String(row.direction ?? "upload"),
-    pendentes_criar: Number(row.pendentes_criar ?? 0),
-    pendentes_atualizar: Number(row.pendentes_atualizar ?? 0),
-    pendentes_deletar: Number(row.pendentes_deletar ?? 0),
-    conflitos: Number(row.conflitos ?? 0),
-    last_sync_at: row.last_sync_at ? String(row.last_sync_at) : null,
-    created_at: String(row.created_at ?? ""),
-  }));
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => {
+    const obraId = String(row.obra_id ?? "");
+    const obraNome = ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string;
+
+    return {
+      id: String(row.id ?? ""),
+      obra_id: obraId,
+      obraId,
+      obra_nome: obraNome,
+      obraNome,
+      status: String(row.status ?? "pendente"),
+      direction: String(row.direction ?? "upload"),
+      pendentes_criar: Number(row.pendentes_criar ?? 0),
+      pendentes_atualizar: Number(row.pendentes_atualizar ?? 0),
+      pendentes_deletar: Number(row.pendentes_deletar ?? 0),
+      conflitos: Number(row.conflitos ?? 0),
+      last_sync_at: row.last_sync_at ? String(row.last_sync_at) : null,
+      created_at: String(row.created_at ?? ""),
+    };
+  });
 }
 
 export async function createMobileSyncJob(input: {
@@ -157,4 +166,3 @@ export async function resolveMobileSyncConflict(conflictId: string, resolucao: s
     throw new Error(`Erro ao resolver conflito mobile: ${error.message}`);
   }
 }
-

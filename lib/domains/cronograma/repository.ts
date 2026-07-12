@@ -13,7 +13,7 @@ import {
 export interface ICronogramaRepository {
   listTarefas(empresaId: string): Promise<any[]>;
   createTarefa(empresaId: string, input: CreateTarefaInput): Promise<{ id: string }>;
-  updateTarefa(empresaId: string, input: UpdateTarefaInput): Promise<{ id: string; obra_id: string }>;
+  updateTarefa(empresaId: string, input: UpdateTarefaInput): Promise<{ id: string; obraId: string }>;
   deleteTarefa(empresaId: string, id: string): Promise<void>;
   listDependencias(empresaId: string): Promise<any[]>;
   createDependencia(empresaId: string, input: CreateDependenciaInput): Promise<void>;
@@ -55,7 +55,7 @@ export class SupabaseCronogramaRepository implements ICronogramaRepository {
     return data;
   }
 
-  async updateTarefa(empresaId: string, input: UpdateTarefaInput): Promise<{ id: string; obra_id: string }> {
+  async updateTarefa(empresaId: string, input: UpdateTarefaInput): Promise<{ id: string; obraId: string }> {
     const { data, error } = await this.supabase
       .from("obras_tarefas")
       .update({
@@ -71,7 +71,7 @@ export class SupabaseCronogramaRepository implements ICronogramaRepository {
       .single();
 
     if (error || !data?.id) throw new Error(error?.message ?? "Tarefa não encontrada");
-    return data;
+    return { id: data.id, obraId: data.obra_id };
   }
 
   async deleteTarefa(empresaId: string, id: string): Promise<void> {

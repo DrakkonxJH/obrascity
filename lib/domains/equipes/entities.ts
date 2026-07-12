@@ -10,6 +10,7 @@ export type MembroItem = {
   nome: string | null;
   email: string | null;
   equipeId: string | null;
+  equipe_id: string | null;
   cargo: string | null;
   crea: string | null;
 };

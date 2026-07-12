@@ -2,6 +2,7 @@ import { getFinanceService } from "@/lib/domains/finance";
 import { FinanceiroItem } from "@/lib/domains/finance/entities";
 
 export type FinanceiroItemLegacy = FinanceiroItem;
+export type { FinanceiroItem };
 
 export async function listFinanceiro(): Promise<FinanceiroItemLegacy[]> {
   const service = await getFinanceService();

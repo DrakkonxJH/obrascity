@@ -8,13 +8,16 @@ import { getCurrentUser } from "@/lib/auth/session";
 export type RelatórioItem = {
   id: string;
   obra_id: string | null;
+  obraId: string | null;
   tipo: string;
   formato: string;
   status: string;
   obra_nome: string | null;
+  obraNome: string | null;
   url: string | null;
   error_message: string | null;
   created_at: string;
+  createdAt: string;
 };
 
 export type RelatorioExecucaoItem = {
@@ -84,17 +87,26 @@ export async function listRelatorios(): Promise<RelatórioItem[]> {
 
   return rows
     .filter((item) => item.obra_id === null || activeObraIds.has(item.obra_id as string))
-    .map((item) => ({
-    id: item.id as string,
-    obra_id: (item.obra_id as string | null) ?? null,
-    tipo: item.tipo as string,
-    formato: item.formato ?? "pdf",
-    status: item.status as string,
-    url: (item.url as string | null) ?? null,
-    error_message: (item.error_message as string | null) ?? null,
-    created_at: item.created_at as string,
-    obra_nome: item.obras?.nome ?? null,
-  }));
+    .map((item) => {
+      const obraId = (item.obra_id as string | null) ?? null;
+      const obraNome = item.obras?.nome ?? null;
+      const createdAt = item.created_at as string;
+
+      return {
+        id: item.id as string,
+        obra_id: obraId,
+        obraId,
+        tipo: item.tipo as string,
+        formato: item.formato ?? "pdf",
+        status: item.status as string,
+        url: (item.url as string | null) ?? null,
+        error_message: (item.error_message as string | null) ?? null,
+        created_at: createdAt,
+        createdAt,
+        obra_nome: obraNome,
+        obraNome,
+      };
+    });
 }
 
 export async function listRelatorioExecucoes(limit = 50): Promise<RelatorioExecucaoItem[]> {

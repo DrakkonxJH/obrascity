@@ -218,7 +218,7 @@ export default async function RelatóriosPage() {
             {relatórios.map((rel) => (
               <tr key={rel.id}>
                 <td>{rel.tipo}</td>
-                <td>{rel.obra_nome ?? "Todas"}</td>
+                <td>{rel.obraNome ?? "Todas"}</td>
                 <td>
                   <span className="of-badge of-badge-blue">{rel.status}</span>
                 </td>

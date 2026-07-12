@@ -14,7 +14,9 @@ export async function getDiarioService(): Promise<DiarioService> {
   const deps = {
     getEmpresaId: getEmpresaIdFromProfile,
     getCurrentUser: getCurrentUser,
-    ensureObraAtiva,
+    ensureObraAtiva: async (obraId: string) => {
+      await ensureObraAtiva(obraId);
+    },
     listActiveObraIds: async () => {
       const ids = await listActiveObraIds();
       return ids;

@@ -33,7 +33,7 @@ export default async function EntregaPage() {
 
   const itensTestados = comissionamentos.filter((item) => item.status === "testado" || item.status === "concluido").length;
   const entregasConcluidas = entregas.filter((item) => item.status === "entregue").length;
-  const chavesEntregues = entregas.filter((item) => item.chaves_entregues).length;
+  const chavesEntregues = entregas.filter((item) => item.chavesEntregues).length;
 
   return (
     <section className="of-page">
@@ -151,7 +151,7 @@ export default async function EntregaPage() {
               <tbody>
                 {comissionamentos.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
+                    <td>{item.obraNome}</td>
                     <td>{item.sistema}</td>
                     <td>{item.ambiente}</td>
                     <td>{item.item}</td>
@@ -186,11 +186,11 @@ export default async function EntregaPage() {
               <tbody>
                 {entregas.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.obra_nome}</td>
+                    <td>{item.obraNome}</td>
                     <td>{item.status}</td>
-                    <td>{item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "—"}</td>
-                    <td>{item.chaves_entregues ? "Sim" : "Não"}</td>
-                    <td>{item.aceite_cliente_nome || "—"}</td>
+                    <td>{item.dataEntrega ? new Date(item.dataEntrega).toLocaleDateString("pt-BR") : "—"}</td>
+                    <td>{item.chavesEntregues ? "Sim" : "Não"}</td>
+                    <td>{item.aceiteClienteNome || "—"}</td>
                   </tr>
                 ))}
                 {entregas.length === 0 ? (

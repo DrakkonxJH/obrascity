@@ -37,6 +37,7 @@ export class MateriaisService {
         unidade: item.unidade as string,
         quantidade: Number(item.quantidade ?? 0),
         minimo: Number(item.minimo ?? 0),
+        mínimo: Number(item.minimo ?? 0),
       }));
     } catch (error: any) {
       logInfraError(error, { action: "listMateriais" });
@@ -50,16 +51,25 @@ export class MateriaisService {
       const rows = await this.repository.listPedidosCompra(empresaId);
       return rows
         .filter((item) => activeObraIds.has(item.obra_id as string))
-        .map((item) => ({
-          id: item.id as string,
-          obraId: item.obra_id as string,
-          materialNome: item.materiais?.nome ?? "Material",
-          obraNome: item.obras?.nome ?? "Obra",
-          fornecedor: item.fornecedor ?? "",
-          quantidade: Number(item.quantidade ?? 0),
-          status: item.status as string,
-          valor: Number(item.valor ?? 0),
-        }));
+        .map((item) => {
+          const obraId = item.obra_id as string;
+          const materialNome = item.materiais?.nome ?? "Material";
+          const obraNome = item.obras?.nome ?? "Obra";
+
+          return {
+            id: item.id as string,
+            obraId,
+            obra_id: obraId,
+            materialNome,
+            material_nome: materialNome,
+            obraNome,
+            obra_nome: obraNome,
+            fornecedor: item.fornecedor ?? "",
+            quantidade: Number(item.quantidade ?? 0),
+            status: item.status as string,
+            valor: Number(item.valor ?? 0),
+          };
+        });
     } catch (error: any) {
       logInfraError(error, { action: "listPedidosCompra" });
       return [];
@@ -206,16 +216,29 @@ export class MateriaisService {
     try {
       const empresaId = await this.deps.getEmpresaId();
       const rows = await this.repository.listCotacoesCompra(empresaId);
-      return rows.map(item => ({
-        id: String(item.id ?? ""),
-        obraId: String(item.obra_id ?? ""),
-        obraNome: ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
-        materialId: item.material_id ? String(item.material_id) : null,
-        materialNome: ((item.materiais as { nome?: string } | null)?.nome ?? "Material livre") as string,
-        titulo: String(item.titulo ?? ""),
-        status: String(item.status ?? "aberta"),
-        createdAt: String(item.created_at ?? ""),
-      }));
+      return rows.map(item => {
+        const obraId = String(item.obra_id ?? "");
+        const obraNome = ((item.obras as { nome?: string } | null)?.nome ?? "Obra") as string;
+        const materialId = item.material_id ? String(item.material_id) : null;
+        const materialNome = ((item.materiais as { nome?: string } | null)?.nome ?? "Material livre") as string;
+        const createdAt = String(item.created_at ?? "");
+
+        return {
+          id: String(item.id ?? ""),
+          obraId,
+          obra_id: obraId,
+          obraNome,
+          obra_nome: obraNome,
+          materialId,
+          material_id: materialId,
+          materialNome,
+          material_nome: materialNome,
+          titulo: String(item.titulo ?? ""),
+          status: String(item.status ?? "aberta"),
+          createdAt,
+          created_at: createdAt,
+        };
+      });
     } catch (error: any) {
       logInfraError(error, { action: "listCotacoesCompra" });
       return [];
@@ -239,16 +262,25 @@ export class MateriaisService {
     try {
       const empresaId = await this.deps.getEmpresaId();
       const rows = await this.repository.listCotacoesFornecedores(empresaId);
-      return rows.map(item => ({
-        id: String(item.id ?? ""),
-        cotacaoId: String(item.cotacao_id ?? ""),
-        fornecedor: String(item.fornecedor ?? ""),
-        valorUnitario: Number(item.valor_unitario ?? 0),
-        quantidade: Number(item.quantidade ?? 0),
-        prazoDias: Number(item.prazo_dias ?? 0),
-        selecionado: Boolean(item.selecionado),
-        aprovado: Boolean(item.aprovado),
-      }));
+      return rows.map(item => {
+        const cotacaoId = String(item.cotacao_id ?? "");
+        const valorUnitario = Number(item.valor_unitario ?? 0);
+        const prazoDias = Number(item.prazo_dias ?? 0);
+
+        return {
+          id: String(item.id ?? ""),
+          cotacaoId,
+          cotacao_id: cotacaoId,
+          fornecedor: String(item.fornecedor ?? ""),
+          valorUnitario,
+          valor_unitario: valorUnitario,
+          quantidade: Number(item.quantidade ?? 0),
+          prazoDias,
+          prazo_dias: prazoDias,
+          selecionado: Boolean(item.selecionado),
+          aprovado: Boolean(item.aprovado),
+        };
+      });
     } catch (error: any) {
       logInfraError(error, { action: "listCotacoesFornecedores" });
       return [];
@@ -343,18 +375,35 @@ export class MateriaisService {
     try {
       const empresaId = await this.deps.getEmpresaId();
       const rows = await this.repository.listContratos(empresaId);
-      return rows.map(row => ({
-        id: String(row.id ?? ""),
-        obraId: String(row.obra_id ?? ""),
-        obraNome: ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string,
-        cotacaoId: String(row.cotacao_id ?? ""),
-        fornecedorId: row.fornecedor_id ? String(row.fornecedor_id) : null,
-        status: String(row.status ?? "rascunho"),
-        valorTotal: Number(row.valor_total ?? 0),
-        prazoDias: Number(row.prazo_dias ?? 0),
-        condicoes: String(row.condicoes ?? ""),
-        createdAt: String(row.created_at ?? ""),
-      }));
+      return rows.map(row => {
+        const obraId = String(row.obra_id ?? "");
+        const obraNome = ((row.obras as { nome?: string } | null)?.nome ?? "Obra") as string;
+        const cotacaoId = String(row.cotacao_id ?? "");
+        const fornecedorId = row.fornecedor_id ? String(row.fornecedor_id) : null;
+        const valorTotal = Number(row.valor_total ?? 0);
+        const prazoDias = Number(row.prazo_dias ?? 0);
+        const createdAt = String(row.created_at ?? "");
+
+        return {
+          id: String(row.id ?? ""),
+          obraId,
+          obra_id: obraId,
+          obraNome,
+          obra_nome: obraNome,
+          cotacaoId,
+          cotacao_id: cotacaoId,
+          fornecedorId,
+          fornecedor_id: fornecedorId,
+          status: String(row.status ?? "rascunho"),
+          valorTotal,
+          valor_total: valorTotal,
+          prazoDias,
+          prazo_dias: prazoDias,
+          condicoes: String(row.condicoes ?? ""),
+          createdAt,
+          created_at: createdAt,
+        };
+      });
     } catch (error: any) {
       logInfraError(error, { action: "listContratos" });
       return [];
