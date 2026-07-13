@@ -4,19 +4,23 @@ import { listFinanceiro } from "@/lib/db/financeiro";
 import { DashboardView } from "@/components/templates/dashboard-view";
 
 export default async function DashboardPage() {
-  let resumo = null;
+  let resumo: any = { total: 0, andamento: 0, concluidas: 0 };
   let obras: any[] = [];
   let membros: any[] = [];
   let financeiro: any[] = [];
   let loadError: string | null = null;
 
   try {
-    [resumo, obras, membros, financeiro] = await Promise.all([
+    const [res, o, m, f] = await Promise.all([
       getDashboardResumo(),
       listObras(),
       listMembros(),
       listFinanceiro(),
     ]);
+    resumo = res;
+    obras = o;
+    membros = m;
+    financeiro = f;
   } catch (error) {
     loadError = error instanceof Error ? error.message : "Erro ao carregar dados do dashboard.";
   }
