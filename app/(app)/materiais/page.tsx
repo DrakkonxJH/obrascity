@@ -51,20 +51,39 @@ export default async function MateriaisPage() {
     return <PremiumFeatureBlock featureName="Materiais" status={access} />;
   }
 
-  const [materiais, pedidos, obras, cotacoes, fornecedores, rodadas, contratos] = await Promise.all([
-    listMateriais(),
-    listPedidosCompra(),
-    listObras(),
-    listCotacoesCompra(),
-    listCotacoesFornecedores(),
-    listCotacaoRodadas(),
-    listContratosFornecedores(),
-  ]);
+  let materiais: any[] = [];
+  let pedidos: any[] = [];
+  let obras: any[] = [];
+  let cotacoes: any[] = [];
+  let fornecedores: any[] = [];
+  let rodadas: any[] = [];
+  let contratos: any[] = [];
+  let loadError: string | null = null;
+
+  try {
+    [materiais, pedidos, obras, cotacoes, fornecedores, rodadas, contratos] = await Promise.all([
+      listMateriais(),
+      listPedidosCompra(),
+      listObras(),
+      listCotacoesCompra(),
+      listCotacoesFornecedores(),
+      listCotacaoRodadas(),
+      listContratosFornecedores(),
+    ]);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Erro ao carregar dados de materiais.";
+  }
   const suggestionsId = "material-suggestions";
   const materialSuggestions = buildMaterialSuggestions(materiais.map((material) => material.nome));
 
   return (
       <section className="of-page">
+      {loadError ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
+          <p className="of-card-title">Falha ao carregar dados de materiais</p>
+          <p className="of-empty-text">{loadError}</p>
+        </article>
+      ) : null}
       <PageHeader
         eyebrow="Suprimentos"
         title="Materiais e compras"

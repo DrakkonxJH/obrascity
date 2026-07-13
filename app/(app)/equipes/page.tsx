@@ -12,13 +12,24 @@ export default async function EquipesPage() {
     return <PremiumFeatureBlock featureName="Equipes" status={access} />;
   }
 
-  const [equipes, membros, obras, alocacoes, capacidade] = await Promise.all([
-    listEquipes(),
-    listMembros(),
-    listObras(),
-    listEquipeAlocacoes(),
-    listEquipeCapacidade(),
-  ]);
+  let equipes: any[] = [];
+  let membros: any[] = [];
+  let obras: any[] = [];
+  let alocacoes: any[] = [];
+  let capacidade: any[] = [];
+  let loadError: string | null = null;
+
+  try {
+    [equipes, membros, obras, alocacoes, capacidade] = await Promise.all([
+      listEquipes(),
+      listMembros(),
+      listObras(),
+      listEquipeAlocacoes(),
+      listEquipeCapacidade(),
+    ]);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Erro ao carregar dados de equipes.";
+  }
 
   const formSlot = (
     <form action={createEquipeAction} className="of-card of-form-grid md:grid-cols-3" style={{ marginBottom: 20 }}>
@@ -33,6 +44,12 @@ export default async function EquipesPage() {
 
   return (
     <section className="of-page">
+      {loadError ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
+          <p className="of-card-title">Falha ao carregar dados de equipes</p>
+          <p className="of-empty-text">{loadError}</p>
+        </article>
+      ) : null}
       <EquipesView equipes={equipes} membros={membros} formSlot={formSlot} />
 
         <div className="grid gap-4 lg:grid-cols-2" style={{ marginTop: 20 }}>

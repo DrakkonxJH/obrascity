@@ -20,12 +20,22 @@ function formatDate(value: string | null | undefined) {
 }
 
 export default async function PortalPage() {
-  const [obras, relatorios, assinatura, shares] = await Promise.all([
-    listObras(),
-    listRelatorios(),
-    getAssinaturaAtual(),
-    listPortalShares(),
-  ]);
+  let obras: any[] = [];
+  let relatorios: any[] = [];
+  let assinatura: any = null;
+  let shares: any[] = [];
+  let loadError: string | null = null;
+
+  try {
+    [obras, relatorios, assinatura, shares] = await Promise.all([
+      listObras(),
+      listRelatorios(),
+      getAssinaturaAtual(),
+      listPortalShares(),
+    ]);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Erro ao carregar dados do portal.";
+  }
   const appOrigin = getAppOrigin();
   const linksAtivos = shares.filter((share) => share.active);
   const linksComExpiracao = shares.filter((share) => Boolean(share.expires_at)).length;
@@ -52,6 +62,12 @@ export default async function PortalPage() {
 
   return (
     <section className="of-page">
+      {loadError ? (
+        <article className="of-card" style={{ marginBottom: 16, borderColor: "var(--of-red)" }}>
+          <p className="of-card-title">Falha ao carregar dados do portal</p>
+          <p className="of-empty-text">{loadError}</p>
+        </article>
+      ) : null}
       <PageHeader
         eyebrow="Sistema"
         title="Portal do cliente"
