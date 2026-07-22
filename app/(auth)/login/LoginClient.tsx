@@ -39,7 +39,7 @@ export default function LoginClient() {
     formData.append("next", "/dashboard");
 
     try {
-      const result = await signInAction(null, formData);
+      const result = await signInAction({ ok: false, message: "" }, formData);
       if (!result.ok) {
         setError(result.message);
         setLoading(false);
