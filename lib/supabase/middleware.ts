@@ -20,6 +20,7 @@ const PUBLIC_PATHS = [
   "/og-image.svg",
   "/auth/callback",
   "/conta-pendente",
+  "/images",  // Imagens da landing page
 ];
 
 function isPublicPath(pathname: string) {
