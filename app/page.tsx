@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import ClientPage from "@/components/landing/ClientPage";
 
 export default function Home() {
-  redirect("/landing.html");
+  return <ClientPage />;
 }

@@ -3445,3 +3445,264 @@ html[data-device="mobile"] .of-main-content {
     justify-content: flex-start;
   }
 }
+@import "tailwindcss";
+
+@theme {
+  /* ── Palette: noir architectural / warm bronze / bone ivory ── */
+  --color-ink: #0e0d0b;
+  --color-coal: #16140f;
+  --color-soot: #221e16;
+  --color-bone: #ece5d8;
+  --color-bone-dim: #b8b0a0;
+  --color-bronze: #c9a96e;
+  --color-bronze-deep: #9a7b45;
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Space Grotesk", "Inter", sans-serif;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* GPU acceleration for animated elements */
+.will-animate {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .grain { display: none; }
+}
+
+::selection {
+  background: var(--color-bronze);
+  color: var(--color-ink);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-bronze-deep);
+}
+
+/* ── Film grain overlay (kills the flat "AI gradient" look) ── */
+.grain {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 9s steps(6) infinite;
+}
+@keyframes grain-shift {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2%, 1%); }
+  40% { transform: translate(1%, -2%); }
+  60% { transform: translate(-1%, 2%); }
+  80% { transform: translate(2%, -1%); }
+}
+
+/* ── Line / word reveal masks ── */
+.mask {
+  display: block;
+  overflow: hidden;
+}
+.mask > span {
+  display: block;
+  will-change: transform;
+}
+
+/* ── Editorial hairline rules ── */
+.rule {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-bronze) 0%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* ── Nav link underline ── */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 1px;
+  background: var(--color-bronze);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ── Marquee (dual tracks) ── */
+@keyframes marquee-forward {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.333%); }
+}
+@keyframes marquee-reverse {
+  from { transform: translateX(-33.333%); }
+  to { transform: translateX(0); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-forward 28s linear infinite;
+}
+.marquee-track.reverse {
+  animation: marquee-reverse 28s linear infinite;
+}
+
+/* ── Custom cursor — minimal dot + subtle ring ── */
+@media (hover: hover) and (pointer: fine) {
+  body { cursor: none; }
+  a, button, input, select, textarea, label, [data-cursor] { cursor: none; }
+
+  .cursor-dot,
+  .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 200;
+    border-radius: 50%;
+    mix-blend-mode: difference;
+  }
+  .cursor-dot {
+    width: 4px;
+    height: 4px;
+    background: #fff;
+  }
+  .cursor-ring {
+    width: 20px;
+    height: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.35s ease,
+                opacity 0.35s ease;
+  }
+  .cursor-ring.is-hover {
+    width: 44px;
+    height: 44px;
+    border-color: rgba(201, 169, 110, 0.5);
+  }
+}
+
+/* ── Hero serif emphasis ── */
+.serif-i {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 340;
+}
+
+/* ── Outline display text (footer) ── */
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(236, 229, 216, 0.22);
+  color: transparent;
+}
+
+/* ── Underline-style editorial form fields ── */
+.field {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(236, 229, 216, 0.18);
+  padding: 0.875rem 0;
+  font-size: 0.95rem;
+  color: var(--color-bone);
+  outline: none;
+  transition: border-color 0.4s ease;
+}
+.field::placeholder {
+  color: rgba(236, 229, 216, 0.35);
+}
+.field:focus {
+  border-color: var(--color-bronze);
+}
+
+/* ── Lenis recommended base ── */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* ── Hero scroll cue ── */
+.scroll-cue {
+  animation: cue-flow 2.5s ease-in-out infinite;
+}
+@keyframes cue-flow {
+  0% { opacity: 0; transform: translateY(-8px); }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(8px); }
+}
+
+/* ── Smooth text reveal mask ── */
+.reveal-mask {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.reveal-mask.revealed {
+  clip-path: inset(0 0% 0 0);
+}
+
+/* ── Hover lift effect ── */
+.hover-lift {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* ── Bronze link underline ── */
+.link-bronze {
+  position: relative;
+  display: inline-block;
+}
+.link-bronze::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: var(--color-bronze);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.link-bronze:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
