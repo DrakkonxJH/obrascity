@@ -1,5 +1,4 @@
-import { db } from "@/db";
-import { leads } from "@/db/schema";
+import { createServerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -14,9 +13,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [lead] = await db
-      .insert(leads)
-      .values({
+    const supabase = await createServerClient();
+
+    const { data: lead, error: insertError } = await supabase
+      .from("leads")
+      .insert({
         name,
         email,
         phone: phone || null,
@@ -25,7 +26,16 @@ export async function POST(request: NextRequest) {
         message: message || null,
         source: source || "website",
       })
-      .returning();
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Supabase insert error:", insertError);
+      return NextResponse.json(
+        { error: "Erro ao criar lead no banco de dados." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { success: true, id: lead.id },
